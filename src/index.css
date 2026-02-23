@@ -4,401 +4,174 @@
 
 @layer base {
   :root {
-    --background: 220 14% 10%; /* Slightly lighter dark background */
-    --foreground: 220 8% 95%;
-    --card: 220 13% 12%; /* Slightly lighter dark */
-    --card-foreground: 220 8% 95%;
-    --popover: 220 13% 12%;
-    --popover-foreground: 220 8% 95%;
-    --primary: 217 91% 60%; /* Electric blue primary */
-    --primary-foreground: 220 8% 5%;
-    --secondary: 220 13% 18%;
-    --secondary-foreground: 220 8% 95%;
-    --muted: 220 13% 16%;
-    --muted-foreground: 220 8% 65%;
-    --accent: 198 93% 60%; /* Cyan accent */
-    --accent-foreground: 220 8% 5%;
-    --destructive: 0 84% 60%; /* Gaming red */
-    --destructive-foreground: 220 8% 95%;
-    --border: 220 13% 18%;
-    --input: 220 13% 16%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
+    /* Brand Colors - Electric Teal/Cyan Focus */
+    --brand-primary: 174 100% 50%;
+    /* Electric Cyan */
+    --brand-secondary: 190 100% 50%;
+    /* Deep Blue-Cyan */
+    --brand-accent: 300 100% 50%;
+    /* Magenta/Purple for contrast */
 
-    /* Gaming-specific colors */
-    --gaming-gold: 45 100% 51%;
-    --gaming-green: 142 71% 45%;
-    --gaming-purple: 271 81% 56%;
-    --gaming-orange: 25 95% 53%;
-    --gaming-neon-blue: 194 100% 50%;
-    --gaming-neon-pink: 322 84% 60%;
-    
-    /* Glow effects */
-    --glow-primary: 0 0 15px hsl(217 91% 60% / 0.3);
-    --glow-accent: 0 0 15px hsl(198 93% 60% / 0.3);
-    --glow-success: 0 0 15px hsl(142 71% 45% / 0.3);
-  }
+    /* Backgrounds - Deep, Rich Dark */
+    --background: 230 25% 5%;
+    /* Very dark blue-black */
+    --foreground: 210 20% 98%;
 
-  .dark {
-    --background: 222 47% 7%;
-    --foreground: 213 31% 91%;
-    --card: 222 47% 9%;
-    --card-foreground: 213 31% 91%;
-    --popover: 222 47% 9%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 7%;
-    --secondary: 217 32% 18%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215 16% 65%;
-    --accent: 198 93% 60%;
-    --accent-foreground: 222 47% 7%;
+    --card: 230 25% 8%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 230 25% 8%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 174 100% 50%;
+    --primary-foreground: 230 25% 5%;
+
+    --secondary: 226 25% 15%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 226 25% 12%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 174 100% 50%;
+    --accent-foreground: 230 25% 5%;
+
     --destructive: 0 84% 60%;
-    --destructive-foreground: 213 31% 91%;
-    --border: 217 32% 18%;
-    --input: 223 47% 11%;
-    --ring: 217 91% 60%;
+    --destructive-foreground: 210 20% 98%;
 
-    /* Dark mode specific shadow variables */
-    --shadow-dark-glow: 0 0 10px rgba(30, 64, 175, 0.15);
-    --shadow-dark-soft: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --border: 226 25% 15%;
+    --input: 226 25% 15%;
+    --ring: 174 100% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 230 25% 4%;
+    --sidebar-foreground: 215 20% 80%;
+    --sidebar-primary: 174 100% 50%;
+    --sidebar-primary-foreground: 230 25% 5%;
+    --sidebar-accent: 226 25% 12%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 226 25% 10%;
+    --sidebar-ring: 174 100% 50%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: 'Inter', sans-serif;
-  }
-  
-  /* Dark mode body enhancement with subtle noise */
-  .dark body {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    background-position: 0 0;
-    background-size: 200px;
-  }
-}
-
-/* Modern Gaming UI Components */
-.gaming-card {
-  @apply bg-card border border-border/50 rounded-md shadow-sm;
-  background: linear-gradient(150deg, hsl(var(--card)) 0%, hsl(var(--card)/0.95) 100%);
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-}
-
-.dark .gaming-card {
-  background: linear-gradient(150deg, hsl(var(--card)) 0%, hsl(var(--card)/0.85) 100%);
-  box-shadow: var(--shadow-dark-soft);
-  border-color: rgba(255,255,255,0.03);
-}
-
-.gaming-card:hover {
-  box-shadow: 
-    0 8px 20px -3px rgba(0, 0, 0, 0.2),
-    0 0 0 1px hsl(var(--border)/0.1);
-  transform: translateY(-1px);
-}
-
-.dark .gaming-card:hover {
-  box-shadow: 
-    0 8px 25px -5px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
-}
-
-.gaming-button {
-  @apply relative overflow-hidden rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center gap-2;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)/0.85) 100%);
-}
-
-.gaming-button:hover {
-  @apply shadow-sm;
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-}
-
-.gaming-button:active {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-
-/* Enhanced dark mode specific styles */
-.dark .bg-card {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
-  background-position: 0 0;
-  background-size: 200px;
-}
-
-/* Subtle noise backgrounds for various dark mode elements */
-.dark .bg-noise-subtle {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  background-position: 0 0;
-  background-size: 200px;
-}
-
-/* Updated text styling */
-.neon-text {
-  @apply font-bold tracking-tight;
-  text-shadow: 0 0 5px hsl(var(--primary)/0.5);
-}
-
-.dark .neon-text {
-  text-shadow: 0 0 8px hsl(var(--primary)/0.7);
-}
-
-/* Stats bar styling */
-.stat-bar {
-  @apply relative h-2 bg-muted/50 rounded-full overflow-hidden;
-}
-
-.stat-bar-fill {
-  @apply h-full rounded-full transition-all duration-700 ease-out;
-  background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  box-shadow: 0 0 8px hsl(var(--primary)/0.3);
-}
-
-.dark .stat-bar-fill {
-  box-shadow: 0 0 12px hsl(var(--primary)/0.5);
-}
-
-/* Table styling */
-.gaming-table {
-  @apply bg-card rounded-lg overflow-hidden border-0;
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
-}
-
-.dark .gaming-table {
-  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
-}
-
-.gaming-table-header {
-  background: linear-gradient(to bottom, hsl(var(--secondary)) 0%, hsl(var(--secondary)/0.9) 100%);
-  @apply border-b-0;
-}
-
-.dark .gaming-table-header {
-  background: linear-gradient(to bottom, hsl(var(--secondary)/0.95) 0%, hsl(var(--secondary)/0.8) 100%);
-}
-
-.gaming-table-header th {
-  @apply text-xs font-medium tracking-wide uppercase text-muted-foreground px-6 py-3;
-  letter-spacing: 0.05em;
-}
-
-.gaming-table-row {
-  @apply border-0 border-b border-border/20;
-}
-
-.gaming-table-row:hover {
-  @apply bg-muted/30;
-  box-shadow: inset 0 0 0 1px hsl(var(--primary)/0.1);
-}
-
-.dark .gaming-table-row:hover {
-  background-color: rgba(30, 41, 59, 0.4);
-  box-shadow: inset 0 0 0 1px hsl(var(--primary)/0.2), 0 0 10px rgba(30, 64, 175, 0.07);
-}
-
-.gaming-table-row td {
-  @apply px-6 py-4 transition-colors;
-}
-
-.gaming-table-row:last-child {
-  @apply border-b-0;
-}
-
-/* Enhanced Status indicators */
-.status-completed {
-  @apply bg-gaming-green/10 text-gaming-green border border-gaming-green/20 px-3 py-1 rounded-full text-xs font-medium;
-  box-shadow: 0 0 10px rgba(20, 184, 166, 0.1);
-}
-
-.status-scheduled {
-  @apply bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-xs font-medium;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
-}
-
-.status-cancelled {
-  @apply bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-xs font-medium;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
-}
-
-.status-in-progress {
-  @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-xs font-medium;
-  box-shadow: 0 0 10px rgba(234, 179, 8, 0.1);
-  animation: pulse 2s infinite;
-}
-
-/* Result indicators */
-.result-win {
-  @apply bg-gaming-green/10 text-gaming-green font-semibold;
-}
-
-.result-loss {
-  @apply bg-destructive/10 text-destructive font-semibold;
-}
-
-.result-draw {
-  @apply bg-gaming-gold/10 text-gaming-gold font-semibold;
-}
-
-/* Animations */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.8;
-    box-shadow: 0 0 5px hsl(var(--primary)/0.3);
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 10px hsl(var(--primary)/0.5);
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Subtle grid pattern for the whole app */
+    background-image:
+      linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.8) 100%),
+      radial-gradient(circle at 50% 0%, hsl(var(--brand-primary) / 0.05) 0%, transparent 50%),
+      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    background-attachment: fixed;
   }
 }
 
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
+@layer components {
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+  /* Modern Glassmorphism - Multi-layered for depth */
+  .glass-panel {
+    @apply bg-zinc-950/40 backdrop-blur-2xl border border-white/10;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.05), transparent);
   }
-  50% {
-    opacity: 0.7;
+
+  .glass-card {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-white/5 transition-all duration-500 overflow-hidden relative;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   }
-}
 
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  .glass-card:hover {
+    @apply bg-zinc-800/50 border-white/20 -translate-y-1;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(45, 212, 191, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .glass-button {
+    @apply bg-white/5 active:scale-95 border border-white/5 transition-all backdrop-blur-md shadow-lg;
   }
-}
 
-.slide-up {
-  animation: slide-up 0.3s ease-out;
-}
-
-/* Table Row Animations */
-.table-row-animate-in {
-  animation: table-row-in 0.3s ease-out forwards;
-}
-
-@keyframes table-row-in {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
+  .glass-button:hover {
+    background-color: hsl(var(--brand-primary) / 0.1);
+    border-color: hsl(var(--brand-primary) / 0.3);
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+
+  /* Neon & Brand Accents */
+  .glow-text {
+    text-shadow: 0 0 15px hsl(var(--brand-primary) / 0.4), 0 0 30px hsl(var(--brand-primary) / 0.2);
   }
-}
 
-/* Dark mode enhanced shadows */
-.dark .shadow-gaming {
-  box-shadow: 0 0 15px rgba(30, 64, 175, 0.2);
-}
+  .glow-text-sm {
+    text-shadow: 0 0 8px hsl(var(--brand-primary) / 0.3);
+  }
 
-.dark .shadow-gaming-lg {
-  box-shadow: 0 0 30px rgba(30, 64, 175, 0.15);
-}
+  .glow-border {
+    border-color: hsl(var(--brand-primary) / 0.3);
+    box-shadow: 0 0 15px rgba(45, 212, 191, 0.1);
+  }
 
-/* Modern scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  /* Page & Component Animations */
+  .animate-page-entry {
+    animation: page-entry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
+  @keyframes page-entry {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.995);
+    }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 3px;
-}
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
+  /* Bento Grid Layout Utilities */
+  .bento-grid {
+    @apply grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-5 p-1;
+  }
 
-/* Dark mode enhanced scrollbars */
-.dark ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.3);
-}
+  .bento-card {
+    @apply glass-card rounded-2xl p-6 flex flex-col;
+  }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
-}
+  /* Typography Polish */
+  .text-label {
+    @apply text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase;
+  }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
-}
+  .text-value {
+    @apply text-3xl font-black tracking-tighter text-white;
+  }
 
-/* Modern card layout */
-.dashboard-card {
-  @apply bg-card border border-border/50 rounded-md shadow-sm overflow-hidden;
-  background: linear-gradient(150deg, hsl(var(--card)) 0%, hsl(var(--card)/0.95) 100%);
-  backdrop-filter: blur(10px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+  /* Refined Scrollbars */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 
-.dark .dashboard-card {
-  background: linear-gradient(150deg, hsl(var(--card)) 0%, hsl(var(--card)/0.85) 100%);
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2);
-  border-color: rgba(255,255,255,0.03);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
-}
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-.dashboard-card:hover {
-  @apply shadow-md;
-  transform: translateY(-2px);
-}
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-.dark .dashboard-card:hover {
-  box-shadow: 0 12px 20px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
 
-.dashboard-card-header {
-  @apply p-5 border-b border-border/30 flex items-center justify-between;
-}
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full transition-colors;
+  }
 
-.dark .dashboard-card-header {
-  border-color: rgba(255,255,255,0.05);
-}
-
-/* Day picker overrides for gaming theme */
-.day-has-event {
-  position: relative;
-}
-
-.day-has-event > .rdp-button_reset.rdp-button {
-  font-weight: bold;
-  color: hsl(var(--primary));
-}
-
-.day-has-event::after {
-  content: '';
-  display: block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: hsl(var(--primary));
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--brand-primary) / 0.2);
+  }
 }

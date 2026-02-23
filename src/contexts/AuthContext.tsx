@@ -1,256 +1,113 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback, useMemo } from 'react';
+
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
-
-export interface Profile {
-  id: string;
-  ign: string | null;
-  full_name: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export type AppRole = 'admin' | 'coach' | 'player';
-
-export interface UserRole {
-  role: AppRole;
-  id?: string;
-  user_id?: string;
-  created_at?: string;
-}
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface SignUpCredentials {
-  email: string;
-  password: string;
-  data?: { full_name?: string; ign?: string | null };
-}
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
-  profile: Profile | null;
-  roles: UserRole[];
-  authLoading: boolean;
-  profileLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<{ error: AuthError | null }>;
-  signUp: (credentials: SignUpCredentials) => Promise<{ error: AuthError | null; data: { user: User | null; session: Session | null; } }>;
-  logout: () => Promise<{ error: AuthError | null }>;
-  isAdmin: boolean;
-  isCoach: boolean;
-  isPlayer: boolean;
+  session: Session | null;
+  isLoading: boolean;
+  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<UserRole[]>([]);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserProfileAndRoles = useCallback(async (userId: string | null) => {
-    if (!userId) {
-      setProfile(null);
-      setRoles([]);
-      setProfileLoading(false);
-      return;
-    }
-    setProfileLoading(true);
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) {
-        console.error("Auth (Supabase): Error fetching profile:", profileError.message);
-      } else if (profileData) {
-        setProfile(profileData as Profile);
-
-        // Update last_login_at when profile is successfully fetched
-        await supabase
-          .from('profiles')
-          .update({ last_login_at: new Date().toISOString() })
-          .eq('id', userId);
-      } else {
-        setProfile(null);
-      }
-
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-
-      if (rolesError) {
-        console.error("Auth (Supabase): Error fetching roles:", rolesError.message);
-      } else if (rolesData) {
-        setRoles(rolesData as UserRole[]);
-      } else {
-        setRoles([]);
-      }
-    } catch (e: any) {
-      console.error("Auth (Supabase): Unexpected error fetching profile/roles:", e.message);
-      setProfile(null);
-      setRoles([]);
-    } finally {
-      setProfileLoading(false);
-    }
-  }, []);
-
-  // Effect 1: Initial Authentication State Check (runs once)
   useEffect(() => {
-    setAuthLoading(true);
+    let mounted = true;
 
-    const initializeSession = async () => {
-      let currentSessionUser: User | null = null;
-      try {
-        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error("AuthProvider EFFECT (InitialLoad): Error in getSession:", sessionError.message);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        console.log('Auth state change:', event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Only set loading to false after we've processed the auth state
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          setTimeout(() => {
+            if (mounted) setIsLoading(false);
+          }, 100);
         }
-
-        setSession(currentSession);
-        currentSessionUser = currentSession?.user ?? null;
-        setUser(currentSessionUser);
-
-        setUser(currentSessionUser);
-
-        setAuthLoading(false); // MODIFIED: Set authLoading false here
-
-        if (currentSessionUser) {
-          // Call fetchUserProfileAndRoles, but don't necessarily await it here
-          // as authLoading is already false. Let profileLoading handle its state.
-          fetchUserProfileAndRoles(currentSessionUser.id);
-        } else {
-          // Ensure profile/roles/profileLoading are reset if no user
-          fetchUserProfileAndRoles(null); // This will set profile/roles to null and profileLoading to false
-        }
-      } catch (error: any) {
-        console.error("AuthProvider EFFECT (InitialLoad): Error during initial auth setup:", error.message);
-        setSession(null);
-        setUser(null);
-        fetchUserProfileAndRoles(null); // Reset profile state
-        setAuthLoading(false); // Ensure authLoading is false even on error
       }
-      // Removed finally block for setAuthLoading(false) as it's handled earlier or in catch.
-    };
+    );
 
-    initializeSession();
-  }, [fetchUserProfileAndRoles]); // fetchUserProfileAndRoles is stable
-
-  // Effect 2: Auth State Change Listener (runs once to subscribe)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, newSession: Session | null) => {
-      setSession(newSession);
-      const newUser = newSession?.user ?? null;
-      setUser(newUser);
-
-      if (event === 'SIGNED_OUT') {
-        fetchUserProfileAndRoles(null);
-      } else if (newUser) {
-        fetchUserProfileAndRoles(newUser.id);
-      } else if (!newUser) {
-        fetchUserProfileAndRoles(null);
-      }
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
+      console.log('Initial session check:', session?.user?.email);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
     });
 
     return () => {
-      subscription?.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
-  }, [fetchUserProfileAndRoles]);
-
-
-
-  const login = useCallback(async (credentials: LoginCredentials) => {
-    setAuthLoading(true);
-    const { error, data } = await supabase.auth.signInWithPassword(credentials);
-    // onAuthStateChange will handle fetching profile/roles.
-    // Set authLoading to false after the operation. If there's an error,
-    // it will be caught by onAuthStateChange as well if session becomes null.
-    // If successful, onAuthStateChange gets SIGNED_IN.
-    setAuthLoading(false);
-    if (error) {
-      console.error("Auth (Supabase): Login error:", error.message);
-      return { error };
-    }
-    return { error: null };
   }, []);
 
-  const signUp = useCallback(async (credentials: SignUpCredentials) => {
-    setAuthLoading(true);
-    const { email, password, data: optionsData } = credentials;
-    const { data, error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, displayName?: string) => {
+    // Always use standard Supabase signup flow with email verification
+    const redirectUrl = `${window.location.origin}/`;
+    
+    console.log('SignUp redirect URL:', redirectUrl);
+    
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: optionsData
+        emailRedirectTo: redirectUrl,
+        data: {
+          display_name: displayName || '',
+          full_name: displayName || '' // Keep for backward compatibility
+        }
       }
     });
-    setAuthLoading(false);
-    if (error) {
-      console.error("Auth (Supabase): SignUp error:", error.message);
-      return { error, data: { user: null, session: null } };
-    }
-    return { error: null, data: { user: data.user, session: data.session } };
-  }, []);
-
-  const logout = useCallback(async () => {
-    setAuthLoading(true);
-    const { error } = await supabase.auth.signOut();
-    // onAuthStateChange with 'SIGNED_OUT' event will clear user, session, profile, roles
-    // and also set profileLoading to false (via fetchUserProfileAndRoles(null)).
-    setAuthLoading(false);
-    if (error) {
-      console.error("Auth (Supabase): Logout error:", error.message);
-    }
+    
     return { error };
-  }, []);
+  };
 
-  const isAdmin = useMemo(() => roles.some(r => r.role === 'admin'), [roles]);
-  const isCoach = useMemo(() => roles.some(r => r.role === 'coach'), [roles]);
-  const isPlayer = useMemo(() => roles.some(r => r.role === 'player'), [roles]);
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    return { error };
+  };
 
-  const authContextValue = useMemo(() => ({
-    session,
-    user,
-    profile,
-    roles,
-    authLoading,
-    profileLoading,
-    login,
-    signUp,
-    logout,
-    isAdmin,
-    isCoach,
-    isPlayer,
-  }), [
-    session, user, profile, roles, authLoading, profileLoading,
-    login, signUp, logout,
-    isAdmin, isCoach, isPlayer
-  ]);
-
-
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    return { error };
+  };
 
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      isLoading,
+      signUp,
+      signIn,
+      signOut
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

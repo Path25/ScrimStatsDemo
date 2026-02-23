@@ -28,8 +28,7 @@ const fetchPlayers = async (): Promise<Player[]> => {
     console.error("PlayersPage: Error fetching players:", error);
     throw new Error(error.message);
   }
-}
-return data || [];
+  return data || [];
 };
 
 const addPlayer = async ({ playerData, userId }: { playerData: AddPlayerFormData; userId: string }): Promise<Player> => {
@@ -52,8 +51,7 @@ const addPlayer = async ({ playerData, userId }: { playerData: AddPlayerFormData
     console.error("PlayersPage: Error adding player:", error);
     throw new Error(error.message);
   }
-}
-return data;
+  return data;
 };
 
 const updatePlayer = async ({ playerId, playerData, userId }: { playerId: string; playerData: EditPlayerFormData; userId: string }): Promise<Player> => {
@@ -79,8 +77,7 @@ const updatePlayer = async ({ playerId, playerData, userId }: { playerId: string
     console.error("PlayersPage: Error updating player:", error);
     throw new Error(error.message);
   }
-}
-return data;
+  return data;
 };
 
 const deletePlayer = async (playerId: string): Promise<void> => {
@@ -93,8 +90,6 @@ const deletePlayer = async (playerId: string): Promise<void> => {
     console.error("PlayersPage: Error deleting player:", error);
     throw new Error(error.message);
   }
-  throw new Error(error.message);
-}
 };
 
 const PlayersPage: React.FC = () => {
@@ -108,8 +103,6 @@ const PlayersPage: React.FC = () => {
   // Use isAdmin and isCoach from AuthContext directly
   const isAdmin = contextIsAdmin;
   const isCoach = contextIsCoach;
-  const canManagePlayers = isAdmin || isCoach;
-
   const canManagePlayers = isAdmin || isCoach;
 
 
@@ -187,7 +180,6 @@ const PlayersPage: React.FC = () => {
     }
     if (!canManagePlayers) {
       toast({ title: "Permission Denied", description: "You do not have permission to add players.", variant: "destructive" });
-      toast({ title: "Permission Denied", description: "You do not have permission to add players.", variant: "destructive" });
       return;
     }
     addPlayerMutation.mutate({ playerData, userId: user.id });
@@ -206,7 +198,6 @@ const PlayersPage: React.FC = () => {
   const handleUpdatePlayer = (playerData: EditPlayerFormData) => {
     if (!editingPlayer || !user?.id) {
       toast({ title: "Error", description: "Cannot update player. Missing data or user.", variant: "destructive" });
-      console.error("PlayersPage: Cannot update player, editingPlayer or user not available.");
       console.error("PlayersPage: Cannot update player, editingPlayer or user not available.");
       return;
     }

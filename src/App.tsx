@@ -53,7 +53,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
 
-const workspacePaths = ["/overview/*", "/players/*", "/scrims/*", "/calendar/*", "/actions/*", "/collector/*", "/analytics/*", "/soloq/*", "/scouting/*", "/draft/*", "/preparation/*", "/integrations/*", "/settings/*"];
+const workspacePaths = ["/overview/*?", "/players/*?", "/scrims/*?", "/calendar/*?", "/actions/*?", "/collector/*?", "/analytics/*?", "/soloq/*?", "/scouting/*?", "/draft/*?", "/preparation/*?", "/integrations/*?", "/settings/*?"];
 
 function AuthAwareNotFound() {
   const { user, isLoading } = useAuth();

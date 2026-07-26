@@ -33,6 +33,12 @@ test.describe("public launch surface", () => {
     await expect(page).toHaveURL(/forgot-password/);
     await expect(page.getByRole("heading", { name: /reset your password/i })).toBeVisible();
   });
+
+  test("dashboard entry routes through the authentication guard", async ({ page }) => {
+    await page.goto("/overview");
+    await expect(page).toHaveURL(/sign-in/);
+    await expect(page.getByRole("heading", { name: /sign in to your team workspace/i })).toBeVisible();
+  });
 });
 
 for (const role of roles) {

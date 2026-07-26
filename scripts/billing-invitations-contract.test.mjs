@@ -36,3 +36,9 @@ test("paid product routes have explicit plan gates", () => {
   assert.match(source, /minimum="elite" feature="collector capture"/);
   assert.match(read("src/pages/Settings.tsx"), /<BillingPanel \/>/);
 });
+
+test("billing presents the exact configured monthly prices", () => {
+  const source = read("src/components/billing/BillingPanel.tsx");
+  assert.match(source, /id: "pro", price: "\$9\.99"/);
+  assert.match(source, /id: "elite", price: "\$19\.99"/);
+});

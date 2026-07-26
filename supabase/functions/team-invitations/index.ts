@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
 
 const allowedOrigin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
-const cors = { "Access-Control-Allow-Origin": allowedOrigin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
+const cors = { "Access-Control-Allow-Origin": allowedOrigin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] || character));
 
@@ -14,7 +14,7 @@ Deno.serve(async (request) => {
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
-  if (!url || !serviceKey || !resendKey) return json({ error: "Invitation delivery is not configured" }, 503);
+  if (!url || !serviceKey) return json({ error: "Invitation service is not configured" }, 503);
   const service = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const token = authorization.slice(7);
   const { data: authData, error: authError } = await service.auth.getUser(token);
@@ -38,7 +38,11 @@ Deno.serve(async (request) => {
     if (!input.invitation_id) return json({ error: "Invitation is required" }, 400);
     const result = await service.from("team_invitations").select("id,email,token,role,expires_at,player_id").eq("id", input.invitation_id).eq("tenant_id", input.tenant_id).is("accepted_at", null).is("revoked_at", null).maybeSingle();
     if (result.error || !result.data) return json({ error: "Invitation is unavailable" }, 404);
-    invitation = result.data;
+    const refreshedToken = crypto.randomUUID();
+    const refreshedExpiry = new Date(Date.now() + 7 * 86_400_000).toISOString();
+    const refreshed = await service.from("team_invitations").update({ token: refreshedToken, expires_at: refreshedExpiry, delivery_status: "pending", delivery_error: null }).eq("id", result.data.id).select("id,email,token,role,expires_at,player_id").single();
+    if (refreshed.error || !refreshed.data) return json({ error: "Invitation could not be refreshed" }, 400);
+    invitation = refreshed.data;
   } else {
     if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return json({ error: "A valid email is required" }, 400);
     if (!input.role || !["admin", "member", "viewer"].includes(input.role)) return json({ error: "A valid role is required" }, 400);
@@ -65,12 +69,16 @@ Deno.serve(async (request) => {
     return json({ error: "Secure account link could not be created" }, 502);
   }
   const { data: tenant } = await service.from("tenants").select("name").eq("id", input.tenant_id).single();
+  if (!resendKey) {
+    await service.from("team_invitations").update({ delivery_status: "failed", delivery_error: "Email delivery is not configured" }).eq("id", invitation.id);
+    return json({ invitation_id: invitation.id, token: invitation.token, setup_url: link.data.properties.action_link, expires_at: invitation.expires_at, delivery_status: "failed", warning: "Invitation created, but email delivery is not configured. Copy the secure link instead." });
+  }
   const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${resendKey}`, "content-type": "application/json" }, body: JSON.stringify({ from: "ScrimStats <noreply@email.scrimstats.gg>", to: [invitation.email], subject: `Join ${tenant?.name || "your team"} on ScrimStats`, html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="font-size:24px">Your private team workspace is ready</h1><p>${escapeHtml(authData.user.email || "A team manager")} invited you to join <strong>${escapeHtml(tenant?.name || "a ScrimStats team")}</strong> as ${escapeHtml(invitation.role)}.</p><p><a href="${link.data.properties.action_link}" style="display:inline-block;background:#11e2d0;color:#06100f;padding:12px 18px;text-decoration:none;font-weight:700">Set up secure access</a></p><p style="color:#667085;font-size:13px">This link expires on ${new Date(invitation.expires_at).toUTCString()}.</p></div>` }) });
   if (!response.ok) {
     const detail = await response.text();
     await service.from("team_invitations").update({ delivery_status: "failed", delivery_error: detail.slice(0, 500), last_sent_at: new Date().toISOString() }).eq("id", invitation.id);
-    return json({ error: "Invitation email could not be delivered", invitation_id: invitation.id }, 502);
+    return json({ invitation_id: invitation.id, token: invitation.token, setup_url: link.data.properties.action_link, expires_at: invitation.expires_at, delivery_status: "failed", warning: "Invitation created, but the email could not be delivered. Copy the secure link instead." });
   }
   await service.from("team_invitations").update({ delivery_status: "sent", delivery_error: null, last_sent_at: new Date().toISOString() }).eq("id", invitation.id);
-  return json({ invitation_id: invitation.id, token: invitation.token, setup_url: link.data.properties.action_link, expires_at: invitation.expires_at });
+  return json({ invitation_id: invitation.id, token: invitation.token, setup_url: link.data.properties.action_link, expires_at: invitation.expires_at, delivery_status: "sent" });
 });

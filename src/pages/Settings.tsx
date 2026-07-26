@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { DesktopCollectorIntegration } from "@/components/integrations/DesktopCollectorIntegration";
 import { DesktopAppStatus } from "@/components/scrims/DesktopAppStatus";
 import { InviteTeamMemberDialog } from "@/components/team/InviteTeamMemberDialog";
+import { BillingPanel } from "@/components/billing/BillingPanel";
 import { NotificationPreferencesPanel } from "@/components/notifications/NotificationPreferencesPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,8 @@ export default function Settings() {
         description="Account security, team membership, scheduling preferences and collector configuration."
         actions={isManager ? <InviteTeamMemberDialog /> : undefined}
       />
+
+      <BillingPanel />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="space-y-6">
@@ -252,7 +255,9 @@ export default function Settings() {
                       <Button size="icon" variant="ghost" aria-label={`Resend invitation to ${invitation.email}`} onClick={() => administration.resendInvitation(invitation.id)} disabled={administration.isSaving}>
                         <RefreshCw className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => administration.cancelInvitation(invitation.id)}>
+                      <Button size="icon" variant="ghost" aria-label={`Remove pending invitation for ${invitation.email}`} disabled={administration.isSaving} onClick={() => {
+                        if (window.confirm(`Remove the pending invitation for ${invitation.email}? The existing link will stop working.`)) administration.cancelInvitation(invitation.id);
+                      }}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

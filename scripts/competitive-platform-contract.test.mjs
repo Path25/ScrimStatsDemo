@@ -123,10 +123,9 @@ test("Discord delivery is private, deduplicated, and only queues subscribed even
   assert.match(workflows, /claimed_at < now\(\) - interval '15 minutes'/);
   assert.match(workflows, /to service_role/);
   assert.doesNotMatch(discord, /scouting|preparation_brief|review content/i);
-  assert.doesNotMatch(
-    supabaseConfig,
-    /\[functions\.(?:draft-intelligence|game-analytics|champion-pool-analysis|create-checkout|stripe-webhook)\]/,
-  );
+  assert.doesNotMatch(supabaseConfig, /\[functions\.(?:draft-intelligence|game-analytics|champion-pool-analysis)\]/);
+  assert.match(supabaseConfig, /\[functions\.create-checkout\]\s+verify_jwt = true/);
+  assert.match(supabaseConfig, /\[functions\.stripe-webhook\]\s+verify_jwt = false/);
 });
 
 test("planned integrations remain an honest roadmap preview", () => {

@@ -1,107 +1,59 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import Stripe from "npm:stripe@18.4.0";
+import { createClient } from "npm:@supabase/supabase-js@2.110.0";
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+const origin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
+const cors = { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
+const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
-};
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (request.method !== "POST") return respond({ error: "Method not allowed" }, 405);
   try {
-    logStep("Function started");
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const prices = { pro: Deno.env.get("STRIPE_PRICE_PRO_MONTHLY"), elite: Deno.env.get("STRIPE_PRICE_ELITE_MONTHLY") } as const;
+    if (!stripeKey || !url || !serviceKey || !prices.pro || !prices.elite) return respond({ error: "Billing is not configured" }, 503);
 
-    // Create Supabase client using the anon key for user authentication
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    const authorization = request.headers.get("authorization");
+    if (!authorization?.startsWith("Bearer ")) return respond({ error: "Authentication required" }, 401);
+    const service = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: auth, error: authError } = await service.auth.getUser(authorization.slice(7));
+    if (authError || !auth.user?.email) return respond({ error: "Session is invalid" }, 401);
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
+    const input = await request.json() as { tenant_id?: string; plan?: "pro" | "elite" };
+    if (!input.tenant_id || !input.plan || !["pro", "elite"].includes(input.plan)) return respond({ error: "A valid workspace and paid plan are required" }, 400);
+    const { data: membership } = await service.from("tenant_users").select("role").eq("tenant_id", input.tenant_id).eq("user_id", auth.user.id).maybeSingle();
+    if (!membership || !["owner", "admin"].includes(membership.role)) return respond({ error: "Owner or admin access is required" }, 403);
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    const { data: tenant, error: tenantError } = await service.from("tenants").select("id,name,stripe_customer_id,stripe_subscription_id").eq("id", input.tenant_id).single();
+    if (tenantError || !tenant) return respond({ error: "Workspace is unavailable" }, 404);
+    if (tenant.stripe_subscription_id) return respond({ error: "Use the billing portal to change an existing subscription", portal_required: true }, 409);
 
-    // Parse request body
-    const { tier, allow_promotion_codes = true } = await req.json();
-    if (!tier || !['pro', 'elite'].includes(tier)) {
-      throw new Error("Invalid tier specified. Must be 'pro' or 'elite'");
-    }
-    logStep("Request parsed", { tier, allow_promotion_codes });
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
-    // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
-    } else {
-      logStep("No existing customer found");
+    const stripe = new Stripe(stripeKey, { httpClient: Stripe.createFetchHttpClient() });
+    let customerId = tenant.stripe_customer_id as string | null;
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: auth.user.email, name: tenant.name, metadata: { tenant_id: tenant.id } }, { idempotencyKey: `tenant-customer-${tenant.id}` });
+      customerId = customer.id;
+      const { error } = await service.from("tenants").update({ stripe_customer_id: customerId, billing_updated_at: new Date().toISOString() }).eq("id", tenant.id);
+      if (error) throw error;
     }
 
-    // Use your actual Stripe price IDs
-    const tierPriceIds = {
-      pro: "price_1RWKZBCiOpn9NlRMoQBkc8Yv", // $9.99 Pro Plan
-      elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ" // $19.99 Elite Plan
-    };
-
-    const priceId = tierPriceIds[tier as keyof typeof tierPriceIds];
-    logStep("Using price ID", { tier, priceId });
-
-    // Create checkout session using your actual price IDs
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
       mode: "subscription",
-      allow_promotion_codes: allow_promotion_codes,
-      success_url: `${req.headers.get("origin")}/settings?tab=billing&success=true`,
-      cancel_url: `${req.headers.get("origin")}/settings?tab=billing&canceled=true`,
-      metadata: {
-        user_id: user.id,
-        tier: tier,
-      },
-    });
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
-
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      customer: customerId,
+      line_items: [{ price: prices[input.plan]!, quantity: 1 }],
+      allow_promotion_codes: true,
+      client_reference_id: tenant.id,
+      success_url: `${origin}/settings?billing=success`,
+      cancel_url: `${origin}/settings?billing=cancelled`,
+      metadata: { tenant_id: tenant.id, plan: input.plan, purchaser_user_id: auth.user.id },
+      subscription_data: { metadata: { tenant_id: tenant.id, plan: input.plan } },
+    }, { idempotencyKey: `checkout-${tenant.id}-${input.plan}-${new Date().toISOString().slice(0, 13)}` });
+    return respond({ url: session.url });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error(JSON.stringify({ event: "billing.checkout.failed", message: error instanceof Error ? error.message : String(error) }));
+    return respond({ error: "Checkout could not be started" }, 500);
   }
 });

@@ -62,7 +62,8 @@ export function InviteTeamMemberDialog() {
     setInviteUrl(data.setup_url || `${window.location.origin}/accept-invite?token=${encodeURIComponent(data.token)}`);
     void queryClient.invalidateQueries({ queryKey: ["players", tenant.id] });
     void queryClient.invalidateQueries({ queryKey: ["workspace-administration", tenant.id] });
-    toast.success("Invitation emailed and secure setup link created.");
+    if (data.warning) toast.warning(data.warning);
+    else toast.success("Invitation emailed and secure setup link created.");
   }
 
   async function copyInvitation() {
@@ -92,7 +93,7 @@ export function InviteTeamMemberDialog() {
         </DialogHeader>
         {inviteUrl ? (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">A secure setup email was sent to {email}. You can also copy the same account link below.</p>
+            <p className="text-sm text-muted-foreground">A secure invitation was created for {email}. Copy the link below as a delivery fallback.</p>
             <Input value={inviteUrl} readOnly className="bg-background font-mono text-xs" />
             <Button type="button" onClick={() => void copyInvitation()} className="w-full"><Copy className="mr-2 h-4 w-4" />Copy invitation link</Button>
           </div>

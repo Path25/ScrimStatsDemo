@@ -11,6 +11,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { WorkspaceGate } from "@/components/auth/WorkspaceGate";
+import { PlanGate } from "@/components/billing/PlanGate";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -101,14 +102,14 @@ function AppWorkspace() {
             <Route path="/scrims/:scrimId" element={<ScrimBlockPage />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/actions" element={<CoachingActions />} />
-            <Route path="/collector" element={<CollectorWorkspace />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/soloq" element={<SoloQTracker />} />
-            <Route path="/scouting" element={<Scouting />} />
-            <Route path="/scouting/:opponentId" element={<ScoutingTeamReport />} />
-            <Route path="/draft" element={<Draft />} />
+            <Route path="/collector" element={<PlanGate minimum="elite" feature="collector capture"><CollectorWorkspace /></PlanGate>} />
+            <Route path="/analytics" element={<PlanGate minimum="pro" feature="team analytics"><Analytics /></PlanGate>} />
+            <Route path="/soloq" element={<PlanGate minimum="pro" feature="Solo Queue tracking"><SoloQTracker /></PlanGate>} />
+            <Route path="/scouting" element={<PlanGate minimum="pro" feature="opponent scouting"><Scouting /></PlanGate>} />
+            <Route path="/scouting/:opponentId" element={<PlanGate minimum="pro" feature="opponent scouting"><ScoutingTeamReport /></PlanGate>} />
+            <Route path="/draft" element={<PlanGate minimum="pro" feature="the Draft workspace"><Draft /></PlanGate>} />
             <Route path="/preparation" element={<LegacyPreparationRedirect />} />
-            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/integrations" element={<PlanGate minimum="elite" feature="capture and integrations"><Integrations /></PlanGate>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound authenticated />} />
           </Routes>

@@ -1,223 +1,93 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import Stripe from "npm:stripe@18.4.0";
+import { createClient } from "npm:@supabase/supabase-js@2.110.0";
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+function periodEnd(subscription: Stripe.Subscription) {
+  const value = (subscription as unknown as { current_period_end?: number }).current_period_end
+    || (subscription.items.data[0] as unknown as { current_period_end?: number } | undefined)?.current_period_end;
+  return value ? new Date(value * 1000).toISOString() : null;
+}
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
-};
+Deno.serve(async (request) => {
+  if (request.method !== "POST") return respond({ error: "Method not allowed" }, 405);
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!stripeKey || !webhookSecret || !url || !serviceKey) return respond({ error: "Webhook is not configured" }, 503);
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  const signature = request.headers.get("stripe-signature");
+  if (!signature) return respond({ error: "Stripe signature is required" }, 400);
+  const stripe = new Stripe(stripeKey, { httpClient: Stripe.createFetchHttpClient() });
+  let event: Stripe.Event;
+  try {
+    event = await stripe.webhooks.constructEventAsync(await request.text(), signature, webhookSecret, undefined, Stripe.createSubtleCryptoProvider());
+  } catch {
+    return respond({ error: "Invalid Stripe signature" }, 400);
   }
 
+  const service = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const inserted = await service.from("stripe_webhook_events").insert({ event_id: event.id, event_type: event.type, status: "processing" }).select("event_id").maybeSingle();
+  if (inserted.error?.code === "23505") {
+    const existing = await service.from("stripe_webhook_events").select("status").eq("event_id", event.id).single();
+    if (existing.data?.status === "completed") return respond({ received: true, duplicate: true });
+    const retry = await service.from("stripe_webhook_events").update({ status: "processing", error: null, processed_at: null }).eq("event_id", event.id);
+    if (retry.error) return respond({ error: "Webhook event could not be retried" }, 500);
+  }
+  if (inserted.error && inserted.error.code !== "23505") return respond({ error: "Webhook event could not be reserved" }, 500);
+
   try {
-    logStep("Webhook received");
-
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET is not set");
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    
-    // Use service role key to bypass RLS
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    const body = await req.text();
-    const signature = req.headers.get("stripe-signature");
-
-    if (!signature) {
-      throw new Error("No Stripe signature found");
+    let tenantId: string | null = null;
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      tenantId = session.metadata?.tenant_id || session.client_reference_id || null;
+      if (tenantId) {
+        await service.from("tenants").update({
+          stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,
+          stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
+          subscription_status: "processing",
+          billing_updated_at: new Date().toISOString(),
+        }).eq("id", tenantId);
+      }
     }
 
-    // Verify webhook signature
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    logStep("Webhook verified", { type: event.type });
-
-    // Handle relevant subscription events
-    if (event.type === 'customer.subscription.created' || 
-        event.type === 'customer.subscription.updated' ||
-        event.type === 'customer.subscription.deleted') {
-      
+    if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted", "customer.subscription.paused", "customer.subscription.resumed"].includes(event.type)) {
       const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
-      
-      logStep("Processing subscription event", { 
-        subscriptionId: subscription.id, 
-        customerId, 
-        status: subscription.status 
-      });
-
-      // Get customer email
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer || customer.deleted || !customer.email) {
-        logStep("Customer not found or deleted");
-        return new Response("Customer not found", { status: 400 });
+      const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+      tenantId = subscription.metadata?.tenant_id || null;
+      if (!tenantId) {
+        const lookup = await service.from("tenants").select("id").eq("stripe_customer_id", customerId).maybeSingle();
+        tenantId = lookup.data?.id || null;
       }
-
-      const customerEmail = customer.email;
-      logStep("Found customer", { email: customerEmail });
-
-      // Determine subscription tier and status based on Stripe subscription status
-      let subscriptionTier = 'free';
-      let subscribed = false;
-      let subscriptionEnd = null;
-      let subscriptionStatus = 'inactive';
-
-      logStep("Processing subscription status", { 
-        stripeStatus: subscription.status,
-        subscriptionId: subscription.id 
-      });
-
-      // Handle different subscription statuses
-      if (['active', 'trialing'].includes(subscription.status)) {
-        subscribed = true;
-        subscriptionStatus = subscription.status === 'trialing' ? 'trial' : 'active';
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        
-        logStep("Subscription is active or trialing", { status: subscription.status });
-      } else if (subscription.status === 'past_due') {
-        // Keep subscription active during grace period for past_due
-        subscribed = true;
-        subscriptionStatus = 'past_due';
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        
-        logStep("Subscription is past due - keeping active with warning", { status: subscription.status });
-      } else if (['canceled', 'unpaid', 'incomplete_expired'].includes(subscription.status)) {
-        subscribed = false;
-        subscriptionStatus = 'inactive';
-        subscriptionEnd = subscription.canceled_at ? 
-          new Date(subscription.canceled_at * 1000).toISOString() : 
-          new Date().toISOString();
-        
-        logStep("Subscription is inactive", { 
-          status: subscription.status,
-          canceledAt: subscription.canceled_at 
-        });
-      } else {
-        // Handle other statuses (incomplete, etc.) as inactive
-        subscribed = false;
-        subscriptionStatus = 'inactive';
-        
-        logStep("Subscription status not recognized - setting to inactive", { status: subscription.status });
-      }
-
-      // Only determine tier if subscription is active/valid
-      if (subscribed) {
-        // Determine tier from price
-        const priceId = subscription.items.data[0].price.id;
-        const price = await stripe.prices.retrieve(priceId);
-        const amount = price.unit_amount || 0;
-        
-        if (amount <= 999) {
-          subscriptionTier = "free";
-        } else if (amount <= 1999) {
-          subscriptionTier = "pro";
-        } else {
-          subscriptionTier = "elite";
-        }
-        
-        logStep("Subscription tier determined", { 
-          tier: subscriptionTier,
-          priceAmount: amount,
-          endDate: subscriptionEnd 
-        });
-      } else {
-        logStep("Subscription inactive - setting tier to free");
-      }
-
-      // Find user by email
-      const { data: profiles, error: profileError } = await supabaseClient
-        .from("profiles")
-        .select("id")
-        .eq("email", customerEmail)
-        .single();
-
-      if (profileError || !profiles) {
-        logStep("User profile not found", { email: customerEmail });
-        return new Response("User not found", { status: 400 });
-      }
-
-      const userId = profiles.id;
-
-      // Update subscribers table
-      const { error: subscriberError } = await supabaseClient
-        .from("subscribers")
-        .upsert({
-          email: customerEmail,
-          user_id: userId,
-          stripe_customer_id: customerId,
-          subscribed: subscribed,
-          subscription_tier: subscriptionTier,
-          subscription_end: subscriptionEnd,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'email' });
-
-      if (subscriberError) {
-        logStep("Error updating subscribers table", subscriberError);
-        throw subscriberError;
-      }
-
-      // Find user's tenant and update it
-      const { data: tenantUser, error: tenantUserError } = await supabaseClient
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (tenantUserError || !tenantUser) {
-        logStep("No tenant found for user", tenantUserError);
-      } else {
-        // Update tenant table
-        const { error: tenantError } = await supabaseClient
-          .from("tenants")
-          .update({
-            subscription_tier: subscriptionTier,
-            subscription_status: subscribed ? 'active' : 'inactive',
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscription.id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', tenantUser.tenant_id);
-
-        if (tenantError) {
-          logStep("Error updating tenant table", tenantError);
-          throw tenantError;
-        }
-
-        logStep("Successfully updated tenant", { 
-          tenantId: tenantUser.tenant_id,
-          tier: subscriptionTier 
-        });
-      }
-
-      logStep("Webhook processed successfully");
+      if (!tenantId) throw new Error("Subscription is not linked to a workspace");
+      const priceId = subscription.items.data[0]?.price.id || null;
+      const proPrice = Deno.env.get("STRIPE_PRICE_PRO_MONTHLY");
+      const elitePrice = Deno.env.get("STRIPE_PRICE_ELITE_MONTHLY");
+      const active = ["active", "trialing", "past_due"].includes(subscription.status);
+      const tier = active && priceId === elitePrice ? "elite" : active && priceId === proPrice ? "pro" : "free";
+      if (active && tier === "free") throw new Error("Subscription price is not recognized");
+      const { error } = await service.from("tenants").update({
+        stripe_customer_id: customerId,
+        stripe_subscription_id: subscription.status === "canceled" ? null : subscription.id,
+        stripe_price_id: priceId,
+        subscription_tier: tier,
+        subscription_status: subscription.status,
+        subscription_period_end: periodEnd(subscription),
+        subscription_cancel_at_period_end: subscription.cancel_at_period_end,
+        billing_updated_at: new Date().toISOString(),
+      }).eq("id", tenantId);
+      if (error) throw error;
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
+    await service.from("stripe_webhook_events").update({ status: "completed", tenant_id: tenantId, processed_at: new Date().toISOString(), error: null }).eq("event_id", event.id);
+    console.log(JSON.stringify({ event: "billing.webhook.completed", stripe_event_id: event.id, stripe_event_type: event.type, tenant_id: tenantId }));
+    return respond({ received: true });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in stripe-webhook", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    await service.from("stripe_webhook_events").update({ status: "failed", error: message.slice(0, 500), processed_at: new Date().toISOString() }).eq("event_id", event.id);
+    console.error(JSON.stringify({ event: "billing.webhook.failed", stripe_event_id: event.id, stripe_event_type: event.type, message }));
+    return respond({ error: "Webhook processing failed" }, 500);
   }
 });

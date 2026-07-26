@@ -15,7 +15,7 @@ const board = read("src/components/draft/DraftSequenceBoard.tsx");
 const allMigrations = `${migration}\n${revisionMigration}\n${cloneMigration}\n${splitMigration}`;
 
 test("Draft owns the active route and legacy preparation links redirect safely", () => {
-  assert.match(app, /path="\/draft" element={<Draft/);
+  assert.match(app, /path="\/draft" element={<PlanGate minimum="pro"[^>]*><Draft/);
   assert.match(app, /path="\/preparation" element={<LegacyPreparationRedirect/);
   assert.match(app, /legacy\.get\("brief"\)/);
   assert.match(shell, /title: "Draft", href: "\/draft"/);

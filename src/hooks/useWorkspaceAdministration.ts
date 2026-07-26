@@ -29,9 +29,10 @@ export function useWorkspaceAdministration() {
           .order("created_at"),
         supabase
           .from("team_invitations")
-          .select("id, email, role, token, player_id, created_at, expires_at, accepted_at")
+          .select("id, email, role, token, player_id, created_at, expires_at, accepted_at, delivery_status, delivery_error, last_sent_at, revoked_at")
           .eq("tenant_id", tenant!.id)
           .is("accepted_at", null)
+          .is("revoked_at", null)
           .order("created_at", { ascending: false }),
       ]);
       if (membersResult.error) throw membersResult.error;
@@ -93,38 +94,43 @@ export function useWorkspaceAdministration() {
 
   const invitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const { error } = await supabase
-        .from("team_invitations")
-        .delete()
-        .eq("id", invitationId)
-        .eq("tenant_id", tenant!.id);
+      const { error } = await supabase.functions.invoke("team-invitations", { body: { action: "revoke", tenant_id: tenant!.id, invitation_id: invitationId } });
       if (error) throw error;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["workspace-administration"] });
       void queryClient.invalidateQueries({ queryKey: ["players"] });
-      toast.success("Invitation cancelled.");
+      toast.success("Invitation revoked.");
     },
     onError: (error) => toast.error(message(error, "Invitation could not be cancelled")),
+  });
+
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { error } = await supabase.functions.invoke("team-invitations", { body: { action: "resend", tenant_id: tenant!.id, invitation_id: invitationId } });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["workspace-administration"] });
+      toast.success("Invitation email resent.");
+    },
+    onError: (error) => toast.error(message(error, "Invitation could not be resent")),
   });
 
   const preferencesMutation = useMutation({
     mutationFn: async ({
       timezone,
-      scheduleEmail,
-      collectorEmail,
     }: {
       timezone: string;
-      scheduleEmail: boolean;
-      collectorEmail: boolean;
     }) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: timezone }).format();
+      } catch {
+        throw new Error("Choose a valid IANA timezone.");
+      }
       const settings = {
         ...tenant!.settings,
         timezone,
-        notifications: {
-          schedule_email: scheduleEmail,
-          collector_email: collectorEmail,
-        },
       };
       const { error } = await supabase
         .from("tenants")
@@ -155,12 +161,14 @@ export function useWorkspaceAdministration() {
     updateRole: roleMutation.mutate,
     removeMember: removeMutation.mutate,
     cancelInvitation: invitationMutation.mutate,
+    resendInvitation: resendInvitationMutation.mutate,
     savePreferences: preferencesMutation.mutate,
     changePassword: passwordMutation.mutate,
     isSaving:
       roleMutation.isPending ||
       removeMutation.isPending ||
       invitationMutation.isPending ||
+      resendInvitationMutation.isPending ||
       preferencesMutation.isPending ||
       passwordMutation.isPending,
   };

@@ -16,6 +16,7 @@ import { BlockReviewDialog } from "@/components/scrims/BlockReviewDialog";
 import { EditScrimDialog } from "@/components/scrims/EditScrimDialog";
 import { GameReviewDialog } from "@/components/scrims/GameReviewDialog";
 import { GameEvidenceDialog } from "@/components/scrims/GameEvidenceDialog";
+import { CoachingActionDialog } from "@/components/actions/CoachingActionDialog";
 import { ReviewChecklist } from "@/components/scrims/ReviewChecklist";
 import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -345,12 +346,15 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
             <div className="flex flex-wrap items-center gap-2">
               <span className="ss-mono mr-2 text-sm">{recordedNumber(selectedGame.our_team_kills)}–{recordedNumber(selectedGame.enemy_team_kills)} kills</span>
               {canManageTeam && (
-                <GameReviewDialog
-                  scrimId={scrimId}
-                  game={selectedGame}
-                  defaultGameNumber={selectedGame.game_number}
-                  trigger={<Button variant="outline"><Pencil className="h-4 w-4" /> Edit game</Button>}
-                />
+                <>
+                  <CoachingActionDialog scrimId={scrimId} scrimGameId={selectedGame.id} />
+                  <GameReviewDialog
+                    scrimId={scrimId}
+                    game={selectedGame}
+                    defaultGameNumber={selectedGame.game_number}
+                    trigger={<Button variant="outline"><Pencil className="h-4 w-4" /> Edit game</Button>}
+                  />
+                </>
               )}
               <Button variant="ghost" size="icon" onClick={() => selectGame(scrimGames[selectedGameIndex - 1]?.id || null)} disabled={selectedGameIndex <= 0} aria-label="Previous game">
                 <ChevronLeft className="h-4 w-4" />

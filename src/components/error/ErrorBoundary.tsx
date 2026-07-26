@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { reportClientError } from '@/lib/error-reporting';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  reference?: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -25,12 +27,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const reference = reportClientError(error, { componentStack: errorInfo.componentStack?.slice(0, 1000) });
+    this.setState({ reference });
     this.props.onError?.(error, errorInfo);
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false, error: undefined, reference: undefined });
   };
 
   public render() {
@@ -47,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <CardTitle className="text-destructive">Something went wrong</CardTitle>
             <CardDescription>
-              {this.state.error?.message || 'An unexpected error occurred'}
+              This part of the dashboard could not be displayed. Retry once, or include support reference {this.state.reference || "pending"} when contacting support.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">

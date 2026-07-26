@@ -22,8 +22,7 @@ export function useWorkspaceModules() {
         .eq("tenant_id", tenant.id);
 
       if (error) {
-        // The app remains navigable before the additive migration is applied.
-        return defaultWorkspaceModules;
+        throw error;
       }
 
       const modules = { ...defaultWorkspaceModules };
@@ -45,5 +44,8 @@ export function useWorkspaceModules() {
   return {
     modules: query.data || defaultWorkspaceModules,
     isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    retry: query.refetch,
   };
 }

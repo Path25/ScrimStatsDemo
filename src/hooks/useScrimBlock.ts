@@ -29,6 +29,7 @@ export function useScrimBlock(scrimId?: string) {
         .select("*")
         .eq("tenant_id", tenant.id)
         .eq("id", scrimId)
+        .is("archived_at", null)
         .maybeSingle();
       if (error) throw error;
       return data as ScrimBlock | null;

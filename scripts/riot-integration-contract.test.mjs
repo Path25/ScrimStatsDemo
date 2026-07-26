@@ -46,9 +46,10 @@ test("credential changes require an authenticated workspace manager", () => {
   assert.match(integrationFunction, /store_tenant_riot_api_key/);
 });
 
-test("Solo Queue sync prefers a tenant key and keeps a platform fallback", () => {
+test("Solo Queue sync requires the workspace Riot key without a platform fallback", () => {
   assert.match(syncFunction, /get_tenant_riot_api_key/);
-  assert.match(syncFunction, /tenantApiKey \|\| Deno\.env\.get\('RIOT_API_KEY'\)/);
+  assert.doesNotMatch(syncFunction, /Deno\.env\.get\('RIOT_API_KEY'\)/);
+  assert.match(syncFunction, /Configure a valid workspace Riot API key in Integrations first/);
   assert.match(syncFunction, /tenant_riot_integrations/);
 });
 

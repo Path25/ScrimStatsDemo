@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, LockKeyhole } from "lucide-react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "@/lib/router";
 
 import { PublicBodyCopy } from "@/components/public/PublicBodyCopy";
 import { PublicHeader } from "@/components/public/PublicHeader";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 
 export default function SignIn() {
   const { signIn } = useAuth();
@@ -33,19 +32,7 @@ export default function SignIn() {
       return;
     }
     const invitationToken = searchParams.get("invite");
-    if (invitationToken) {
-      const { data, error: invitationError } = await supabase.rpc("accept_team_invitation", {
-        invitation_token: invitationToken,
-      });
-      if (
-        invitationError ||
-        (data && typeof data === "object" && "success" in data && data.success === false)
-      ) {
-        setError(invitationError?.message || "This invitation could not be accepted.");
-        setPending(false);
-        return;
-      }
-    }
+    if (invitationToken) return navigate(`/accept-invite?token=${encodeURIComponent(invitationToken)}&mode=existing`, { replace: true });
     navigate((location.state as { from?: string } | null)?.from || "/overview", {
       replace: true,
     });
@@ -151,6 +138,7 @@ export default function SignIn() {
                 {pending ? "Signing in..." : "Enter workspace"}
                 {!pending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
               </Button>
+              <Link to="/forgot-password" className="block text-center text-sm text-[var(--public-muted)] hover:text-[var(--public-foreground)]">Forgot your password?</Link>
             </form>
           </div>
         </section>

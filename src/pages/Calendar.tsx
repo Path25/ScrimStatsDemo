@@ -295,7 +295,7 @@ export default function Calendar() {
                       {format(day, "EEE")}
                     </span>
                     <span className="mt-1 block text-lg font-semibold">{format(day, "d")}</span>
-                    <span className="mt-1 block text-[10px] text-[var(--workspace-subtle)]">
+                    <span className="mt-1 block text-xs text-[var(--workspace-subtle)]">
                       {eventCount ? `${eventCount} event${eventCount === 1 ? "" : "s"}` : "Free"}
                     </span>
                   </button>

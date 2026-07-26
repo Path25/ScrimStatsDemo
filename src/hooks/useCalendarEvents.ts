@@ -92,6 +92,7 @@ export const useCalendarEvents = () => {
         supabase
           .from('scrims')
           .select('*')
+          .is('archived_at', null)
           .eq('tenant_id', tenant.id)
       ]);
 

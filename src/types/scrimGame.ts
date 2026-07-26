@@ -18,10 +18,10 @@ export interface ScrimGameDB {
   enemy_team_kills: number;
   our_team_gold: number;
   enemy_team_gold: number;
-  objectives: any; // Json type from DB
-  bans: any; // Json type from DB
+  objectives: unknown; // Json type from DB
+  bans: unknown; // Json type from DB
   external_game_id?: string;
-  external_game_data?: any; // Added this field for desktop app data
+  external_game_data?: unknown; // Added this field for desktop app data
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
@@ -56,7 +56,7 @@ export interface ScrimGame {
   objectives: GameObjectives;
   bans: GameBans;
   external_game_id?: string;
-  external_game_data?: any; // Added this field for desktop app data
+  external_game_data?: unknown; // Added this field for desktop app data
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
@@ -119,9 +119,9 @@ export interface ScrimParticipantDB {
   damage_dealt: number;
   damage_taken: number;
   vision_score: number;
-  items: any; // Json type from DB
-  runes: any; // Json type from DB
-  summoner_spells: any; // Json type from DB
+  items: unknown; // Json type from DB
+  runes: unknown; // Json type from DB
+  summoner_spells: unknown; // Json type from DB
   level: number;
   is_our_team: boolean;
   created_at: string;
@@ -187,9 +187,9 @@ export interface LiveGameDataDB {
   red_team_kills: number;
   blue_team_gold: number;
   red_team_gold: number;
-  objectives_state: any; // Json type from DB
-  participants_state: any; // Json type from DB
-  game_events: any; // Json type from DB
+  objectives_state: unknown; // Json type from DB
+  participants_state: unknown; // Json type from DB
+  game_events: unknown; // Json type from DB
   timestamp: string;
   data_source: 'manual' | 'grid' | 'desktop_app';
 }
@@ -202,7 +202,7 @@ export interface LiveGameData {
   red_team_kills: number;
   blue_team_gold: number;
   red_team_gold: number;
-  objectives_state: any;
+  objectives_state: unknown;
   participants_state: LiveParticipantState[];
   game_events: GameEvent[];
   timestamp: string;
@@ -229,7 +229,7 @@ export interface GameEvent {
   timestamp: number;
   type: 'kill' | 'death' | 'assist' | 'objective' | 'item_purchase' | 'level_up';
   participant: string;
-  details: any;
+  details: unknown;
 }
 
 export interface CreateScrimGameData {
@@ -254,9 +254,9 @@ export interface UpdateScrimGameData extends Partial<CreateScrimGameData> {
   enemy_team_kills?: number;
   our_team_gold?: number;
   enemy_team_gold?: number;
-  objectives?: any; // Allow any for database compatibility
-  bans?: any; // Allow any for database compatibility
-  external_game_data?: any; // Add this field to allow GRID data updates
+  objectives?: unknown; // Database JSON compatibility
+  bans?: unknown; // Database JSON compatibility
+  external_game_data?: unknown; // GRID provider JSON
   match_history_url?: string;
   replay_url?: string;
   coaching_notes?: string; // Add this field for coaching notes
@@ -340,8 +340,8 @@ export interface ChampionPool {
 export const transformScrimGameFromDB = (dbGame: ScrimGameDB & { participants?: ScrimParticipantDB[]; live_data?: LiveGameDataDB[] }): ScrimGame => {
   return {
     ...dbGame,
-    objectives: dbGame.objectives || { dragons: [], barons: [], towers: [], inhibitors: [] },
-    bans: dbGame.bans || { our_bans: [], enemy_bans: [] },
+    objectives: (dbGame.objectives as GameObjectives | null) || { dragons: [], barons: [], towers: [], inhibitors: [] },
+    bans: (dbGame.bans as GameBans | null) || { our_bans: [], enemy_bans: [] },
     participants: dbGame.participants?.map(transformParticipantFromDB),
     live_data: dbGame.live_data?.map(transformLiveDataFromDB),
   };
@@ -351,7 +351,7 @@ export const transformParticipantFromDB = (dbParticipant: ScrimParticipantDB): S
   return {
     ...dbParticipant,
     items: Array.isArray(dbParticipant.items) ? dbParticipant.items : [],
-    runes: dbParticipant.runes || { primary_tree: '', secondary_tree: '', runes: [], stat_mods: [] },
+    runes: (dbParticipant.runes as RuneSetup | null) || { primary_tree: '', secondary_tree: '', runes: [], stat_mods: [] },
     summoner_spells: Array.isArray(dbParticipant.summoner_spells) ? dbParticipant.summoner_spells : [],
   };
 };

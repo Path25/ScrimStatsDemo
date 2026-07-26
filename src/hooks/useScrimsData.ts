@@ -146,24 +146,20 @@ export function useScrimsData() {
         },
     });
 
-    const deleteScrimMutation = useMutation({
-        mutationFn: async (scrimId: string) => {
+    const archiveScrimMutation = useMutation({
+        mutationFn: async ({ scrimId, restore = false }: { scrimId: string; restore?: boolean }) => {
             if (!tenant?.id) throw new Error('No authenticated workspace selected');
-            const { error } = await supabase
-                .from('scrims')
-                .delete()
-                .eq('id', scrimId)
-                .eq('tenant_id', tenant.id);
-
+            const { error } = await supabase.rpc('archive_scrim_block', { p_scrim_id: scrimId, p_restore: restore });
             if (error) throw error;
         },
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['scrims-optimized'] });
             queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
-            toast.success('Scrim deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['overview-briefing'] });
+            toast.success(variables.restore ? 'Scrim restored.' : 'Scrim archived.');
         },
         onError: (error: unknown) => {
-            toast.error(errorMessage(error, 'Failed to delete scrim'));
+            toast.error(errorMessage(error, 'Scrim archive state could not be changed'));
         },
     });
 
@@ -172,9 +168,11 @@ export function useScrimsData() {
         scheduleScrim: scheduleScrimMutation.mutate,
         scheduleScrimAsync: scheduleScrimMutation.mutateAsync,
         updateScrim: updateScrimMutation.mutate,
-        deleteScrim: deleteScrimMutation.mutate,
+        archiveScrim: (scrimId: string) => archiveScrimMutation.mutate({ scrimId }),
+        restoreScrim: (scrimId: string) => archiveScrimMutation.mutate({ scrimId, restore: true }),
+        deleteScrim: (scrimId: string) => archiveScrimMutation.mutate({ scrimId }),
         isCreating: createScrimMutation.isPending || scheduleScrimMutation.isPending,
         isUpdating: updateScrimMutation.isPending,
-        isDeleting: deleteScrimMutation.isPending,
+        isDeleting: archiveScrimMutation.isPending,
     };
 }

@@ -32,7 +32,7 @@ test("list is a featured queue and filterable paginated history", () => {
 test("review workspace removes collector diagnostics and preserves per-game provenance", () => {
   assert.doesNotMatch(blockView, /DesktopAppStatus|collector panel/i);
   assert.match(blockView, /<ReviewChecklist checks=\{checks\}/);
-  assert.match(blockView, /<SourceBadge compact source=\{gameSource\(selectedGame\)\}/);
+  assert.match(blockView, /<GameEvidenceDialog compact gameId=\{selectedGame\.id\}/);
   assert.match(blockView, /<GameOverviewTab game=\{selectedGame\} participants=\{participants\}/);
 });
 

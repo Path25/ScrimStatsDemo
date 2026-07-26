@@ -45,31 +45,24 @@ export function InviteTeamMemberDialog() {
 
     setIsSubmitting(true);
     const normalizedEmail = email.trim().toLowerCase();
-    const { data, error } =
-      playerId === "staff-only"
-        ? await supabase.rpc("create_team_invitation", {
-            p_tenant_id: tenant.id,
-            p_email: normalizedEmail,
-            p_role: role,
-          })
-        : await supabase.rpc("create_roster_invitation", {
-            p_tenant_id: tenant.id,
-            p_player_id: playerId,
-            p_email: normalizedEmail,
-            p_role: role,
-          });
+    const { data, error } = await supabase.functions.invoke("team-invitations", { body: {
+      action: "create",
+      tenant_id: tenant.id,
+      email: normalizedEmail,
+      role,
+      player_id: playerId === "staff-only" ? null : playerId,
+    } });
     setIsSubmitting(false);
 
-    const invitation = data?.[0];
-    if (error || !invitation?.token) {
+    if (error || !data?.token) {
       toast.error(error?.message || "The invitation could not be created.");
       return;
     }
 
-    setInviteUrl(`${window.location.origin}/sign-in?invite=${encodeURIComponent(invitation.token)}`);
+    setInviteUrl(data.setup_url || `${window.location.origin}/accept-invite?token=${encodeURIComponent(data.token)}`);
     void queryClient.invalidateQueries({ queryKey: ["players", tenant.id] });
     void queryClient.invalidateQueries({ queryKey: ["workspace-administration", tenant.id] });
-    toast.success("Secure invitation link created.");
+    toast.success("Invitation emailed and secure setup link created.");
   }
 
   async function copyInvitation() {
@@ -99,7 +92,7 @@ export function InviteTeamMemberDialog() {
         </DialogHeader>
         {inviteUrl ? (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Send this secure link to {email}. It can be accepted only after signing in with that email address.</p>
+            <p className="text-sm text-muted-foreground">A secure setup email was sent to {email}. You can also copy the same account link below.</p>
             <Input value={inviteUrl} readOnly className="bg-background font-mono text-xs" />
             <Button type="button" onClick={() => void copyInvitation()} className="w-full"><Copy className="mr-2 h-4 w-4" />Copy invitation link</Button>
           </div>

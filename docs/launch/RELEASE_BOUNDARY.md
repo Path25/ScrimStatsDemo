@@ -1,0 +1,30 @@
+# Web dashboard release boundary
+
+## Included
+
+- Managed tenant provisioning and operator oversight.
+- Invitation acceptance, password recovery, membership, and role-aware access.
+- Roster, availability, calendar, reminders, scrim blocks, review, and coaching actions.
+- Solo Queue, Team Analytics, Scouting, and Draft web workflows.
+- In-app and email notification delivery state.
+- Collector pairing, configuration, web health, and captured evidence presentation.
+- Public privacy, terms, support, status, request-access, and honest not-found pages.
+
+## Excluded
+
+- Native collector resilience, signing, packaging, and update delivery.
+- Self-serve workspace creation, checkout, and subscription entitlements.
+- Interactive Discord delivery until its complete support path is verified.
+- Unsupported analytics inferred from missing evidence.
+
+## Preserved compatibility
+
+- `/preparation` redirects to `/draft`.
+- Historical migrations and immutable capture provenance remain intact.
+- The internal `draft_preparation` module key remains unchanged.
+
+## Cleanup evidence
+
+The release dependency graph begins at the web entry point and includes static imports, lazy routes, route registration, direct test references, Edge Function invocations, and database-facing references. The cleanup removed 202 proven-unreachable TypeScript, TSX, and CSS files. Run `npm run release-boundary` to regenerate the current reachability report.
+
+No database history or captured evidence is removed by this cleanup.

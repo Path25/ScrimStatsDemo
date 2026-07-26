@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 
 import { PublicBodyCopy } from "@/components/public/PublicBodyCopy";
 import { PublicHeader } from "@/components/public/PublicHeader";

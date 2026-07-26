@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
 import { OpponentSoloQDialog } from "@/components/scouting/OpponentSoloQDialog";

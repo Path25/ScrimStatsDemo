@@ -47,7 +47,7 @@ interface UseOptimizedScrimsDataOptions {
   dateFrom?: string;
   dateTo?: string;
   includeGames?: boolean;
-  mode?: 'all' | 'upcoming' | 'history';
+  mode?: 'all' | 'upcoming' | 'history' | 'archived';
   opponent?: string;
   result?: 'win' | 'loss' | 'draw' | 'unrecorded';
   reviewStatus?: 'not_started' | 'in_review' | 'complete';
@@ -91,6 +91,8 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
         .select('*', { count: 'exact' })
         .eq('tenant_id', tenant.id);
 
+      query = mode === 'archived' ? query.not('archived_at', 'is', null) : query.is('archived_at', null);
+
       // Apply filters
       if (status) {
         query = query.eq('status', status);
@@ -129,7 +131,7 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
 
       // Apply sorting and pagination
       query = query
-        .order('starts_at', { ascending: mode === 'upcoming' })
+        .order(mode === 'archived' ? 'archived_at' : 'starts_at', { ascending: mode === 'upcoming' })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       const { data: scrimsData, error: scrimsError, count } = await query;

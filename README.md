@@ -2,9 +2,11 @@
 
 ScrimStats is a League of Legends team-operations workspace for planning scrims, tracking players, reviewing games, and organising coaching work.
 
-## Current focus
+## Managed-pilot scope
 
-The production Operations Core covers tenant-safe team access, roster, scrim blocks, calendar, collector status, and post-game review. Public marketing and authenticated workspace routes are separate. Live workspace screens never fall back to sample team data: unavailable data is shown as unavailable.
+The web dashboard covers tenant-safe team access, roster and availability, calendar and reminders, scrim review, coaching actions, Solo Queue, analytics, scouting, Draft, notifications, and managed-pilot operations. Public marketing and authenticated workspace routes are separate. Live workspace screens never fall back to sample team data: unavailable data is shown as unavailable.
+
+Native collector development is outside this release boundary. The existing collector pairing, health, and review evidence surfaces remain supported in the web dashboard.
 
 ## Invited-team collector beta
 
@@ -25,7 +27,14 @@ npm install
 npm run dev
 ```
 
-Create a production build with `npm run build`.
+Use the release checks before handing a build to a pilot team:
+
+```sh
+npm run verify
+npm run test:e2e
+```
+
+Operational, security, and release notes live under [`docs/`](docs/).
 
 ## Deployment environment
 

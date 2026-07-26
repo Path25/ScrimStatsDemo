@@ -7,23 +7,32 @@ import {
   useLocation,
   useNavigate,
   useParams,
-} from "react-router-dom";
+} from "@/lib/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { WorkspaceGate } from "@/components/auth/WorkspaceGate";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { TenantProvider } from "@/contexts/TenantContext";
-import Landing from "@/pages/Landing";
-import RequestAccess from "@/pages/RequestAccess";
-import SignIn from "@/pages/SignIn";
-import Workspaces from "@/pages/Workspaces";
+import NotFound from "@/pages/NotFound";
+
+const Landing = lazy(() => import("@/pages/Landing"));
+const RequestAccess = lazy(() => import("@/pages/RequestAccess"));
+const SignIn = lazy(() => import("@/pages/SignIn"));
+const Workspaces = lazy(() => import("@/pages/Workspaces"));
+const AcceptInvite = lazy(() => import("@/pages/AcceptInvite"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const TrustPage = lazy(() => import("@/pages/TrustPage"));
+const PilotOperations = lazy(() => import("@/pages/PilotOperations"));
 
 const Analytics = lazy(() => import("@/pages/Analytics"));
 const Calendar = lazy(() => import("@/pages/Calendar"));
+const CoachingActions = lazy(() => import("@/pages/CoachingActions"));
 const CollectorWorkspace = lazy(() => import("@/pages/CollectorWorkspace"));
 const Integrations = lazy(() => import("@/pages/Integrations"));
 const Overview = lazy(() => import("@/pages/Overview"));
@@ -43,6 +52,14 @@ const ScrimBlockView = lazy(() =>
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
+
+const workspacePaths = ["/overview/*", "/players/*", "/scrims/*", "/calendar/*", "/actions/*", "/collector/*", "/analytics/*", "/soloq/*", "/scouting/*", "/draft/*", "/preparation/*", "/integrations/*", "/settings/*"];
+
+function AuthAwareNotFound() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div className="public-page grid min-h-screen place-items-center text-sm">Checking route…</div>;
+  return <NotFound authenticated={Boolean(user)} />;
+}
 
 function ScrimBlockPage() {
   const { scrimId } = useParams();
@@ -83,6 +100,7 @@ function AppWorkspace() {
             <Route path="/scrims" element={<Scrims />} />
             <Route path="/scrims/:scrimId" element={<ScrimBlockPage />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/actions" element={<CoachingActions />} />
             <Route path="/collector" element={<CollectorWorkspace />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/soloq" element={<SoloQTracker />} />
@@ -92,7 +110,7 @@ function AppWorkspace() {
             <Route path="/preparation" element={<LegacyPreparationRedirect />} />
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/overview" replace />} />
+            <Route path="*" element={<NotFound authenticated />} />
           </Routes>
         </Suspense>
       </DashboardLayout>
@@ -109,13 +127,26 @@ export default function App() {
           <AuthProvider>
             <TenantProvider>
               <RoleProvider>
+                <ErrorBoundary>
+                <Suspense fallback={<div className="public-page grid min-h-screen place-items-center text-sm">Loading ScrimStats…</div>}>
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/sign-in" element={<SignIn />} />
+                  <Route path="/accept-invite" element={<AcceptInvite />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/workspaces" element={<Workspaces />} />
                   <Route path="/request-access" element={<RequestAccess />} />
-                  <Route path="/*" element={<AppWorkspace />} />
+                  <Route path="/privacy" element={<TrustPage />} />
+                  <Route path="/terms" element={<TrustPage />} />
+                  <Route path="/support" element={<TrustPage />} />
+                  <Route path="/status" element={<TrustPage />} />
+                  <Route path="/ops" element={<PilotOperations />} />
+                  {workspacePaths.map((path) => <Route key={path} path={path} element={<AppWorkspace />} />)}
+                  <Route path="*" element={<AuthAwareNotFound />} />
                 </Routes>
+                </Suspense>
+                </ErrorBoundary>
               </RoleProvider>
             </TenantProvider>
           </AuthProvider>

@@ -22,7 +22,7 @@ const getChampionImageUrl = (championName?: string | null, version: string = '14
 
   try {
     // More comprehensive champion name cleaning for Data Dragon compatibility
-    let cleanName = championName
+    const cleanName = championName
       .replace(/'/g, '') // Remove apostrophes (Kai'Sa -> KaiSa)
       .replace(/\./g, '') // Remove dots (Dr. Mundo -> DrMundo)
       .replace(/\s+/g, '') // Remove spaces (Twisted Fate -> TwistedFate)

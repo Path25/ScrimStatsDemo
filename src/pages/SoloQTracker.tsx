@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Clock3, Database, RefreshCw, Settings2, TrendingDown, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 
 import { SoloQMatchRow } from "@/components/soloq/SoloQMatchRow";
 import { SoloQRankChart } from "@/components/soloq/SoloQRankChart";

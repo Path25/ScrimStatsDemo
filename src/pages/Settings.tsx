@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { Copy, Database, KeyRound, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
+import { Copy, Database, KeyRound, RefreshCw, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { DesktopCollectorIntegration } from "@/components/integrations/DesktopCollectorIntegration";
 import { DesktopAppStatus } from "@/components/scrims/DesktopAppStatus";
 import { InviteTeamMemberDialog } from "@/components/team/InviteTeamMemberDialog";
+import { NotificationPreferencesPanel } from "@/components/notifications/NotificationPreferencesPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataSurface } from "@/components/workspace/DataSurface";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,7 @@ import { useWorkspaceAdministration } from "@/hooks/useWorkspaceAdministration";
 import type { Database as SupabaseDatabase } from "@/integrations/supabase/types";
 
 type TenantRole = SupabaseDatabase["public"]["Enums"]["tenant_role"];
+const commonTimezones = ["UTC", "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Warsaw", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Seoul", "Asia/Tokyo", "Australia/Sydney"];
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -37,18 +39,10 @@ export default function Settings() {
   const { players } = usePlayersData();
   const displayName =
     user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Team member";
-  const existingNotifications =
-    (tenant?.settings.notifications as Record<string, unknown> | undefined) || {};
   const [timezone, setTimezone] = useState(
     (tenant?.settings.timezone as string) ||
       Intl.DateTimeFormat().resolvedOptions().timeZone ||
       "UTC",
-  );
-  const [scheduleEmail, setScheduleEmail] = useState(
-    existingNotifications.schedule_email !== false,
-  );
-  const [collectorEmail, setCollectorEmail] = useState(
-    existingNotifications.collector_email !== false,
   );
   const [password, setPassword] = useState("");
 
@@ -58,7 +52,7 @@ export default function Settings() {
 
   async function copyInvitation(token: string) {
     await navigator.clipboard.writeText(
-      `${window.location.origin}/sign-in?invite=${encodeURIComponent(token)}`,
+      `${window.location.origin}/accept-invite?token=${encodeURIComponent(token)}`,
     );
     toast.success("Invitation link copied.");
   }
@@ -129,48 +123,17 @@ export default function Settings() {
             <div className="grid gap-5 p-5">
               <div className="grid gap-2">
                 <Label htmlFor="workspace-timezone">IANA timezone</Label>
-                <Input
-                  id="workspace-timezone"
-                  value={timezone}
-                  onChange={(event) => setTimezone(event.target.value)}
-                  disabled={!isManager}
-                  placeholder="Europe/London"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <Label htmlFor="schedule-email">Schedule email reminders</Label>
-                  <p className="mt-1 text-sm text-[var(--workspace-muted)]">
-                    Changes and upcoming practice blocks.
-                  </p>
-                </div>
-                <Switch
-                  id="schedule-email"
-                  checked={scheduleEmail}
-                  onCheckedChange={setScheduleEmail}
-                  disabled={!isManager}
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <Label htmlFor="collector-email">Collector readiness email</Label>
-                  <p className="mt-1 text-sm text-[var(--workspace-muted)]">
-                    Missing or offline collector warnings before a block.
-                  </p>
-                </div>
-                <Switch
-                  id="collector-email"
-                  checked={collectorEmail}
-                  onCheckedChange={setCollectorEmail}
-                  disabled={!isManager}
-                />
+                <Select value={timezone} onValueChange={setTimezone} disabled={!isManager}>
+                  <SelectTrigger id="workspace-timezone"><SelectValue /></SelectTrigger>
+                  <SelectContent>{[...new Set([timezone, ...commonTimezones])].map((zone) => <SelectItem key={zone} value={zone}>{zone}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               {isManager && (
                 <Button
                   className="justify-self-start"
                   disabled={administration.isSaving || !timezone.trim()}
                   onClick={() =>
-                    administration.savePreferences({ timezone, scheduleEmail, collectorEmail })
+                    administration.savePreferences({ timezone })
                   }
                 >
                   Save preferences
@@ -178,6 +141,7 @@ export default function Settings() {
               )}
             </div>
           </DataSurface>
+          <NotificationPreferencesPanel />
         </div>
 
         <div className="space-y-6">
@@ -228,20 +192,10 @@ export default function Settings() {
                       </p>
                     </div>
                     {isManager && member.user_id !== user?.id ? (
-                      <select
-                        value={member.role}
-                        onChange={(event) =>
-                          administration.updateRole({
-                            membershipId: member.id,
-                            role: event.target.value as TenantRole,
-                          })
-                        }
-                        className="h-9 border border-input bg-background px-2 text-sm"
-                      >
-                        <option value="admin">Admin</option>
-                        <option value="member">Member</option>
-                        <option value="viewer">Viewer</option>
-                      </select>
+                      <Select value={member.role} onValueChange={(role) => administration.updateRole({ membershipId: member.id, role: role as TenantRole })}>
+                        <SelectTrigger aria-label={`Role for ${member.profile?.display_name || member.profile?.email || "team member"}`}><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="admin">Admin</SelectItem><SelectItem value="member">Member</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent>
+                      </Select>
                     ) : (
                       <span className="ss-mono text-xs uppercase">{member.role}</span>
                     )}
@@ -285,10 +239,18 @@ export default function Settings() {
                         {invitation.role} · expires{" "}
                         {new Date(invitation.expires_at).toLocaleDateString()}
                       </p>
+                      <p className="mt-1 text-xs capitalize text-[var(--workspace-muted)]">
+                        Delivery: {invitation.delivery_status.replaceAll("_", " ")}
+                        {invitation.last_sent_at ? ` · last sent ${new Date(invitation.last_sent_at).toLocaleString()}` : ""}
+                      </p>
+                      {invitation.delivery_error && <p className="mt-1 text-xs text-destructive">Delivery failed. Copy the secure link or resend.</p>}
                     </div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => void copyInvitation(invitation.token)}>
                         <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" aria-label={`Resend invitation to ${invitation.email}`} onClick={() => administration.resendInvitation(invitation.id)} disabled={administration.isSaving}>
+                        <RefreshCw className="h-4 w-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => administration.cancelInvitation(invitation.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />

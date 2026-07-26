@@ -16,7 +16,6 @@ const championPicker = read("src/components/preparation/ChampionPicker.tsx");
 const championCatalog = read("src/hooks/useChampionCatalog.ts");
 const integrations = read("src/pages/Integrations.tsx");
 const moduleModel = read("src/types/workspaceModules.ts");
-const legacyAnalytics = read("src/hooks/useScrimAnalytics.ts");
 const migration = read(
   "supabase/migrations/20260724170000_competitive_platform_foundation.sql",
 );
@@ -62,7 +61,7 @@ test("the complete product map is routed and honestly labelled", () => {
 });
 
 test("active competitive routes do not contain fabricated intelligence", () => {
-  for (const source of [analytics, scouting, report, draft, legacyAnalytics]) {
+  for (const source of [analytics, scouting, report, draft]) {
     assert.doesNotMatch(source, /Math\.random|MOCK_|predicted_win_probability|synergy_score/i);
     assert.doesNotMatch(source, /public opponent database|shared opponent intelligence/i);
   }

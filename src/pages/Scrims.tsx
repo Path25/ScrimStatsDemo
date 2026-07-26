@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   CalendarDays,
+  ArchiveRestore,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -10,7 +11,7 @@ import {
   Swords,
   Trash2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 
 import { EditScrimDialog } from "@/components/scrims/EditScrimDialog";
 import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
@@ -83,7 +84,7 @@ export default function Scrims() {
   const { isCoach, isManager } = useRole();
   const canEdit = isManager || isCoach;
   const navigate = useNavigate();
-  const { deleteScrim } = useScrimsData();
+  const { archiveScrim, restoreScrim } = useScrimsData();
   const [editingScrim, setEditingScrim] = useState<Scrim | null>(null);
   const [opponentSearch, setOpponentSearch] = useState("");
   const [resultFilter, setResultFilter] = useState("all");
@@ -107,6 +108,7 @@ export default function Scrims() {
         ? undefined
         : reviewFilter as "not_started" | "in_review" | "complete",
   });
+  const archivedQuery = useOptimizedScrimsData({ mode: "archived", pageSize: 20 });
 
   const upcoming = upcomingQuery.data?.scrims || [];
   const featured = upcoming[0];
@@ -115,11 +117,11 @@ export default function Scrims() {
   const historyCount = historyQuery.data?.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(historyCount / HISTORY_PAGE_SIZE));
 
-  function deleteBlock(scrim: Scrim) {
+  function archiveBlock(scrim: Scrim) {
     const confirmed = window.confirm(
-      `Delete the block against ${scrim.opponent_name}? Its recorded games will also be removed. This cannot be undone.`,
+      `Archive the block against ${scrim.opponent_name}? Its games and reviews will be preserved and support can restore it.`,
     );
-    if (confirmed) deleteScrim(scrim.id);
+    if (confirmed) archiveScrim(scrim.id);
   }
 
   function resetPage() {
@@ -337,8 +339,8 @@ export default function Scrims() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setEditingScrim(scrim)}>Edit block</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteBlock(scrim)}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete block
+                            <DropdownMenuItem onClick={() => archiveBlock(scrim)}>
+                              <Trash2 className="mr-2 h-4 w-4" /> Archive block
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -364,6 +366,24 @@ export default function Scrims() {
           )}
         </DataSurface>
       </section>
+
+      {canEdit && (archivedQuery.data?.scrims.length || 0) > 0 && (
+        <section>
+          <details className="group border border-[var(--workspace-rule)] bg-[var(--workspace-surface)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between p-5 text-sm font-semibold">
+              Archived scrim blocks <span className="font-mono text-xs text-[var(--workspace-subtle)]">{archivedQuery.data?.totalCount || 0}</span>
+            </summary>
+            <div className="divide-y divide-[var(--workspace-rule)] border-t border-[var(--workspace-rule)]">
+              {archivedQuery.data?.scrims.map((scrim) => (
+                <div key={scrim.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div><p className="text-sm font-medium">vs {scrim.opponent_name}</p><p className="mt-1 text-xs text-[var(--workspace-subtle)]">{localDateTime(scrim.starts_at).date} · Games and review evidence preserved</p></div>
+                  <Button size="sm" variant="outline" onClick={() => restoreScrim(scrim.id)}><ArchiveRestore className="h-4 w-4" />Restore</Button>
+                </div>
+              ))}
+            </div>
+          </details>
+        </section>
+      )}
 
       {editingScrim && (
         <EditScrimDialog

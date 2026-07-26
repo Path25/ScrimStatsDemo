@@ -79,7 +79,7 @@ serve(async (req: Request) => {
       );
     }
 
-    let responsePayload: Record<string, unknown> = { api_type: data.api_type };
+    const responsePayload: Record<string, unknown> = { api_type: data.api_type };
 
     if (api_type === 'RIOT' && data.config_data) {
       responsePayload.platformId = (data.config_data as any).platformId || null;

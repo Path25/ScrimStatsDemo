@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 
 export function PublicFooter() {
   return (
@@ -23,6 +23,10 @@ export function PublicFooter() {
             >
               Request access
             </Link>
+            <Link to="/support" className="transition-colors hover:text-[var(--public-foreground)]">Support</Link>
+            <Link to="/status" className="transition-colors hover:text-[var(--public-foreground)]">Status</Link>
+            <Link to="/privacy" className="transition-colors hover:text-[var(--public-foreground)]">Privacy</Link>
+            <Link to="/terms" className="transition-colors hover:text-[var(--public-foreground)]">Terms</Link>
           </div>
         </div>
         <p className="mt-7 max-w-5xl border-t border-[var(--public-rule)] pt-5 text-xs leading-5 text-[var(--public-muted)]">

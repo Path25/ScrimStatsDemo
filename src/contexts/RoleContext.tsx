@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useTenant } from './TenantContext';
 import { UserRole } from '@/types/auth';
+import { getWorkspaceCapabilities } from '@/lib/workspace-capabilities';
 
 interface RoleContextType {
     activeRole: UserRole | null;
@@ -30,6 +31,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
 
     const value = useMemo(() => {
         const hierarchyLevel = activeRole ? ROLE_HIERARCHY[activeRole] : 0;
+        const capabilities = getWorkspaceCapabilities(activeRole);
 
         return {
             activeRole,
@@ -37,27 +39,15 @@ export function RoleProvider({ children }: { children: ReactNode }) {
             isManager: activeRole === 'admin' || activeRole === 'owner',
             isCoach: activeRole === 'admin' || activeRole === 'owner',
             isPlayer: activeRole === 'member' || activeRole === 'viewer',
-            canManageTeam: hierarchyLevel >= ROLE_HIERARCHY.admin,
-            canEditIntelligence: hierarchyLevel >= ROLE_HIERARCHY.admin,
-            canManageIntegrations: hierarchyLevel >= ROLE_HIERARCHY.admin,
+            canManageTeam: capabilities.manageMemberships,
+            canEditIntelligence: capabilities.manageIntelligence,
+            canManageIntegrations: capabilities.manageIntegrations,
             hasAccess: (requiredRole: UserRole) => hierarchyLevel >= ROLE_HIERARCHY[requiredRole]
         };
     }, [activeRole]);
 
-    // Derived flags for easy access
-    const contextValue: RoleContextType = {
-        ...value,
-        isOwner: activeRole === 'owner',
-        isManager: activeRole === 'admin' || activeRole === 'owner',
-        isCoach: activeRole === 'admin' || activeRole === 'owner',
-        isPlayer: activeRole === 'member' || activeRole === 'viewer',
-        canManageTeam: activeRole === 'admin' || activeRole === 'owner',
-        canEditIntelligence: activeRole === 'admin' || activeRole === 'owner',
-        canManageIntegrations: activeRole === 'admin' || activeRole === 'owner',
-    };
-
     return (
-        <RoleContext.Provider value={contextValue}>
+        <RoleContext.Provider value={value}>
             {children}
         </RoleContext.Provider>
     );

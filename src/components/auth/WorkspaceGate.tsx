@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from '@/lib/router';
 import { ShieldAlert } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';

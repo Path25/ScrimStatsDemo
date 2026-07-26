@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Archive, BookOpenCheck, CalendarClock, CheckCircle2, Database, Eye, GitBranch, Library, LockKeyhole, Pencil, Plus, RotateCcw, ScanSearch, Send, ShieldCheck, Swords, Users } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "@/lib/router";
 
 import { DraftSequenceBoard } from "@/components/draft/DraftSequenceBoard";
 import { ChampionPicker } from "@/components/preparation/ChampionPicker";

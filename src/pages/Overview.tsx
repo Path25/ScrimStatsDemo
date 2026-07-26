@@ -6,7 +6,7 @@ import {
   Plus,
   Swords,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 
 import { ScheduleScrimDialog } from "@/components/scrims/ScheduleScrimDialog";
 import { Button } from "@/components/ui/button";

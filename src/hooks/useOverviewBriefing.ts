@@ -29,6 +29,7 @@ export function useOverviewBriefing() {
           .from("scrims")
           .select(scrimFields)
           .eq("tenant_id", tenant.id)
+          .is("archived_at", null)
           .gte("starts_at", now.toISOString())
           .order("starts_at", { ascending: true })
           .limit(100),
@@ -36,6 +37,7 @@ export function useOverviewBriefing() {
           .from("scrims")
           .select(scrimFields)
           .eq("tenant_id", tenant.id)
+          .is("archived_at", null)
           .gte("starts_at", oldestRelevant)
           .lte("starts_at", now.toISOString())
           .order("starts_at", { ascending: false })
@@ -80,4 +82,3 @@ export function useOverviewBriefing() {
     },
   });
 }
-

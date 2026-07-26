@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Download, HardDrive, Link2, MonitorCheck, Radio, Unlink } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

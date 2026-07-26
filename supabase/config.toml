@@ -56,16 +56,16 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.discord-dispatch]
-verify_jwt = false
+verify_jwt = true
 
 [functions.discord-install]
-verify_jwt = false
+verify_jwt = true
 
 [functions.discord-channels]
 verify_jwt = true
 
 [functions.discord-schedule-reminders]
-verify_jwt = false
+verify_jwt = true
 
 [functions.soloq-sync-v2]
 verify_jwt = false
@@ -80,6 +80,18 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.leaguepedia-draft-import]
+verify_jwt = true
+
+[functions.team-invitations]
+verify_jwt = true
+
+[functions.notification-worker]
+verify_jwt = false
+
+[functions.send-notification-email]
+verify_jwt = true
+
+[functions.pilot-ops]
 verify_jwt = true
 
 [auth]

@@ -1,8 +1,10 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import {
   BarChart3,
+  AlertTriangle,
   Bot,
   CalendarDays,
+  ClipboardCheck,
   Check,
   ChevronsUpDown,
   LayoutDashboard,
@@ -18,9 +20,10 @@ import {
   Workflow,
   X,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
+import { NotificationInbox } from "@/components/notifications/NotificationInbox";
 import { ModuleStateBadge } from "@/components/workspace/ModuleStateBadge";
 import {
   DropdownMenu,
@@ -54,6 +57,7 @@ const navigation = [
     label: "Practice",
     items: [
       { title: "Scrim blocks", href: "/scrims", icon: Swords },
+      { title: "Coaching actions", href: "/actions", icon: ClipboardCheck },
       { title: "Solo Queue", href: "/soloq", icon: TrendingUp },
       { title: "Team analytics", href: "/analytics", icon: BarChart3, module: "analytics" as const },
     ],
@@ -72,6 +76,7 @@ const pageTitles: Record<string, string> = {
   "/players": "Active roster",
   "/scrims": "Scrim blocks",
   "/calendar": "Team calendar",
+  "/actions": "Coaching actions",
   "/analytics": "Team trends",
   "/soloq": "Solo Queue tracker",
   "/scouting": "Private scouting",
@@ -118,7 +123,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, signOut } = useAuth();
   const { connectionInfo, isLoading: collectorLoading, error: collectorError } =
     useDesktopConnection();
-  const { modules } = useWorkspaceModules();
+  const { modules, isError: modulesUnavailable, retry: retryModules } = useWorkspaceModules();
 
   const tenantName = tenant?.name || "Team workspace";
   const userName =
@@ -326,6 +331,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-[var(--workspace-muted)]">
+              <NotificationInbox />
+              <span className="mx-1 hidden h-5 w-px bg-[var(--workspace-rule)] sm:block" aria-hidden="true" />
               {collectorReady ? (
                 <MonitorCheck className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden="true" />
               ) : (
@@ -344,7 +351,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1440px] px-5 py-7 lg:px-8 lg:py-9">{children}</main>
+        <main className="mx-auto max-w-[1440px] px-5 py-7 lg:px-8 lg:py-9">
+          {modulesUnavailable && (
+            <div role="alert" className="mb-6 flex flex-col gap-3 border border-amber-400/25 bg-amber-400/5 p-4 text-sm sm:flex-row sm:items-center">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-300" />
+              <p className="flex-1 text-[var(--workspace-muted)]"><span className="font-semibold text-[var(--workspace-foreground)]">Workspace configuration is temporarily unavailable.</span> Your last known navigation remains visible, but module access could not be confirmed.</p>
+              <Button size="sm" variant="outline" onClick={() => void retryModules()}>Try again</Button>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

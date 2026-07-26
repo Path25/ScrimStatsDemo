@@ -12,7 +12,9 @@ export function useDesktopConnection(scrimId?: string) {
   const { tenant } = useTenant();
   const query = useQuery({
     queryKey: ['collector-status', tenant?.id, scrimId],
-    enabled: Boolean(user && tenant?.id), refetchInterval: 15_000,
+    enabled: Boolean(user && tenant?.id),
+    refetchInterval: scrimId ? 15_000 : 60_000,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('collector-status', { body: { tenant_id: tenant!.id, scrim_id: scrimId } });
       if (error) throw error; return data as { devices: CollectorDevice[]; sessions: CaptureSession[] };

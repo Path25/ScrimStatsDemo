@@ -2,11 +2,18 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@18.4.0";
 import { createClient } from "npm:@supabase/supabase-js@2.110.0";
 
-const origin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
-const cors = { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
-const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
+const productionOrigin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
+const developmentOrigins = new Set(["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5173", "http://127.0.0.1:5173"]);
+const requestOrigin = (request: Request) => {
+  const origin = request.headers.get("origin");
+  return origin && (origin === productionOrigin || developmentOrigins.has(origin)) ? origin : productionOrigin;
+};
+const corsFor = (request: Request) => ({ "Access-Control-Allow-Origin": requestOrigin(request), "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" });
 
 Deno.serve(async (request) => {
+  const origin = requestOrigin(request);
+  const cors = corsFor(request);
+  const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
   if (request.method === "OPTIONS") return new Response(null, { headers: cors });
   if (request.method !== "POST") return respond({ error: "Method not allowed" }, 405);
   try {

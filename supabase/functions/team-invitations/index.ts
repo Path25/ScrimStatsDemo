@@ -2,11 +2,17 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
 
 const allowedOrigin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
-const cors = { "Access-Control-Allow-Origin": allowedOrigin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
+const developmentOrigins = new Set(["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5173", "http://127.0.0.1:5173"]);
+const corsFor = (request: Request) => {
+  const requestOrigin = request.headers.get("origin");
+  const origin = requestOrigin && (requestOrigin === allowedOrigin || developmentOrigins.has(requestOrigin)) ? requestOrigin : allowedOrigin;
+  return { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
+};
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] || character));
 
 Deno.serve(async (request) => {
+  const cors = corsFor(request);
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
   if (request.method === "OPTIONS") return new Response(null, { headers: cors });
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
   const authorization = request.headers.get("authorization");

@@ -10,6 +10,7 @@ test("invitations permit current Supabase browser headers and survive email deli
   assert.match(source, /Invitation created, but email delivery is not configured/);
   assert.match(source, /action === "revoke"/);
   assert.doesNotMatch(source, /!url \|\| !serviceKey \|\| !resendKey/);
+  assert.match(source, /http:\/\/localhost:8080/);
 });
 
 test("checkout is tenant-owned and maps only server-configured Pro and Elite prices", () => {
@@ -19,6 +20,7 @@ test("checkout is tenant-owned and maps only server-configured Pro and Elite pri
   assert.match(source, /tenant_id/);
   assert.match(source, /\["owner", "admin"\]/);
   assert.doesNotMatch(source, /price_1[A-Za-z0-9]+/);
+  assert.match(source, /developmentOrigins/);
 });
 
 test("Stripe webhook verifies signatures and records idempotent events", () => {
@@ -41,4 +43,13 @@ test("billing presents the exact configured monthly prices", () => {
   const source = read("src/components/billing/BillingPanel.tsx");
   assert.match(source, /id: "pro", price: "\$9\.99"/);
   assert.match(source, /id: "elite", price: "\$19\.99"/);
+});
+
+test("billing permits only production and explicit local development origins", () => {
+  for (const path of ["supabase/functions/create-checkout/index.ts", "supabase/functions/customer-portal/index.ts"]) {
+    const source = read(path);
+    assert.match(source, /http:\/\/localhost:8080/);
+    assert.match(source, /origin === productionOrigin \|\| developmentOrigins\.has\(origin\)/);
+    assert.doesNotMatch(source, /Access-Control-Allow-Origin": "\*"/);
+  }
 });

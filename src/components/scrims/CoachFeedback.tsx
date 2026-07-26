@@ -17,6 +17,7 @@ import type { ScrimGame, ScrimParticipant, CoachFeedback as CoachFeedbackType } 
 interface CoachFeedbackComponentProps {
   game: ScrimGame;
   participants: ScrimParticipant[];
+  canEdit?: boolean;
 }
 
 type FeedbackPriority = 'low' | 'medium' | 'high';
@@ -29,6 +30,7 @@ const getOurTeamParticipants = (participants: ScrimParticipant[]) => {
 export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
   game,
   participants,
+  canEdit = false,
 }) => {
   const { user } = useAuth();
   const { feedback, createFeedback, updateFeedback, deleteFeedback, isCreating, isUpdating, isDeleting } = useCoachFeedback(game.id);
@@ -73,8 +75,6 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
     if (!user || !newFeedback.content.trim()) return;
 
     const playerNameForSave = newFeedback.player_name === 'all_players' ? null : newFeedback.player_name;
-    console.log('Creating feedback with player_name:', playerNameForSave);
-
     createFeedback({
       scrim_game_id: game.id,
       coach_id: user.id,
@@ -102,8 +102,6 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
   };
 
   const handleEditFeedback = (item: CoachFeedbackType) => {
-    console.log('Editing feedback item:', item);
-    
     setEditingFeedback(item.id);
     setEditFormData({
       feedback_type: item.feedback_type,
@@ -121,8 +119,6 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
     if (!editFormData.content.trim()) return;
 
     const playerNameForSave = editFormData.player_name === 'all_players' ? null : editFormData.player_name;
-    console.log('Updating feedback with player_name:', playerNameForSave);
-
     updateFeedback({
       id: feedbackId,
       feedback_type: editFormData.feedback_type,
@@ -320,20 +316,22 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
   return (
     <div className="space-y-6">
       {/* Create New Feedback */}
-      <Card className="glass-card">
-        <CardHeader>
+      <Card className="rounded-none border-[var(--workspace-rule)] bg-[var(--workspace-surface)] shadow-none">
+        <CardHeader className="border-b border-[var(--workspace-rule)]">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               Coach Feedback
             </CardTitle>
-            <Button 
-              onClick={() => setIsCreatingFeedback(!isCreatingFeedback)}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Feedback
-            </Button>
+            {canEdit && (
+              <Button 
+                onClick={() => setIsCreatingFeedback(!isCreatingFeedback)}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Feedback
+              </Button>
+            )}
           </div>
         </CardHeader>
         {isCreatingFeedback && (
@@ -351,8 +349,8 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
       </Card>
 
       {/* Feedback List */}
-      <Card className="glass-card">
-        <CardHeader>
+      <Card className="rounded-none border-[var(--workspace-rule)] bg-[var(--workspace-surface)] shadow-none">
+        <CardHeader className="border-b border-[var(--workspace-rule)]">
           <CardTitle>
             Feedback History
             <Badge variant="outline" className="ml-2">
@@ -372,7 +370,7 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
                 </div>
               ) : (
                 feedback.map((item) => (
-                  <div key={item.id} className="p-4 rounded border border-border/50 hover:bg-muted/10 transition-colors">
+                  <div key={item.id} className="border border-[var(--workspace-rule)] p-4 transition-colors hover:bg-white/[0.025]">
                     {editingFeedback === item.id ? (
                       renderFeedbackForm(
                         editFormData,
@@ -410,7 +408,7 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
                                 {new Date(item.created_at).toLocaleDateString()}
                               </span>
                             </div>
-                            <div className="flex gap-1">
+                            {canEdit && <div className="flex gap-1">
                               <Button 
                                 size="sm" 
                                 variant="ghost" 
@@ -428,7 +426,7 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
-                            </div>
+                            </div>}
                           </div>
                         </div>
 
@@ -468,8 +466,8 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
       </Card>
 
       {/* Overall Coaching Notes */}
-      <Card className="glass-card">
-        <CardHeader>
+      <Card className="rounded-none border-[var(--workspace-rule)] bg-[var(--workspace-surface)] shadow-none">
+        <CardHeader className="border-b border-[var(--workspace-rule)]">
           <CardTitle>Overall Game Notes</CardTitle>
         </CardHeader>
         <CardContent>
@@ -479,19 +477,22 @@ export const CoachFeedback: React.FC<CoachFeedbackComponentProps> = ({
               onChange={(e) => setGameNotes(e.target.value)}
               placeholder="Add overall coaching notes and summary for this game..."
               rows={4}
+              readOnly={!canEdit}
             />
             <div className="flex justify-between items-center">
               <p className="text-xs text-muted-foreground">
                 These notes provide an overall summary and coaching insights for the entire game.
               </p>
-              <Button 
-                onClick={handleSaveGameNotes}
-                disabled={isSavingNotes || gameNotes === (game.coaching_notes || '')}
-                size="sm"
-              >
-                <Save className="h-4 w-4 mr-1" />
-                {isSavingNotes ? 'Saving...' : 'Save Notes'}
-              </Button>
+              {canEdit && (
+                <Button 
+                  onClick={handleSaveGameNotes}
+                  disabled={isSavingNotes || gameNotes === (game.coaching_notes || '')}
+                  size="sm"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>

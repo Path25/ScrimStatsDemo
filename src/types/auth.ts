@@ -1,4 +1,5 @@
-export type UserRole = 'owner' | 'manager' | 'coach' | 'player';
+/** Matches the role enum enforced by the live `tenant_users` table. */
+export type UserRole = 'owner' | 'admin' | 'member' | 'viewer';
 
 export interface UserProfile {
     id: string;

@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo, useState } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useTenant } from './TenantContext';
 import { UserRole } from '@/types/auth';
 
@@ -8,27 +8,25 @@ interface RoleContextType {
     isManager: boolean;
     isCoach: boolean;
     isPlayer: boolean;
+    canManageTeam: boolean;
+    canEditIntelligence: boolean;
+    canManageIntegrations: boolean;
     // Helper to check if user has at least this level of access
     hasAccess: (role: UserRole) => boolean;
-    // For demo purposes: allow manual role switching
-    setActiveRole: (role: UserRole) => void;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
     'owner': 4,
-    'manager': 3,
-    'coach': 2,
-    'player': 1
+    'admin': 3,
+    'member': 2,
+    'viewer': 1,
 };
 
 export function RoleProvider({ children }: { children: ReactNode }) {
     const { tenant } = useTenant();
-    const [manualRole, setManualRole] = useState<UserRole | null>(null);
-
-    // transform string to UserRole safely, prioritizing manual override for demo
-    const activeRole = manualRole || (tenant?.userRole as UserRole) || null;
+    const activeRole = (tenant?.userRole as UserRole) || null;
 
     const value = useMemo(() => {
         const hierarchyLevel = activeRole ? ROLE_HIERARCHY[activeRole] : 0;
@@ -36,9 +34,12 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         return {
             activeRole,
             isOwner: activeRole === 'owner',
-            isManager: activeRole === 'manager' || activeRole === 'owner',
-            isCoach: activeRole === 'coach' || activeRole === 'manager' || activeRole === 'owner',
-            isPlayer: true, // Everyone can be a player? Or strictly Role === player.
+            isManager: activeRole === 'admin' || activeRole === 'owner',
+            isCoach: activeRole === 'admin' || activeRole === 'owner',
+            isPlayer: activeRole === 'member' || activeRole === 'viewer',
+            canManageTeam: hierarchyLevel >= ROLE_HIERARCHY.admin,
+            canEditIntelligence: hierarchyLevel >= ROLE_HIERARCHY.admin,
+            canManageIntegrations: hierarchyLevel >= ROLE_HIERARCHY.admin,
             hasAccess: (requiredRole: UserRole) => hierarchyLevel >= ROLE_HIERARCHY[requiredRole]
         };
     }, [activeRole]);
@@ -47,10 +48,12 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     const contextValue: RoleContextType = {
         ...value,
         isOwner: activeRole === 'owner',
-        isManager: activeRole === 'manager' || activeRole === 'owner',
-        isCoach: activeRole === 'coach' || activeRole === 'manager' || activeRole === 'owner',
-        isPlayer: activeRole === 'player',
-        setActiveRole: (role: UserRole) => setManualRole(role),
+        isManager: activeRole === 'admin' || activeRole === 'owner',
+        isCoach: activeRole === 'admin' || activeRole === 'owner',
+        isPlayer: activeRole === 'member' || activeRole === 'viewer',
+        canManageTeam: activeRole === 'admin' || activeRole === 'owner',
+        canEditIntelligence: activeRole === 'admin' || activeRole === 'owner',
+        canManageIntegrations: activeRole === 'admin' || activeRole === 'owner',
     };
 
     return (

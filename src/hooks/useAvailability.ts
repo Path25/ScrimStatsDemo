@@ -4,136 +4,84 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Database } from '@/integrations/supabase/types';
-import { AvailabilityEntry, AvailabilityFormData } from '@/types/availability';
+import { AvailabilityEntry, AvailabilityFormData, PLAYER_ROLES, type PlayerRole } from '@/types/availability';
 
 export type AvailabilityRow = Database['public']['Tables']['player_availability']['Row'];
 export type AvailabilityInsert = Database['public']['Tables']['player_availability']['Insert'];
 export type AvailabilityUpdate = Database['public']['Tables']['player_availability']['Update'];
+type AvailabilityPlayer = Pick<
+    Database['public']['Tables']['players']['Row'],
+    'id' | 'summoner_name' | 'role'
+>;
 
-// High quality mock data for demo fallback
-const MOCK_AVAILABILITY: AvailabilityEntry[] = [
-    {
-        id: 'mock-avail-1',
-        playerId: 'mock-player-1',
-        playerName: 'Theory',
-        playerRole: 'mid',
-        tenantId: 'demo',
-        startTime: new Date(new Date().setHours(14, 0, 0, 0)),
-        endTime: new Date(new Date().setHours(20, 0, 0, 0)),
-        isAvailable: true,
-        recurrenceRule: 'daily',
-        notes: 'Available every evening for practice.',
-        createdBy: 'demo',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: 'mock-avail-2',
-        playerId: 'mock-player-2',
-        playerName: 'Vortex',
-        playerRole: 'jungle',
-        tenantId: 'demo',
-        startTime: new Date(new Date().setHours(16, 0, 0, 0)),
-        endTime: new Date(new Date().setHours(22, 0, 0, 0)),
-        isAvailable: true,
-        recurrenceRule: 'daily',
-        notes: 'Late night preference.',
-        createdBy: 'demo',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: 'mock-avail-3',
-        playerId: 'mock-player-3',
-        playerName: 'Shield',
-        playerRole: 'top',
-        tenantId: 'demo',
-        startTime: new Date(new Date().setHours(15, 0, 0, 0)),
-        endTime: new Date(new Date().setHours(21, 0, 0, 0)),
-        isAvailable: true,
-        recurrenceRule: 'daily',
-        notes: null,
-        createdBy: 'demo',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: 'mock-avail-4',
-        playerId: 'mock-player-4',
-        playerName: 'Pulse',
-        playerRole: 'adc',
-        tenantId: 'demo',
-        startTime: new Date(new Date().setHours(15, 0, 0, 0)),
-        endTime: new Date(new Date().setHours(21, 0, 0, 0)),
-        isAvailable: true,
-        recurrenceRule: 'daily',
-        notes: null,
-        createdBy: 'demo',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: 'mock-avail-5',
-        playerId: 'mock-player-5',
-        playerName: 'Aura',
-        playerRole: 'support',
-        tenantId: 'demo',
-        startTime: new Date(new Date().setHours(15, 0, 0, 0)),
-        endTime: new Date(new Date().setHours(21, 0, 0, 0)),
-        isAvailable: true,
-        recurrenceRule: 'daily',
-        notes: null,
-        createdBy: 'demo',
-        createdAt: new Date(),
-        updatedAt: new Date()
+function errorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+        return error.message;
     }
-];
+    return fallback;
+}
+
+function playerRole(value: string | null): PlayerRole | undefined {
+    return PLAYER_ROLES.includes(value as PlayerRole) ? value as PlayerRole : undefined;
+}
 
 export function useAvailability() {
     const { tenant } = useTenant();
     const { user } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: availability, isLoading, error } = useQuery({
+    const { data: availability, isLoading, error, refetch } = useQuery({
         queryKey: ['player-availability', tenant?.id],
         queryFn: async () => {
-            if (!tenant?.id) return MOCK_AVAILABILITY;
+            if (!tenant?.id) return [];
 
-            const { data, error } = await supabase
+            const { data: availabilityRows, error: availabilityError } = await supabase
                 .from('player_availability')
-                .select(`
-                    *,
-                    player:players(id, summoner_name, role)
-                `)
+                .select('*')
                 .eq('tenant_id', tenant.id)
                 .order('start_time');
 
-            if (error) throw error;
+            if (availabilityError) throw availabilityError;
 
-            const dbData = data.map(item => ({
-                id: item.id,
-                playerId: item.player_id,
-                playerName: (item.player as any)?.summoner_name,
-                playerRole: (item.player as any)?.role,
-                tenantId: item.tenant_id,
-                startTime: new Date(item.start_time),
-                endTime: new Date(item.end_time),
-                isAvailable: item.is_available,
-                recurrence_rule: item.recurrence_rule,
-                notes: item.notes,
-                createdBy: item.created_by,
-                createdAt: new Date(item.created_at),
-                updatedAt: new Date(item.updated_at)
-            })) as AvailabilityEntry[];
+            const playerIds = [...new Set((availabilityRows || []).map((item) => item.player_id))];
+            let rosterPlayers: AvailabilityPlayer[] = [];
 
-            // Fallback for demo if DB is empty
-            if (dbData.length === 0) {
-                return MOCK_AVAILABILITY;
+            if (playerIds.length) {
+                const { data: playerRows, error: playersError } = await supabase
+                    .from('players')
+                    .select('id, summoner_name, role')
+                    .eq('tenant_id', tenant.id)
+                    .in('id', playerIds);
+
+                if (playersError) throw playersError;
+                rosterPlayers = (playerRows || []) as AvailabilityPlayer[];
             }
+
+            const playersById = new Map(rosterPlayers.map((player) => [player.id, player]));
+
+            const dbData = (availabilityRows || []).map(item => {
+                const player = playersById.get(item.player_id);
+                return {
+                    id: item.id,
+                    playerId: item.player_id,
+                    playerName: player?.summoner_name,
+                    playerRole: playerRole(player?.role || null),
+                    tenantId: item.tenant_id,
+                    startTime: new Date(item.start_time),
+                    endTime: new Date(item.end_time),
+                    isAvailable: item.is_available,
+                    recurrence_rule: item.recurrence_rule,
+                    notes: item.notes,
+                    createdBy: item.created_by,
+                    createdAt: new Date(item.created_at),
+                    updatedAt: new Date(item.updated_at)
+                };
+            }) as AvailabilityEntry[];
 
             return dbData;
         },
-        enabled: true,
+        enabled: Boolean(tenant?.id),
     });
 
     const saveAvailability = useMutation({
@@ -147,7 +95,7 @@ export function useAvailability() {
                 end_time: formData.endTime.toISOString(),
                 is_available: formData.isAvailable,
                 recurrence_rule: formData.recurrenceRule || null,
-                notes: formData.notes || null,
+                notes: formData.notes?.trim() || null,
                 created_by: user.id
             };
 
@@ -164,17 +112,19 @@ export function useAvailability() {
             queryClient.invalidateQueries({ queryKey: ['player-availability'] });
             toast.success('Availability saved successfully');
         },
-        onError: (error: any) => {
-            toast.error(error.message || 'Failed to save availability');
+        onError: (error: unknown) => {
+            toast.error(errorMessage(error, 'Failed to save availability'));
         },
     });
 
     const deleteAvailability = useMutation({
         mutationFn: async (id: string) => {
+            if (!tenant?.id) throw new Error('No active team workspace');
             const { error } = await supabase
                 .from('player_availability')
                 .delete()
-                .eq('id', id);
+                .eq('id', id)
+                .eq('tenant_id', tenant.id);
 
             if (error) throw error;
         },
@@ -182,16 +132,19 @@ export function useAvailability() {
             queryClient.invalidateQueries({ queryKey: ['player-availability'] });
             toast.success('Availability removed');
         },
-        onError: (error: any) => {
-            toast.error(error.message || 'Failed to remove availability');
+        onError: (error: unknown) => {
+            toast.error(errorMessage(error, 'Failed to remove availability'));
         },
     });
 
     return {
         availability: availability || [],
         isLoading,
-        error,
+        error: error ? errorMessage(error, 'Availability could not be loaded') : null,
+        refetch,
         saveAvailability: saveAvailability.mutateAsync,
         deleteAvailability: deleteAvailability.mutateAsync,
+        isDeleting: deleteAvailability.isPending,
+        pendingAvailabilityId: deleteAvailability.variables || null,
     };
 }

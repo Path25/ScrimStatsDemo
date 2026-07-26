@@ -1,428 +1,405 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
-    Trophy, Target, Users, BarChart3, ChevronRight, ChevronLeft,
-    Clock, Swords, Shield, ArrowLeft, Video, MessageSquare, Layers
-} from 'lucide-react';
-import { useScrimGames } from '@/hooks/useScrimGames';
-import { useScrimParticipants } from '@/hooks/useScrimParticipants';
-import { useLiveGameData } from '@/hooks/useLiveGameData';
-import { GameOverviewTab } from './GameOverviewTab';
-import { DraftView } from './DraftView';
-import { CoachFeedback } from './CoachFeedback';
-import { ExternalDataAnalytics } from './analytics/ExternalDataAnalytics';
-import { DamageAnalysisChart } from './analytics/DamageAnalysisChart';
-import { LiveGameChart } from './LiveGameChart';
-import { GameTimeline } from './GameTimeline';
-import { cn } from '@/lib/utils';
-import type { ScrimGame } from '@/types/scrimGame';
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Clock3,
+  MessageSquareText,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Target,
+} from "lucide-react";
 
-interface ScrimBlockViewProps {
-    scrimId: string;
-    opponentName?: string;
-    matchDate?: string;
-    format?: string;
-    result?: string;
-    onClose: () => void;
+import { BlockReviewDialog } from "@/components/scrims/BlockReviewDialog";
+import { EditScrimDialog } from "@/components/scrims/EditScrimDialog";
+import { GameReviewDialog } from "@/components/scrims/GameReviewDialog";
+import { GameEvidenceDialog } from "@/components/scrims/GameEvidenceDialog";
+import { ReviewChecklist } from "@/components/scrims/ReviewChecklist";
+import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataSurface } from "@/components/workspace/DataSurface";
+import { MetricStrip } from "@/components/workspace/MetricStrip";
+import { WorkspaceState } from "@/components/workspace/WorkspaceState";
+import { useRole } from "@/contexts/RoleContext";
+import { useScrimBlock } from "@/hooks/useScrimBlock";
+import { useScrimGames } from "@/hooks/useScrimGames";
+import type { Scrim } from "@/hooks/useOptimizedScrimsData";
+import { useScrimParticipants } from "@/hooks/useScrimParticipants";
+import {
+  blockScoreLabel,
+  buildReviewChecklist,
+  formatGameDuration,
+  gameReviewComplete,
+  type ReviewStatus,
+} from "@/lib/scrim-review";
+import type { ScrimGame } from "@/types/scrimGame";
+
+const GameOverviewTab = lazy(() =>
+  import("./GameOverviewTab").then((module) => ({ default: module.GameOverviewTab })),
+);
+const DraftView = lazy(() =>
+  import("./DraftView").then((module) => ({ default: module.DraftView })),
+);
+const CoachFeedback = lazy(() =>
+  import("./CoachFeedback").then((module) => ({ default: module.CoachFeedback })),
+);
+
+function localDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date and time not recorded";
+  return date.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-// Get mock scrim metadata for demo
-const MOCK_SCRIM_META = {
-    opponent_name: 'G2 Academy',
-    match_date: '2026-02-19',
-    format: 'BO3',
-    result: 'W 2-1',
-    status: 'Completed',
-};
+function recordedNumber(value: number | null | undefined) {
+  return value === null || value === undefined ? "Not recorded" : value.toLocaleString();
+}
 
-export const ScrimBlockView: React.FC<ScrimBlockViewProps> = ({
-    scrimId,
-    opponentName,
-    matchDate,
-    format,
-    result,
-    onClose,
-}) => {
-    const { scrimGames, isLoading: gamesLoading } = useScrimGames(scrimId);
-    const [selectedGameIndex, setSelectedGameIndex] = useState<number | null>(null); // null = block summary
-    const [activeTab, setActiveTab] = useState('overview');
+function PanelLoading({ label = "Loading saved review data…" }: { label?: string }) {
+  return (
+    <div className="grid min-h-72 place-items-center border border-[var(--workspace-rule)] bg-[var(--workspace-surface)] text-sm text-[var(--workspace-muted)]">
+      {label}
+    </div>
+  );
+}
 
-    const selectedGame = selectedGameIndex !== null ? scrimGames[selectedGameIndex] : null;
+export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose: () => void }) {
+  const { canManageTeam } = useRole();
+  const {
+    block,
+    error: blockError,
+    isLoading: blockLoading,
+    isReopening,
+    reopenReview,
+  } = useScrimBlock(scrimId);
+  const {
+    deleteScrimGame,
+    error: gamesError,
+    isDeleting,
+    isLoading: gamesLoading,
+    scrimGames,
+  } = useScrimGames(scrimId);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const selectedGame = scrimGames.find((game) => game.id === selectedGameId) || null;
+  const selectedGameIndex = selectedGame
+    ? scrimGames.findIndex((game) => game.id === selectedGame.id)
+    : -1;
+  const {
+    participants,
+    isLoading: participantsLoading,
+    error: participantsError,
+  } = useScrimParticipants(selectedGame?.id);
 
-    // Use ScrimParticipants/LiveData for the selected game
-    const { participants, isLoading: participantsLoading } = useScrimParticipants(selectedGame?.id);
-    const { liveData } = useLiveGameData(selectedGame?.id);
-
-    // Use provided meta or fallback to mock
-    const meta = {
-        opponent_name: opponentName || MOCK_SCRIM_META.opponent_name,
-        match_date: matchDate || MOCK_SCRIM_META.match_date,
-        format: format || MOCK_SCRIM_META.format,
-        result: result || MOCK_SCRIM_META.result,
-    };
-
-    const formatDuration = (seconds?: number) => {
-        if (!seconds) return '--:--';
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
-
-    // Calculate block aggregate stats
-    const blockStats = {
-        totalGames: scrimGames.length,
-        wins: scrimGames.filter(g => g.result === 'win').length,
-        losses: scrimGames.filter(g => g.result === 'loss').length,
-        totalKills: scrimGames.reduce((sum, g) => sum + (g.our_team_kills || 0), 0),
-        totalDeaths: scrimGames.reduce((sum, g) => sum + (g.enemy_team_kills || 0), 0),
-        totalGold: scrimGames.reduce((sum, g) => sum + (g.our_team_gold || 0), 0),
-        totalEnemyGold: scrimGames.reduce((sum, g) => sum + (g.enemy_team_gold || 0), 0),
-        avgDuration: scrimGames.length > 0
-            ? Math.round(scrimGames.reduce((sum, g) => sum + (g.duration_seconds || 0), 0) / scrimGames.length)
-            : 0,
-        blueSideGames: scrimGames.filter(g => g.side === 'blue').length,
-        redSideGames: scrimGames.filter(g => g.side === 'red').length,
-        blueSideWins: scrimGames.filter(g => g.side === 'blue' && g.result === 'win').length,
-        redSideWins: scrimGames.filter(g => g.side === 'red' && g.result === 'win').length,
-    };
-
-    if (gamesLoading) {
-        return (
-            <div className="space-y-6 max-w-[1920px] mx-auto pb-10">
-                <div className="glass-panel p-8 rounded-2xl flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto mb-4" />
-                        <p className="text-zinc-400">Loading scrim block...</p>
-                    </div>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    if (selectedGameId && !scrimGames.some((game) => game.id === selectedGameId)) {
+      setSelectedGameId(null);
     }
+  }, [scrimGames, selectedGameId]);
 
+  const summary = useMemo(() => {
+    const activeGames = scrimGames.filter((game) => game.status !== "cancelled");
+    const reviewed = activeGames.filter(gameReviewComplete).length;
+    const blue = activeGames.filter((game) => game.side === "blue").length;
+    const red = activeGames.filter((game) => game.side === "red").length;
+    const durations = activeGames
+      .map((game) => game.duration_seconds)
+      .filter((duration): duration is number => duration !== null && duration !== undefined);
+    return {
+      activeGames,
+      averageDuration: durations.length
+        ? Math.round(durations.reduce((total, duration) => total + duration, 0) / durations.length)
+        : null,
+      blue,
+      red,
+      reviewed,
+    };
+  }, [scrimGames]);
+
+  function selectGame(gameId: string | null) {
+    setSelectedGameId(gameId);
+    setActiveTab("overview");
+  }
+
+  if (blockLoading || gamesLoading) return <PanelLoading />;
+
+  if (blockError || gamesError) {
     return (
-        <div className="space-y-6 max-w-[1920px] mx-auto pb-10">
-
-            {/* Header Bar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl sticky top-24 z-20">
-                <div className="flex items-center space-x-3">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5"
-                        onClick={onClose}
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                    </Button>
-                    <div className="flex items-center space-x-2 text-sm">
-                        <span className="text-zinc-500">Scrims</span>
-                        <ChevronRight className="w-4 h-4 text-zinc-700" />
-                        <span className="text-white font-medium glow-text">{meta.opponent_name}</span>
-                    </div>
-                    <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] uppercase font-bold",
-                        meta.result?.startsWith('W') ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                    )}>
-                        {meta.result}
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-3 text-sm text-zinc-400">
-                    <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        {meta.match_date}
-                    </span>
-                    <span className="text-zinc-600">•</span>
-                    <span className="font-bold text-zinc-300">{meta.format}</span>
-                    <span className="text-zinc-600">•</span>
-                    <span>{blockStats.totalGames} Games</span>
-                </div>
-            </div>
-
-            {/* Game Selector Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-1">
-                <Button
-                    variant="ghost"
-                    onClick={() => { setSelectedGameIndex(null); setActiveTab('overview'); }}
-                    className={cn(
-                        "h-10 px-5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                        selectedGameIndex === null
-                            ? "bg-brand-primary/15 text-brand-primary border border-brand-primary/30 shadow-[0_0_15px_rgba(45,212,191,0.1)]"
-                            : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
-                    )}
-                >
-                    <Layers className="w-4 h-4 mr-2" />
-                    Block Summary
-                </Button>
-
-                {scrimGames.map((game, idx) => (
-                    <Button
-                        key={game.id}
-                        variant="ghost"
-                        onClick={() => { setSelectedGameIndex(idx); setActiveTab('overview'); }}
-                        className={cn(
-                            "h-10 px-5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                            selectedGameIndex === idx
-                                ? "bg-white/10 text-white border border-white/20"
-                                : "text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent"
-                        )}
-                    >
-                        <span className="mr-2">Game {game.game_number}</span>
-                        {game.result && (
-                            <span className={cn(
-                                "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase",
-                                game.result === 'win' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                            )}>
-                                {game.result === 'win' ? 'W' : 'L'}
-                            </span>
-                        )}
-                        {game.side && (
-                            <span className={cn(
-                                "ml-1.5 text-[10px] font-bold",
-                                game.side === 'blue' ? "text-blue-400" : "text-red-400"
-                            )}>
-                                {game.side === 'blue' ? 'B' : 'R'}
-                            </span>
-                        )}
-                    </Button>
-                ))}
-            </div>
-
-            {/* Content Area */}
-            {selectedGameIndex === null ? (
-                /* ============ BLOCK SUMMARY ============ */
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-                    {/* Aggregate Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {[
-                            { label: "Games", value: blockStats.totalGames, icon: Swords },
-                            {
-                                label: "Record", value: `${blockStats.wins}W - ${blockStats.losses}L`, icon: Trophy,
-                                color: blockStats.wins > blockStats.losses ? "text-green-400" : "text-red-400"
-                            },
-                            { label: "Total Kills", value: blockStats.totalKills, icon: Target },
-                            { label: "Total Deaths", value: blockStats.totalDeaths, icon: Shield },
-                            { label: "Avg Duration", value: formatDuration(blockStats.avgDuration), icon: Clock },
-                            {
-                                label: "Gold Diff", value: `${((blockStats.totalGold - blockStats.totalEnemyGold) / 1000).toFixed(1)}k`,
-                                icon: BarChart3,
-                                color: blockStats.totalGold > blockStats.totalEnemyGold ? "text-green-400" : "text-red-400"
-                            },
-                        ].map(stat => (
-                            <div key={stat.label} className="glass-card p-4 rounded-xl">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <stat.icon className="w-3.5 h-3.5 text-zinc-500" />
-                                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{stat.label}</span>
-                                </div>
-                                <p className={cn("text-xl font-black", stat.color || "text-white")}>{stat.value}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Side Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="glass-card p-5 rounded-xl">
-                            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4">Side Performance</h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-blue-400 font-bold text-sm">Blue Side</span>
-                                    <span className="text-white font-bold">{blockStats.blueSideWins}W / {blockStats.blueSideGames - blockStats.blueSideWins}L</span>
-                                </div>
-                                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-500 rounded-full transition-all"
-                                        style={{ width: blockStats.blueSideGames > 0 ? `${(blockStats.blueSideWins / blockStats.blueSideGames) * 100}%` : '0%' }}
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-red-400 font-bold text-sm">Red Side</span>
-                                    <span className="text-white font-bold">{blockStats.redSideWins}W / {blockStats.redSideGames - blockStats.redSideWins}L</span>
-                                </div>
-                                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-red-500 rounded-full transition-all"
-                                        style={{ width: blockStats.redSideGames > 0 ? `${(blockStats.redSideWins / blockStats.redSideGames) * 100}%` : '0%' }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="glass-card p-5 rounded-xl">
-                            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4">Game-by-Game</h3>
-                            <div className="space-y-2">
-                                {scrimGames.map(game => (
-                                    <div
-                                        key={game.id}
-                                        className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.06] cursor-pointer transition-all"
-                                        onClick={() => { setSelectedGameIndex(scrimGames.indexOf(game)); setActiveTab('overview'); }}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm font-bold text-white">Game {game.game_number}</span>
-                                            {game.side && (
-                                                <span className={cn(
-                                                    "text-[10px] font-bold px-1.5 py-0.5 rounded",
-                                                    game.side === 'blue' ? "bg-blue-500/20 text-blue-400" : "bg-red-500/20 text-red-400"
-                                                )}>
-                                                    {game.side === 'blue' ? 'Blue' : 'Red'}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-zinc-400">{formatDuration(game.duration_seconds)}</span>
-                                            <span className="text-xs text-zinc-500">{game.our_team_kills || 0} - {game.enemy_team_kills || 0}</span>
-                                            {game.result && (
-                                                <span className={cn(
-                                                    "text-xs font-bold px-2 py-0.5 rounded",
-                                                    game.result === 'win' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                                                )}>
-                                                    {game.result === 'win' ? 'WIN' : 'LOSS'}
-                                                </span>
-                                            )}
-                                            <ChevronRight className="w-4 h-4 text-zinc-600" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ) : selectedGame ? (
-                /* ============ INDIVIDUAL GAME VIEW ============ */
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-                    {/* Game quick info bar */}
-                    <div className="glass-card p-4 rounded-xl mb-4 flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white">Game {selectedGame.game_number}</span>
-                            {selectedGame.side && (
-                                <span className={cn(
-                                    "text-[10px] font-bold px-2 py-0.5 rounded",
-                                    selectedGame.side === 'blue' ? "bg-blue-500/20 text-blue-400" : "bg-red-500/20 text-red-400"
-                                )}>
-                                    {selectedGame.side === 'blue' ? 'Blue Side' : 'Red Side'}
-                                </span>
-                            )}
-                            {selectedGame.result && (
-                                <span className={cn(
-                                    "text-[10px] font-bold px-2 py-0.5 rounded uppercase",
-                                    selectedGame.result === 'win' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                                )}>
-                                    {selectedGame.result}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-zinc-400 ml-auto">
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {formatDuration(selectedGame.duration_seconds)}</span>
-                            <span>Kills: {selectedGame.our_team_kills || 0} - {selectedGame.enemy_team_kills || 0}</span>
-                            <span>Gold: {((selectedGame.our_team_gold || 0) / 1000).toFixed(1)}k vs {((selectedGame.enemy_team_gold || 0) / 1000).toFixed(1)}k</span>
-                        </div>
-
-                        {/* Prev/Next navigation */}
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost" size="icon"
-                                className="h-8 w-8 text-zinc-500 hover:text-white"
-                                onClick={() => setSelectedGameIndex(Math.max(0, selectedGameIndex - 1))}
-                                disabled={selectedGameIndex === 0}
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <Button
-                                variant="ghost" size="icon"
-                                className="h-8 w-8 text-zinc-500 hover:text-white"
-                                onClick={() => setSelectedGameIndex(Math.min(scrimGames.length - 1, selectedGameIndex + 1))}
-                                disabled={selectedGameIndex === scrimGames.length - 1}
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Game Content Tabs */}
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="glass-card border border-white/5 p-1 rounded-xl w-full grid grid-cols-4 gap-1 no-scrollbar">
-                            <TabsTrigger
-                                value="overview"
-                                className="data-[state=active]:bg-white/10 data-[state=active]:text-white rounded-lg text-xs font-bold text-zinc-500"
-                            >
-                                <Trophy className="h-3.5 w-3.5 mr-2" />
-                                Overview
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="draft"
-                                className="data-[state=active]:bg-white/10 data-[state=active]:text-white rounded-lg text-xs font-bold text-zinc-500"
-                            >
-                                <Target className="h-3.5 w-3.5 mr-2" />
-                                Draft
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="feedback"
-                                className="data-[state=active]:bg-white/10 data-[state=active]:text-white rounded-lg text-xs font-bold text-zinc-500"
-                            >
-                                <MessageSquare className="h-3.5 w-3.5 mr-2" />
-                                Feedback
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="analytics"
-                                className="data-[state=active]:bg-white/10 data-[state=active]:text-white rounded-lg text-xs font-bold text-zinc-500"
-                            >
-                                <BarChart3 className="h-3.5 w-3.5 mr-2" />
-                                Analytics
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <div className="mt-6">
-                            <TabsContent value="overview" className="mt-0">
-                                {participantsLoading ? (
-                                    <div className="glass-card p-8 rounded-xl text-center text-zinc-400">Loading game data...</div>
-                                ) : (
-                                    <GameOverviewTab game={selectedGame} participants={participants} />
-                                )}
-                            </TabsContent>
-
-                            <TabsContent value="draft" className="mt-0">
-                                <DraftView game={selectedGame} participants={participants || []} />
-                            </TabsContent>
-
-                            <TabsContent value="feedback" className="mt-0">
-                                <CoachFeedback game={selectedGame} participants={participants} />
-                            </TabsContent>
-
-                            <TabsContent value="analytics" className="mt-0">
-                                <div className="space-y-8">
-                                    <ExternalDataAnalytics game={selectedGame} participants={participants} />
-                                    <DamageAnalysisChart game={selectedGame} participants={participants} />
-
-                                    {liveData && liveData.length > 0 && (
-                                        <div className="space-y-6">
-                                            <div className="border-t border-white/5 pt-8">
-                                                <h3 className="text-lg font-semibold mb-6 text-white">Live Game Timeline</h3>
-                                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                                                    <LiveGameChart liveData={liveData} metric="kills" />
-                                                    <LiveGameChart liveData={liveData} metric="gold" />
-                                                </div>
-                                                <div className="mt-6">
-                                                    <GameTimeline liveData={liveData} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {(!liveData || liveData.length === 0) && (
-                                        <div className="text-center py-8 glass-card rounded-xl">
-                                            <BarChart3 className="h-8 w-8 text-zinc-600 mx-auto mb-2" />
-                                            <p className="text-sm text-zinc-500">
-                                                Live timeline data not available for this game
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </TabsContent>
-                        </div>
-                    </Tabs>
-                </div>
-            ) : null}
-        </div>
+      <WorkspaceState
+        icon={Clock3}
+        title="This practice block could not be loaded."
+        description={gamesError || (blockError instanceof Error ? blockError.message : "Try again shortly.")}
+        action={<Button onClick={onClose}>Back to scrim blocks</Button>}
+      />
     );
-};
+  }
+
+  if (!block) {
+    return (
+      <WorkspaceState
+        icon={Clock3}
+        title="Practice block not found."
+        description="It may have been archived, deleted, or belong to another workspace."
+        action={<Button onClick={onClose}>Back to scrim blocks</Button>}
+      />
+    );
+  }
+
+  const reviewStatus = (block.review_status || "not_started") as ReviewStatus;
+  const checks = buildReviewChecklist(scrimGames, {
+    opponent_score: block.opponent_score,
+    our_score: block.our_score,
+    result: block.result,
+    result_source: block.result_source === "manual" ? "manual" : "games",
+    review_status: reviewStatus,
+  });
+
+  return (
+    <div className="space-y-6 pb-12">
+      <header className="sticky top-[61px] z-20 border-y border-[var(--workspace-rule-strong)] bg-[color:rgba(10,16,22,.94)] px-4 py-4 backdrop-blur-xl sm:px-5">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 items-start gap-3">
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back to scrim blocks">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <p className="workspace-eyebrow">Practice block review</p>
+              <h1 className="mt-1 truncate text-2xl font-semibold tracking-[-0.03em]">
+                vs {block.opponent_name || "Opponent not recorded"}
+              </h1>
+              <p className="mt-1 text-sm text-[var(--workspace-muted)]">
+                {localDateTime(block.starts_at)} · {block.format || "Format not recorded"}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pl-12 lg:pl-0">
+            <ReviewStatusBadge status={reviewStatus} />
+            {canManageTeam && (
+              <>
+                <EditScrimDialog
+                  scrim={block as unknown as Scrim}
+                  trigger={<Button variant="outline"><Pencil className="h-4 w-4" /> Edit block</Button>}
+                />
+                {reviewStatus === "complete" ? (
+                  <Button variant="outline" disabled={isReopening} onClick={() => void reopenReview()}>
+                    <RotateCcw className="h-4 w-4" /> {isReopening ? "Reopening…" : "Reopen review"}
+                  </Button>
+                ) : (
+                  <BlockReviewDialog
+                    block={block}
+                    games={scrimGames}
+                    trigger={<Button>Complete review</Button>}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="flex gap-2 overflow-x-auto border-b border-[var(--workspace-rule)] pb-3" aria-label="Select block or game">
+        <Button variant={!selectedGame ? "default" : "ghost"} onClick={() => selectGame(null)} className="shrink-0">
+          Block summary
+        </Button>
+        {scrimGames.map((game) => (
+          <Button
+            key={game.id}
+            variant={selectedGame?.id === game.id ? "secondary" : "ghost"}
+            onClick={() => selectGame(game.id)}
+            className="shrink-0"
+          >
+            Game {game.game_number}
+            <span className="ss-mono text-xs uppercase">
+              {game.result === "win" ? "W" : game.result === "loss" ? "L" : "—"}
+            </span>
+          </Button>
+        ))}
+        {canManageTeam && (
+          <GameReviewDialog
+            scrimId={scrimId}
+            defaultGameNumber={Math.max(0, ...scrimGames.map((game) => game.game_number)) + 1}
+            trigger={<Button variant="outline" className="shrink-0"><Plus className="h-4 w-4" /> Add game</Button>}
+          />
+        )}
+      </div>
+
+      {!selectedGame ? (
+        <div className="space-y-6">
+          <MetricStrip
+            items={[
+              {
+                label: reviewStatus === "complete" ? "Final score" : "Recorded-game score",
+                value: blockScoreLabel({
+                  opponent_score: block.opponent_score,
+                  our_score: block.our_score,
+                  result: block.result,
+                  result_source: block.result_source === "manual" ? "manual" : "games",
+                  review_status: reviewStatus,
+                }),
+                detail: block.result_source === "manual" ? "staff-corrected score" : "from explicit game outcomes",
+              },
+              {
+                label: "Games reviewed",
+                value: `${summary.reviewed}/${summary.activeGames.length}`,
+                detail: "rating and summary complete",
+              },
+              {
+                label: "Side distribution",
+                value: summary.blue || summary.red ? `${summary.blue}B · ${summary.red}R` : "Not recorded",
+                detail: "explicitly saved sides",
+              },
+              {
+                label: "Average duration",
+                value: formatGameDuration(summary.averageDuration),
+                detail: summary.averageDuration === null ? "Not recorded" : "saved game durations",
+              },
+            ]}
+          />
+
+          {block.notes && (
+            <DataSurface className="p-5">
+              <p className="workspace-eyebrow">Block focus and notes</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--workspace-foreground)]">{block.notes}</p>
+            </DataSurface>
+          )}
+
+          <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+            <DataSurface>
+              <div className="flex flex-col gap-3 border-b border-[var(--workspace-rule)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-semibold">Game history</h2>
+                  <p className="mt-1 text-sm text-[var(--workspace-muted)]">Saved outcomes and review details for this block.</p>
+                </div>
+                {canManageTeam && (
+                  <GameReviewDialog
+                    scrimId={scrimId}
+                    defaultGameNumber={Math.max(0, ...scrimGames.map((game) => game.game_number)) + 1}
+                    trigger={<Button size="sm"><Plus className="h-4 w-4" /> Add game</Button>}
+                  />
+                )}
+              </div>
+              {scrimGames.length ? (
+                <div className="divide-y divide-[var(--workspace-rule)]">
+                  {scrimGames.map((game) => (
+                    <div key={game.id} className="workspace-ledger-row grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                      <button type="button" onClick={() => selectGame(game.id)} className="min-w-0 text-left">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">Game {game.game_number}</span>
+                          <span className="ss-mono text-xs uppercase text-[var(--workspace-subtle)]">
+                            {game.result || "Outcome not recorded"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-[var(--workspace-muted)]">
+                          {game.side ? `${game.side} side` : "Side not recorded"} · {formatGameDuration(game.duration_seconds)} · {recordedNumber(game.our_team_kills)}–{recordedNumber(game.enemy_team_kills)} kills
+                        </p>
+                      </button>
+                      <div className="flex items-center gap-2 sm:justify-end">
+                        {canManageTeam && (
+                          <GameReviewDialog
+                            scrimId={scrimId}
+                            game={game}
+                            defaultGameNumber={game.game_number}
+                            trigger={<Button size="sm" variant="outline"><Pencil className="h-3.5 w-3.5" /> Edit</Button>}
+                          />
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => selectGame(game.id)} aria-label={`Open game ${game.game_number}`}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <WorkspaceState
+                  icon={Clock3}
+                  title="No games have been recorded."
+                  description={canManageTeam ? "Add a game to begin the structured review." : "Staff have not added a game review yet."}
+                  className="m-5"
+                />
+              )}
+            </DataSurface>
+            <ReviewChecklist checks={checks} />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <DataSurface className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold">Game {selectedGame.game_number}</h2>
+                <GameEvidenceDialog compact gameId={selectedGame.id} />
+              </div>
+              <p className="mt-2 text-sm text-[var(--workspace-muted)]">
+                {selectedGame.result ? `${selectedGame.result === "win" ? "Win" : "Loss"}` : "Outcome not recorded"} · {selectedGame.side ? `${selectedGame.side} side` : "Side not recorded"} · {formatGameDuration(selectedGame.duration_seconds)}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="ss-mono mr-2 text-sm">{recordedNumber(selectedGame.our_team_kills)}–{recordedNumber(selectedGame.enemy_team_kills)} kills</span>
+              {canManageTeam && (
+                <GameReviewDialog
+                  scrimId={scrimId}
+                  game={selectedGame}
+                  defaultGameNumber={selectedGame.game_number}
+                  trigger={<Button variant="outline"><Pencil className="h-4 w-4" /> Edit game</Button>}
+                />
+              )}
+              <Button variant="ghost" size="icon" onClick={() => selectGame(scrimGames[selectedGameIndex - 1]?.id || null)} disabled={selectedGameIndex <= 0} aria-label="Previous game">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => selectGame(scrimGames[selectedGameIndex + 1]?.id || null)} disabled={selectedGameIndex >= scrimGames.length - 1} aria-label="Next game">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </DataSurface>
+
+          {participantsError && (
+            <p className="border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3 text-sm text-amber-100">
+              Participant evidence could not be loaded. The game summary remains available.
+            </p>
+          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid h-auto w-full grid-cols-3 border border-[var(--workspace-rule)] bg-[var(--workspace-surface)] p-1">
+              <TabsTrigger value="overview" className="min-h-10 text-xs sm:text-sm"><ClipboardList className="mr-2 h-4 w-4" /> Summary</TabsTrigger>
+              <TabsTrigger value="draft" className="min-h-10 text-xs sm:text-sm"><Target className="mr-2 h-4 w-4" /> Draft</TabsTrigger>
+              <TabsTrigger value="feedback" className="min-h-10 text-xs sm:text-sm"><MessageSquareText className="mr-2 h-4 w-4" /> Review notes</TabsTrigger>
+            </TabsList>
+            <div className="mt-5">
+              <Suspense fallback={<PanelLoading />}>
+                <TabsContent value="overview" className="mt-0">
+                  {participantsLoading ? <PanelLoading label="Loading participant evidence…" /> : <GameOverviewTab game={selectedGame} participants={participants} />}
+                </TabsContent>
+                <TabsContent value="draft" className="mt-0"><DraftView game={selectedGame} participants={participants} /></TabsContent>
+                <TabsContent value="feedback" className="mt-0"><CoachFeedback game={selectedGame} participants={participants} canEdit={canManageTeam} /></TabsContent>
+              </Suspense>
+            </div>
+          </Tabs>
+
+          {canManageTeam && (
+            <div className="flex justify-end border-t border-[var(--workspace-rule)] pt-5">
+              <Button
+                variant="destructive"
+                disabled={isDeleting}
+                onClick={() => {
+                  if (window.confirm(`Delete game ${selectedGame.game_number}? This cannot be undone.`)) {
+                    deleteScrimGame(selectedGame.id);
+                  }
+                }}
+              >
+                {isDeleting ? "Deleting…" : "Delete game"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,224 +1,311 @@
 import {
-  Users,
-  Shield,
   Crosshair,
-  Swords,
-  Zap,
   Heart,
-  Plus,
   MoreHorizontal,
-  ChevronRight,
-  Trophy,
-  Target,
-  Calendar,
-  UserPlus,
-  Trash2
+  Pencil,
+  RotateCcw,
+  Shield,
+  Swords,
+  Trash2,
+  Users,
+  Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import RoleAssignment from "@/components/players/RoleAssignment";
+import { useState } from "react";
+
 import { AddPlayerDialog } from "@/components/players/AddPlayerDialog";
-import { usePlayersData } from "@/hooks/usePlayersData";
-import { PlayerRole } from "@/types/availability";
-import { useRole } from "@/contexts/RoleContext";
+import { EditPlayerDialog } from "@/components/players/EditPlayerDialog";
+import { InviteTeamMemberDialog } from "@/components/team/InviteTeamMemberDialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DataSurface } from "@/components/workspace/DataSurface";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceState } from "@/components/workspace/WorkspaceState";
+import { useRole } from "@/contexts/RoleContext";
+import { usePlayersData } from "@/hooks/usePlayersData";
+import type { Database } from "@/integrations/supabase/types";
+import { championPoolFromJson, displayRiotIdentity } from "@/lib/roster-profile";
 
-// Map roles to icons
-const RoleIcon = ({ role, className }: { role: string | null; className?: string }) => {
+type Player = Database["public"]["Tables"]["players"]["Row"];
+
+function RoleIcon({ role }: { role: string | null }) {
+  const className = "h-4 w-4";
   switch (role?.toLowerCase()) {
-    case 'top': return <Shield className={className} />;
-    case 'jungle': return <Swords className={className} />;
-    case 'mid': return <Zap className={className} />;
-    case 'adc': return <Crosshair className={className} />;
-    case 'support': return <Heart className={className} />;
-    default: return <Users className={className} />;
+    case "top":
+      return <Shield className={className} aria-hidden="true" />;
+    case "jungle":
+      return <Swords className={className} aria-hidden="true" />;
+    case "mid":
+      return <Zap className={className} aria-hidden="true" />;
+    case "adc":
+      return <Crosshair className={className} aria-hidden="true" />;
+    case "support":
+      return <Heart className={className} aria-hidden="true" />;
+    default:
+      return <Users className={className} aria-hidden="true" />;
   }
-};
+}
 
-const getAvatarColor = (name: string) => {
-  const colors = [
-    "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500",
-    "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500",
-    "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500",
-    "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500",
-    "bg-rose-500"
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
+function RosterActions({
+  playerId,
+  playerName,
+  removePlayer,
+  editPlayer,
+  disabled,
+}: {
+  playerId: string;
+  playerName: string | null;
+  removePlayer: (playerId: string, playerName: string | null) => void;
+  editPlayer: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          aria-label={`Roster actions for ${playerName || "player"}`}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={editPlayer}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit roster profile
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => removePlayer(playerId, playerName)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Remove from active roster
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function Players() {
-  const { players, isLoading, updatePlayer, deletePlayer } = usePlayersData();
-  const { isManager, isCoach } = useRole();
-  const hasEditPermission = isManager || isCoach;
+  const {
+    players,
+    archivedPlayers,
+    isLoading,
+    error,
+    refetch,
+    deletePlayer,
+    reactivatePlayer,
+    isDeleting,
+    pendingPlayerId,
+  } = usePlayersData();
+  const { isManager } = useRole();
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
-  // Wrapper for string IDs
-  const handleRoleAssignString = (playerId: string, role: string) => {
-    updatePlayer({ id: playerId, role });
-  };
-
-  const handleDelete = (playerId: string) => {
-    if (window.confirm("Are you sure you want to remove this player?")) {
-      deletePlayer(playerId);
+  function removePlayer(playerId: string, playerName: string | null) {
+    if (
+      !window.confirm(
+        `Remove ${playerName || "this player"} from the active roster? Their recorded scrim history is retained.`,
+      )
+    ) {
+      return;
     }
-  };
-
-  if (isLoading) {
-    return <div className="text-white">Loading roster...</div>;
+    deletePlayer(playerId);
   }
 
   return (
-    <div className="space-y-8 max-w-[1920px] mx-auto pb-10">
+    <div className="space-y-8 pb-10">
+      <WorkspacePageHeader
+        eyebrow="Team and calendar"
+        title="Active roster"
+        description="League profiles used by this workspace. Match performance remains separate until a game record is captured or entered."
+        actions={
+          isManager ? (
+            <>
+              {archivedPlayers.length > 0 && (
+                <Button variant="outline" onClick={() => setShowArchived((value) => !value)}>
+                  {showArchived ? "Hide archived" : `Archived (${archivedPlayers.length})`}
+                </Button>
+              )}
+              <InviteTeamMemberDialog />
+              <AddPlayerDialog />
+            </>
+          ) : undefined
+        }
+      />
 
-      {/* 1. Compact Header & Quick Actions Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl sticky top-24 z-20">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground pl-2">
-          <span className="text-zinc-500">ScrimStats</span>
-          <ChevronRight className="w-4 h-4 text-zinc-700" />
-          <span className="text-white font-medium glow-text">Active Roster</span>
-          <span className="text-xs ml-2 bg-white/10 px-2 py-0.5 rounded text-zinc-400 font-mono uppercase">{players.length} Players</span>
-        </div>
+      {isLoading ? (
+        <WorkspaceState
+          icon={Users}
+          title="Loading the active roster"
+          description="ScrimStats is reading the players attached to this team workspace."
+        />
+      ) : error ? (
+        <WorkspaceState
+          icon={Users}
+          title="The roster could not be loaded"
+          description={error}
+          action={
+            <Button variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        />
+      ) : players.length === 0 ? (
+        <WorkspaceState
+          icon={Users}
+          title="No active players yet"
+          description="Add the first player when you are ready to track roster participation and captured scrim results."
+          action={isManager ? <AddPlayerDialog /> : undefined}
+        />
+      ) : (
+        <DataSurface>
+          <div className="hidden grid-cols-[minmax(14rem,1.4fr)_0.75fr_0.8fr_0.75fr_minmax(12rem,1fr)_auto] gap-4 border-b border-[var(--workspace-rule)] px-5 py-3 md:grid">
+            {["Player", "Role", "Rank", "Region", "Champion pool", ""].map((heading) => (
+              <span key={heading} className="workspace-eyebrow text-[var(--workspace-subtle)]">
+                {heading}
+              </span>
+            ))}
+          </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-          {hasEditPermission && <AddPlayerDialog />}
-        </div>
-      </div>
+          <div className="divide-y divide-[var(--workspace-rule)]">
+            {players.map((player) => {
+              const championPool = championPoolFromJson(player.main_champions);
+              const riotIdentity = displayRiotIdentity(player.riot_id, player.riot_tag_line);
 
-      {/* Roster Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {players.map((player) => {
-          const avatarColor = getAvatarColor(player.summoner_name || "?");
-          const avatarInitial = player.summoner_name ? player.summoner_name[0].toUpperCase() : "?";
-
-          // Placeholder Stats (until Phase 3)
-          const winRate = "0%";
-          const kda = "0.0";
-          const cspm = "0.0";
-          const matches = 0;
-          const topChamps: string[] = [];
-
-          return (
-            <div
-              key={player.id}
-              className="glass-card group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:border-brand-primary/30 hover:shadow-[0_0_30px_rgba(45,212,191,0.1)]"
-            >
-              {/* Background Gradient on Hover */}
-              <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-gradient-to-br ${avatarColor.replace('bg-', 'from-')} to-transparent`} />
-
-              {/* Top Row: Avatar & Actions */}
-              <div className="relative z-10 flex justify-between items-start mb-6">
-                <div className={cn(
-                  "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-300",
-                  avatarColor
-                )}>
-                  {avatarInitial}
+              return (
+              <article
+                key={player.id}
+                className="workspace-ledger-row px-5 py-5 md:grid md:grid-cols-[minmax(14rem,1.4fr)_0.75fr_0.8fr_0.75fr_minmax(12rem,1fr)_auto] md:items-center md:gap-4 md:py-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center border border-[var(--workspace-rule-strong)] text-[var(--workspace-accent)]">
+                    <RoleIcon role={player.role} />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="truncate font-semibold">
+                      {player.summoner_name || "Unnamed player"}
+                    </h2>
+                    {riotIdentity && (
+                      <p className="mt-1 truncate font-mono text-xs text-[var(--workspace-muted)]">
+                        {riotIdentity}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs capitalize text-[var(--workspace-subtle)]">
+                      {player.membership_state === "linked"
+                        ? "Workspace member"
+                        : player.membership_state === "invited"
+                          ? "Invitation pending"
+                          : player.membership_state === "revoked"
+                            ? "Access revoked"
+                            : "Roster only"}
+                    </p>
+                  </div>
                 </div>
 
-                {hasEditPermission && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white hover:bg-white/10 -mt-2 -mr-2">
-                        <MoreHorizontal className="w-5 h-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-white">
-                      <DropdownMenuItem onClick={() => handleDelete(player.id)} className="text-red-400 hover:text-red-300 hover:bg-white/5 cursor-pointer">
-                        <Trash2 className="w-4 h-4 mr-2" /> Remove Player
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
+                <dl className="mt-5 grid grid-cols-2 gap-x-5 gap-y-4 text-sm md:contents">
+                  <div>
+                    <dt className="workspace-eyebrow mb-1 text-[var(--workspace-subtle)] md:hidden">
+                      Role
+                    </dt>
+                    <dd className="flex items-center gap-2 capitalize text-[var(--workspace-muted)]">
+                      <RoleIcon role={player.role} />
+                      {player.role || "Not set"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="workspace-eyebrow mb-1 text-[var(--workspace-subtle)] md:hidden">
+                      Rank
+                    </dt>
+                    <dd>
+                      {player.rank || "Not recorded"}
+                      {player.lp !== null ? ` · ${player.lp} LP` : ""}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="workspace-eyebrow mb-1 text-[var(--workspace-subtle)] md:hidden">
+                      Region
+                    </dt>
+                    <dd className="text-[var(--workspace-muted)]">
+                      {player.region || "Not recorded"}
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="workspace-eyebrow mb-1 text-[var(--workspace-subtle)] md:hidden">
+                      Champion pool
+                    </dt>
+                    <dd className="truncate text-[var(--workspace-muted)]">
+                      {championPool.length
+                        ? championPool.join(" · ")
+                        : "Awaiting profile data"}
+                    </dd>
+                  </div>
+                </dl>
 
-              {/* Player Info */}
-              <div className="relative z-10 mb-6">
-                <h3 className="text-xl font-bold text-white group-hover:text-brand-primary transition-colors mb-1">{player.summoner_name}</h3>
-                <div className="flex items-center gap-2 text-zinc-400 text-sm mb-3">
-                  <RoleIcon role={player.role} className="w-4 h-4" />
-                  <span className="font-medium uppercase tracking-wider">{player.role || "UNASSIGNED"}</span>
-                </div>
-                <div className="inline-flex items-center px-2.5 py-0.5 rounded border border-white/10 bg-white/5 text-xs text-zinc-300 font-mono">
-                  {player.rank || "Unranked"} {player.lp ? `${player.lp} LP` : ""}
-                </div>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="relative z-10 grid grid-cols-2 gap-3 py-4 border-t border-white/5">
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1">Win Rate</span>
-                  <span className="text-lg font-bold text-green-400">{winRate}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1">KDA</span>
-                  <span className="text-lg font-bold text-brand-primary">{kda}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1">CSPM</span>
-                  <span className="text-lg font-bold text-white">{cspm}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1">Matches</span>
-                  <span className="text-lg font-bold text-white">{matches}</span>
-                </div>
-              </div>
-
-              {/* Top Champions */}
-              <div className="relative z-10 mt-4 pt-4 border-t border-white/5">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-2">Top Champions</span>
-                <div className="flex gap-2">
-                  {topChamps.length > 0 ? topChamps.map((champ, i) => (
-                    <span key={i} className="text-xs bg-black/40 border border-white/5 px-2 py-1 rounded text-zinc-300">
-                      {champ}
-                    </span>
-                  )) : (
-                    <span className="text-xs text-zinc-600">No data</span>
+                <div className="mt-4 flex items-center justify-end border-t border-[var(--workspace-rule)] pt-4 md:mt-0 md:border-0 md:pt-0">
+                  {isManager && (
+                    <RosterActions
+                      playerId={player.id}
+                      playerName={player.summoner_name}
+                      removePlayer={removePlayer}
+                      editPlayer={() => setEditingPlayer(player)}
+                      disabled={isDeleting}
+                    />
                   )}
                 </div>
+              </article>
+              );
+            })}
+          </div>
+        </DataSurface>
+      )}
+
+      {showArchived && archivedPlayers.length > 0 && (
+        <DataSurface>
+          <div className="border-b border-[var(--workspace-rule)] px-5 py-4">
+            <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Retained history</p>
+            <h2 className="mt-1 text-lg font-semibold">Archived roster profiles</h2>
+          </div>
+          <div className="divide-y divide-[var(--workspace-rule)]">
+            {archivedPlayers.map((player) => (
+              <div key={player.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="font-medium">{player.summoner_name}</p>
+                  <p className="mt-1 text-sm text-[var(--workspace-muted)]">
+                    {[player.role, player.region].filter(Boolean).join(" · ") ||
+                      "Profile details not recorded"}
+                  </p>
+                </div>
+                {isManager && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => reactivatePlayer(player.id)}
+                    disabled={isDeleting}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    {pendingPlayerId === player.id ? "Reactivating..." : "Reactivate"}
+                  </Button>
+                )}
               </div>
+            ))}
+          </div>
+        </DataSurface>
+      )}
 
-              {/* Role Assignment & Availability */}
-              <div className="relative z-10 mt-4 pt-4 border-t border-white/5 space-y-2">
-                <RoleAssignment
-                  playerId={player.id as any} // Temporary cast until RoleAssignment updated
-                  playerName={player.summoner_name}
-                  currentRole={player.role || undefined}
-                  onRoleAssign={(pid, r) => handleRoleAssignString(String(pid), r)}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-white/10 text-zinc-300 hover:text-white hover:border-brand-primary/50"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Manage Availability
-                </Button>
-              </div>
-
-            </div>
-          )
-        })}
-
-        {/* Add New Slot (Dashed) */}
-        {(hasEditPermission) && (
-          <AddPlayerDialog trigger={
-            <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center text-zinc-600 hover:text-brand-primary hover:border-brand-primary/30 hover:bg-brand-primary/5 transition-all cursor-pointer min-h-[400px]">
-              <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Plus className="w-6 h-6" />
-              </div>
-              <span className="font-bold">Recruit Player</span>
-            </div>
-          } />
-        )}
-
-      </div>
+      <EditPlayerDialog
+        player={editingPlayer}
+        open={Boolean(editingPlayer)}
+        onOpenChange={(open) => {
+          if (!open) setEditingPlayer(null);
+        }}
+      />
     </div>
   );
 }

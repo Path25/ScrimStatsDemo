@@ -1,361 +1,446 @@
 import { useState } from "react";
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Clock,
-  MapPin,
-  MoreHorizontal,
-  Video,
-  Swords,
-  Users,
-  CalendarDays
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
-import AvailabilityInput from "@/components/calendar/AvailabilityInput";
-import { useCalendarEvents, CalendarEvent } from "@/hooks/useCalendarEvents";
-import {
-  format,
   addDays,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  addWeeks,
-  subWeeks,
   addMonths,
-  subMonths,
+  addWeeks,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
   isToday,
   parseISO,
-  isAfter,
-  isBefore
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+  subWeeks,
 } from "date-fns";
+import {
+  Calendar as CalendarIcon,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Plus,
+} from "lucide-react";
 
-export default function Calendar() {
-  const { events, isLoading } = useCalendarEvents();
-  const [view, setView] = useState<'week' | 'month'>('month');
-  const [calendarMode, setCalendarMode] = useState<'events' | 'availability'>('events');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [showAvailabilityInput, setShowAvailabilityInput] = useState(false);
+import AvailabilityCalendar from "@/components/calendar/AvailabilityCalendar";
+import AvailabilityInput from "@/components/calendar/AvailabilityInput";
+import { WorkspaceEventDialog } from "@/components/calendar/WorkspaceEventDialog";
+import { ScheduleScrimDialog } from "@/components/scrims/ScheduleScrimDialog";
+import { Button } from "@/components/ui/button";
+import { DataSurface } from "@/components/workspace/DataSurface";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceState } from "@/components/workspace/WorkspaceState";
+import { type CalendarEvent, useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { useRole } from "@/contexts/RoleContext";
+import { cn } from "@/lib/utils";
 
-  const handleTodayClick = () => {
-    setCurrentDate(new Date());
-  };
+const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const navigatePrevious = () => {
-    if (view === 'month') {
-      setCurrentDate(subMonths(currentDate, 1));
-    } else {
-      setCurrentDate(subWeeks(currentDate, 1));
-    }
-  };
+function eventTone(type: CalendarEvent["event_type"]) {
+  if (type === "scrim") return "border-[var(--workspace-accent)] text-[var(--workspace-foreground)]";
+  if (type === "official") return "border-rose-400 text-rose-200";
+  if (type === "team_practice") return "border-violet-400 text-violet-200";
+  return "border-[var(--workspace-awaiting)] text-[var(--workspace-muted)]";
+}
 
-  const navigateNext = () => {
-    if (view === 'month') {
-      setCurrentDate(addMonths(currentDate, 1));
-    } else {
-      setCurrentDate(addWeeks(currentDate, 1));
-    }
-  };
+function CalendarEventRow({
+  event,
+  onOpen,
+}: {
+  event: CalendarEvent;
+  onOpen?: (event: CalendarEvent) => void;
+}) {
+  const content = (
+    <>
+      <p className="truncate text-sm font-medium">{event.title}</p>
+      <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--workspace-subtle)]">
+        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+        {format(parseISO(event.start_time), "HH:mm")}
+        {event.end_time && <>–{format(parseISO(event.end_time), "HH:mm")}</>}
+      </p>
+    </>
+  );
 
-  const currentDateDisplay = view === 'month'
-    ? format(currentDate, "MMMM yyyy")
-    : `${format(startOfWeek(currentDate, { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(currentDate, { weekStartsOn: 1 }), "MMM d, yyyy")}`;
+  const className = cn(
+    "block w-full border-l-2 pl-3 text-left",
+    eventTone(event.event_type),
+    onOpen && "cursor-pointer transition-colors hover:bg-[var(--workspace-surface-raised)]",
+  );
 
-  const getEventsForDay = (date: Date) => {
-    return events.filter(event => isSameDay(parseISO(event.start_time), date));
-  };
-
-  const renderMonthView = () => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
-    const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
+  if (onOpen) {
     return (
-      <div className="glass-panel rounded-2xl overflow-hidden h-[700px] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="grid grid-cols-7 border-b border-white/5 bg-white/5 backdrop-blur-sm">
-          {weekDays.map(day => (
-            <div key={day} className="py-4 text-center text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 flex-1 bg-black/20">
-          {days.map((day, i) => {
-            const dayEvents = getEventsForDay(day);
-            const isCurrentMonth = day.getMonth() === monthStart.getMonth();
-
-            return (
-              <div key={day.toISOString()} className={cn(
-                "border-b border-r border-white/5 p-3 relative hover:bg-white/[0.03] transition-all group",
-                isToday(day) && "bg-brand-primary/5",
-                !isCurrentMonth && "opacity-20 grayscale bg-black/40"
-              )}>
-                <div className="flex justify-between items-start">
-                  <span className={cn(
-                    "text-xs font-bold w-7 h-7 flex items-center justify-center rounded-lg transition-all",
-                    isToday(day)
-                      ? "bg-brand-primary text-black shadow-[0_0_15px_rgba(45,212,191,0.4)]"
-                      : "text-zinc-500 group-hover:text-zinc-300"
-                  )}>
-                    {format(day, "d")}
-                  </span>
-                </div>
-
-                {/* Event Bars for Month View */}
-                <div className="mt-1.5 space-y-1">
-                  {dayEvents.slice(0, 3).map(event => (
-                    <div
-                      key={event.id}
-                      className={cn(
-                        "flex items-center rounded-[4px] px-1.5 py-[2px] text-[10px] font-semibold leading-tight truncate cursor-default transition-all hover:brightness-125",
-                        event.event_type === 'scrim'
-                          ? "bg-brand-primary/15 text-brand-primary border-l-2 border-brand-primary"
-                          : event.event_type === 'official'
-                            ? "bg-red-500/15 text-red-400 border-l-2 border-red-500"
-                            : "bg-purple-500/15 text-purple-400 border-l-2 border-purple-500"
-                      )}
-                      title={event.title}
-                    >
-                      <span className="truncate">{event.title}</span>
-                    </div>
-                  ))}
-                  {dayEvents.length > 3 && <span className="text-[10px] text-zinc-600 font-bold pl-1">+{dayEvents.length - 3} more</span>}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      <button type="button" className={className} onClick={() => onOpen(event)}>
+        {content}
+      </button>
     );
-  };
-
-  const renderWeekView = () => {
-    const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
-
-    return (
-      <div className="glass-panel rounded-2xl overflow-hidden min-h-[700px] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="grid grid-cols-7 flex-1 divide-x divide-white/5">
-          {weekDays.map((day) => {
-            const dayEvents = getEventsForDay(day);
-
-            return (
-              <div key={day.toISOString()} className="flex flex-col">
-                {/* Column Header */}
-                <div className={cn(
-                  "p-5 border-b border-white/5 text-center transition-all",
-                  isToday(day) ? "bg-brand-primary/10" : "bg-white/[0.02]"
-                )}>
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">{format(day, "EEE")}</span>
-                  <span className={cn(
-                    "text-2xl font-black transition-all",
-                    isToday(day) ? "text-brand-primary glow-text scale-110 block" : "text-white"
-                  )}>
-                    {format(day, "d")}
-                  </span>
-                </div>
-
-                {/* Events Column */}
-                <div className="flex-1 p-3 space-y-3 bg-black/20 hover:bg-black/30 transition-colors relative">
-                  {/* Current Day Highlight Overlay */}
-                  {isToday(day) && <div className="absolute inset-0 bg-brand-primary/[0.03] pointer-events-none" />}
-
-                  {dayEvents.map(event => (
-                    <div key={event.id} className={cn(
-                      "p-3 rounded-xl border text-sm flex flex-col gap-1.5 cursor-pointer hover:scale-[1.02] hover:brightness-110 active:scale-95 transition-all group relative z-10",
-                      event.event_type === 'scrim' ? "bg-brand-primary/10 border-brand-primary/30 text-brand-primary" :
-                        event.event_type === 'official' ? "bg-red-500/10 border-red-500/30 text-red-400" :
-                          "bg-zinc-900/60 border-white/10 text-zinc-300"
-                    )}>
-                      <span className="font-bold flex items-center justify-between">
-                        {event.title}
-                        {event.event_type === 'scrim' && <Swords className="w-3.5 h-3.5 opacity-50" />}
-                      </span>
-                      <span className="text-[10px] uppercase font-black tracking-widest opacity-70 flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" /> {format(parseISO(event.start_time), "HH:mm")}
-                      </span>
-                    </div>
-                  ))}
-
-                  {dayEvents.length === 0 && (
-                    <div className="h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="sm" className="text-zinc-600 hover:text-white glass-button border-transparent hover:border-white/10">
-                        <Plus className="w-4 h-4 mr-2" /> Quick Add
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  };
+  }
 
   return (
-    <div className="space-y-6 max-w-[1920px] mx-auto pb-10">
-
-      {/* Compact Header & Controls Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl sticky top-24 z-20">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground pl-2">
-          <span className="text-zinc-500">ScrimStats</span>
-          <ChevronRight className="w-4 h-4 text-zinc-700" />
-          <span className="text-white font-medium glow-text">Calendar</span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center bg-black/40 p-1 rounded-xl border border-white/5 no-scrollbar">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-xs font-bold text-zinc-400 hover:text-white"
-              onClick={handleTodayClick}
-            >
-              Today
-            </Button>
-            <div className="w-px h-4 bg-white/10 mx-1" />
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white" onClick={navigatePrevious}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-xs font-black text-white px-2 min-w-[140px] text-center uppercase tracking-tighter">
-              {currentDateDisplay}
-            </span>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white" onClick={navigateNext}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-            {[
-              { id: 'events', label: 'Events', icon: CalendarIcon },
-              { id: 'availability', label: 'Team', icon: CalendarDays }
-            ].map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => setCalendarMode(mode.id as any)}
-                className={cn(
-                  "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
-                  calendarMode === mode.id
-                    ? "bg-brand-primary/20 text-brand-primary glow-border"
-                    : "text-zinc-500 hover:text-zinc-300"
-                )}
-              >
-                <mode.icon className="w-3.5 h-3.5" />
-                {mode.label}
-              </button>
-            ))}
-          </div>
-
-          {calendarMode === 'events' && (
-            <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-              {['Week', 'Month'].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v.toLowerCase() as any)}
-                  className={cn(
-                    "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
-                    view === v.toLowerCase()
-                      ? "bg-brand-primary/20 text-brand-primary glow-border"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  )}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <Button
-            size="sm"
-            className="h-9 px-4 bg-brand-primary text-black hover:bg-brand-primary/90 font-bold shadow-[0_0_20px_rgba(45,212,191,0.2)]"
-            onClick={() => calendarMode === 'events' ? undefined : setShowAvailabilityInput(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {calendarMode === 'events' ? 'Add Event' : 'Add Availability'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Main View Area */}
-      {calendarMode === 'events' ? (
-        <>
-          {view === 'week' && renderWeekView()}
-          {view === 'month' && renderMonthView()}
-        </>
-      ) : (
-        <AvailabilityCalendar weekDays={
-          eachDayOfInterval({
-            start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-            end: endOfWeek(currentDate, { weekStartsOn: 1 })
-          }).map(date => ({
-            day: format(date, "EEE"),
-            date: date.getDate(),
-            fullDate: date
-          }))
-        } />
-      )
-      }
-
-      {/* Upcoming Events Bottom Section */}
-      {
-        calendarMode === 'events' && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest pl-1">Upcoming This Week</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {events
-                .filter(event => {
-                  const eventDate = parseISO(event.start_time);
-                  const today = new Date();
-                  const nextWeek = addDays(today, 7);
-                  return isAfter(eventDate, today) && isBefore(eventDate, nextWeek);
-                })
-                .slice(0, 4)
-                .map((event) => (
-                  <div key={event.id} className="glass-card p-4 rounded-xl border border-white/5 hover:border-brand-primary/30 transition-all group">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider",
-                        event.event_type === 'scrim' ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
-                          "text-zinc-400 bg-zinc-500/10 border-zinc-500/20"
-                      )}>
-                        {event.event_type}
-                      </span>
-                      <span className="text-xs text-zinc-500 font-mono">{format(parseISO(event.start_time), "MMM d")}</span>
-                    </div>
-                    <h4 className="font-bold text-zinc-200 group-hover:text-white transition-colors">{event.title}</h4>
-                    <p className="text-xs text-zinc-500 mt-1">{format(parseISO(event.start_time), "HH:mm")}</p>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )
-      }
-
-      {/* Availability Input Modal */}
-      {
-        showAvailabilityInput && (
-          <AvailabilityInput
-            onClose={() => setShowAvailabilityInput(false)}
-            onSave={(data) => {
-              console.log('Availability saved:', data);
-              // In a real app, this would save to the database
-            }}
-          />
-        )
-      }
-
-    </div >
+    <article className={className}>{content}</article>
   );
 }
 
+export default function Calendar() {
+  const { events, isLoading, error, refetch } = useCalendarEvents();
+  const [view, setView] = useState<"week" | "month">("month");
+  const [calendarMode, setCalendarMode] = useState<"events" | "availability">("events");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [showAvailabilityInput, setShowAvailabilityInput] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const { activeRole, isManager } = useRole();
+  const canAddAvailability = isManager || activeRole === "member";
+  const usesWeeklyRange = calendarMode === "availability" || view === "week";
 
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(monthStart);
+  const rangeStart =
+    !usesWeeklyRange
+      ? startOfWeek(monthStart, { weekStartsOn: 1 })
+      : startOfWeek(currentDate, { weekStartsOn: 1 });
+  const rangeEnd =
+    !usesWeeklyRange
+      ? endOfWeek(monthEnd, { weekStartsOn: 1 })
+      : endOfWeek(currentDate, { weekStartsOn: 1 });
+  const displayedDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
+  const selectedDayEvents = events
+    .filter((event) => isSameDay(parseISO(event.start_time), selectedDay))
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  const currentDateDisplay =
+    !usesWeeklyRange
+      ? format(currentDate, "MMMM yyyy")
+      : `${format(rangeStart, "MMM d")} – ${format(rangeEnd, "MMM d, yyyy")}`;
+
+  function movePrevious() {
+    const nextDate = !usesWeeklyRange ? subMonths(currentDate, 1) : subWeeks(currentDate, 1);
+    setCurrentDate(nextDate);
+    setSelectedDay(nextDate);
+  }
+
+  function moveNext() {
+    const nextDate = !usesWeeklyRange ? addMonths(currentDate, 1) : addWeeks(currentDate, 1);
+    setCurrentDate(nextDate);
+    setSelectedDay(nextDate);
+  }
+
+  function getEventsForDay(day: Date) {
+    return events.filter((event) => isSameDay(parseISO(event.start_time), day));
+  }
+
+  function chooseDay(day: Date) {
+    setSelectedDay(day);
+    setCurrentDate(day);
+  }
+
+  function moveSelectedDay(amount: number) {
+    chooseDay(addDays(selectedDay, amount));
+  }
+
+  return (
+    <div className="space-y-8 pb-10">
+      <WorkspacePageHeader
+        eyebrow="Team and calendar"
+        title="Team calendar"
+        description="Coordinate practice blocks and availability without separating the schedule from the team workspace."
+        actions={
+          isManager ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedEvent(null);
+                  setEventDialogOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add event
+              </Button>
+              <ScheduleScrimDialog />
+            </>
+          ) : undefined
+        }
+      />
+
+      <div className="flex flex-col justify-between gap-4 border-y border-[var(--workspace-rule-strong)] py-4 xl:flex-row xl:items-center">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const today = new Date();
+              setCurrentDate(today);
+              setSelectedDay(today);
+            }}
+          >
+            Today
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="Previous period" onClick={movePrevious}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-44 text-center text-sm font-semibold">{currentDateDisplay}</span>
+          <Button variant="ghost" size="icon" aria-label="Next period" onClick={moveNext}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex border border-[var(--workspace-rule)] p-1">
+            {[
+              { id: "events", label: "Events", icon: CalendarIcon },
+              { id: "availability", label: "Availability", icon: CalendarDays },
+            ].map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  aria-pressed={calendarMode === mode.id}
+                  onClick={() => setCalendarMode(mode.id as "events" | "availability")}
+                  className={cn(
+                    "flex min-h-9 items-center gap-2 px-3 text-xs font-medium transition-colors",
+                    calendarMode === mode.id
+                      ? "bg-[var(--workspace-surface-raised)] text-[var(--workspace-foreground)]"
+                      : "text-[var(--workspace-muted)] hover:text-[var(--workspace-foreground)]",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                  {mode.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {calendarMode === "events" ? (
+            <div className="flex border border-[var(--workspace-rule)] p-1">
+              {(["week", "month"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  onClick={() => setView(option)}
+                  className={cn(
+                    "min-h-9 px-3 text-xs font-medium capitalize transition-colors",
+                    view === option
+                      ? "bg-[var(--workspace-surface-raised)] text-[var(--workspace-foreground)]"
+                      : "text-[var(--workspace-muted)] hover:text-[var(--workspace-foreground)]",
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : canAddAvailability ? (
+            <Button size="sm" onClick={() => setShowAvailabilityInput(true)}>
+              <Plus className="h-4 w-4" /> Add availability
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {calendarMode === "availability" ? (
+        <AvailabilityCalendar
+          weekDays={eachDayOfInterval({
+            start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+            end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+          }).map((date) => ({
+            day: format(date, "EEE"),
+            date: date.getDate(),
+            fullDate: date,
+          }))}
+        />
+      ) : isLoading ? (
+        <WorkspaceState
+          icon={CalendarDays}
+          title="Loading the team calendar"
+          description="ScrimStats is reading saved events and scrim blocks."
+        />
+      ) : error ? (
+        <WorkspaceState
+          icon={CalendarDays}
+          title="The calendar is unavailable"
+          description={error}
+          action={
+            <Button variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <div className="md:hidden">
+            <div
+              className="flex snap-x gap-2 overflow-x-auto pb-2"
+              aria-label="Select calendar date"
+            >
+              {displayedDays.map((day) => {
+                const selected = isSameDay(day, selectedDay);
+                const eventCount = getEventsForDay(day).length;
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    onClick={() => chooseDay(day)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "min-w-16 snap-center border px-3 py-3 text-center transition-colors",
+                      selected
+                        ? "border-[var(--workspace-accent)] bg-[color:rgba(17,226,208,.08)] text-[var(--workspace-foreground)]"
+                        : "border-[var(--workspace-rule)] text-[var(--workspace-muted)]",
+                    )}
+                  >
+                    <span className="workspace-eyebrow block text-[var(--workspace-subtle)]">
+                      {format(day, "EEE")}
+                    </span>
+                    <span className="mt-1 block text-lg font-semibold">{format(day, "d")}</span>
+                    <span className="mt-1 block text-[10px] text-[var(--workspace-subtle)]">
+                      {eventCount ? `${eventCount} event${eventCount === 1 ? "" : "s"}` : "Free"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <DataSurface className="hidden md:block">
+            <div className="grid grid-cols-7 border-b border-[var(--workspace-rule)]">
+              {weekDays.map((day) => (
+                <div
+                  key={day}
+                  className="workspace-eyebrow py-3 text-center text-[var(--workspace-subtle)]"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7">
+              {displayedDays.map((day) => {
+                const dayEvents = getEventsForDay(day);
+                const inCurrentMonth = day.getMonth() === currentDate.getMonth();
+                const selected = isSameDay(day, selectedDay);
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      "min-h-32 border-b border-r border-[var(--workspace-rule)] p-3",
+                      isToday(day) && "bg-[color:rgba(17,226,208,.035)]",
+                      selected && "bg-[color:rgba(17,226,208,.065)] ring-1 ring-inset ring-[var(--workspace-accent)]",
+                      view === "month" && !inCurrentMonth && "opacity-35",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => chooseDay(day)}
+                      aria-label={`Select ${format(day, "EEEE, MMMM d")}`}
+                      aria-pressed={selected}
+                      className={cn(
+                        "ss-mono grid h-7 w-7 place-items-center text-xs text-[var(--workspace-subtle)]",
+                        isToday(day) &&
+                          "bg-[var(--workspace-accent)] font-semibold text-[var(--workspace-bg)]",
+                        selected && !isToday(day) && "border border-[var(--workspace-accent)] text-[var(--workspace-foreground)]",
+                      )}
+                    >
+                      {format(day, "d")}
+                    </button>
+                    <div className="mt-3 space-y-3">
+                      {dayEvents.slice(0, view === "month" ? 3 : 6).map((event) => (
+                        <CalendarEventRow
+                          key={`${event.event_type}-${event.id}`}
+                          event={event}
+                          onOpen={
+                            isManager && event.source === "calendar"
+                              ? (selected) => {
+                                  setSelectedEvent(selected);
+                                  setEventDialogOpen(true);
+                                }
+                              : undefined
+                          }
+                        />
+                      ))}
+                      {dayEvents.length > (view === "month" ? 3 : 6) && (
+                        <p className="text-xs text-[var(--workspace-subtle)]">
+                          +{dayEvents.length - (view === "month" ? 3 : 6)} more
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </DataSurface>
+
+          <DataSurface elevated>
+            <div className="flex flex-col gap-3 border-b border-[var(--workspace-rule)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Selected day</p>
+                <h2 className="mt-1 text-lg font-semibold">
+                  {format(selectedDay, "EEEE, MMMM d, yyyy")}
+                </h2>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Previous day"
+                  onClick={() => moveSelectedDay(-1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Next day"
+                  onClick={() => moveSelectedDay(1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {selectedDayEvents.length ? (
+              <div className="divide-y divide-[var(--workspace-rule)]">
+                {selectedDayEvents.map((event) => (
+                  <div key={`${event.event_type}-${event.id}`} className="px-5 py-4">
+                    <CalendarEventRow
+                      event={event}
+                      onOpen={
+                        isManager && event.source === "calendar"
+                          ? (selected) => {
+                              setSelectedEvent(selected);
+                              setEventDialogOpen(true);
+                            }
+                          : undefined
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-5 py-6 text-sm text-[var(--workspace-muted)]">
+                Nothing is scheduled for this day.
+              </div>
+            )}
+          </DataSurface>
+        </>
+      )}
+
+      {showAvailabilityInput && (
+        <AvailabilityInput
+          initialDate={selectedDay}
+          onClose={() => setShowAvailabilityInput(false)}
+        />
+      )}
+      <WorkspaceEventDialog
+        event={selectedEvent}
+        initialDate={selectedDay}
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+      />
+    </div>
+  );
+}

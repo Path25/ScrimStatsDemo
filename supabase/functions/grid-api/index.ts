@@ -98,6 +98,22 @@ serve(async (req) => {
       .eq('id', tenantData.tenant_id)
       .maybeSingle()
 
+    const { data: captureSetting } = await supabase
+      .from('tenant_capture_settings')
+      .select('profile')
+      .eq('tenant_id', tenantData.tenant_id)
+      .maybeSingle()
+
+    if ((captureSetting?.profile ?? 'desktop_manual') !== 'grid_manual') {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'GRID capture is inactive for this workspace'
+      }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     if (!tenant || !tenant.grid_api_key) {
       return new Response(JSON.stringify({ 
         success: false, 

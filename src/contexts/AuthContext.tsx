@@ -1,15 +1,14 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { AuthError, Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,8 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        
-        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -43,8 +40,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      
-      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -55,27 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
-
-  const signUp = async (email: string, password: string, displayName?: string) => {
-    // Always use standard Supabase signup flow with email verification
-    const redirectUrl = `${window.location.origin}/`;
-    
-    console.log('SignUp redirect URL:', redirectUrl);
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          display_name: displayName || '',
-          full_name: displayName || '' // Keep for backward compatibility
-        }
-      }
-    });
-    
-    return { error };
-  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -95,7 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       session,
       isLoading,
-      signUp,
       signIn,
       signOut
     }}>

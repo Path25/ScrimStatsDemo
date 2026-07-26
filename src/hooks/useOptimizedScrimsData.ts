@@ -7,19 +7,37 @@ export interface Scrim {
   id: string;
   tenant_id: string;
   opponent_name: string;
+  opponent_team_id?: string | null;
   match_date: string;
   scheduled_time: string | null;
+  starts_at: string;
+  ends_at: string | null;
   format: string | null;
   status: string;
   result: string | null;
-  our_score: number;
-  opponent_score: number;
+  our_score: number | null;
+  opponent_score: number | null;
+  result_source: string;
+  result_override_reason: string | null;
+  review_status: string;
+  review_completed_at: string | null;
+  review_completed_by: string | null;
   duration_minutes: number | null;
+  data_source?: string | null;
   created_at: string;
   created_by: string;
   updated_at: string;
   notes: string | null;
-  scrim_games?: any[];
+  scrim_games?: ScrimGameSummary[];
+}
+
+export interface ScrimGameSummary {
+  id: string;
+  game_number: number;
+  status: string;
+  result: string | null;
+  duration_seconds: number | null;
+  scrim_id: string;
 }
 
 interface UseOptimizedScrimsDataOptions {
@@ -29,76 +47,11 @@ interface UseOptimizedScrimsDataOptions {
   dateFrom?: string;
   dateTo?: string;
   includeGames?: boolean;
+  mode?: 'all' | 'upcoming' | 'history';
+  opponent?: string;
+  result?: 'win' | 'loss' | 'draw' | 'unrecorded';
+  reviewStatus?: 'not_started' | 'in_review' | 'complete';
 }
-
-// High quality mock data for demo fallback
-const MOCK_SCRIMS: Scrim[] = [
-  {
-    id: 'mock-scrim-1',
-    tenant_id: 'demo',
-    opponent_name: 'G2 Academy',
-    match_date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    scheduled_time: '18:00',
-    format: 'Bo3',
-    status: 'completed',
-    result: 'win',
-    our_score: 2,
-    opponent_score: 1,
-    duration_minutes: 95,
-    created_at: new Date().toISOString(),
-    created_by: 'demo',
-    updated_at: new Date().toISOString(),
-    notes: 'Strong performance on mid-game rotations.',
-    scrim_games: [
-      { id: 'g1', game_number: 1, status: 'completed', result: 'win', duration_seconds: 1800, scrim_id: 'mock-scrim-1' },
-      { id: 'g2', game_number: 2, status: 'completed', result: 'loss', duration_seconds: 2100, scrim_id: 'mock-scrim-1' },
-      { id: 'g3', game_number: 3, status: 'completed', result: 'win', duration_seconds: 1950, scrim_id: 'mock-scrim-1' },
-    ]
-  },
-  {
-    id: 'mock-scrim-2',
-    tenant_id: 'demo',
-    opponent_name: 'FNC TQ',
-    match_date: new Date(Date.now() - 86400000 * 5).toISOString(),
-    scheduled_time: '19:00',
-    format: 'Bo3',
-    status: 'completed',
-    result: 'loss',
-    our_score: 1,
-    opponent_score: 2,
-    duration_minutes: 110,
-    created_at: new Date().toISOString(),
-    created_by: 'demo',
-    updated_at: new Date().toISOString(),
-    notes: 'Difficult time handling their late-game scaling.',
-    scrim_games: [
-      { id: 'g4', game_number: 1, status: 'completed', result: 'loss', duration_seconds: 2400, scrim_id: 'mock-scrim-2' },
-      { id: 'g5', game_number: 2, status: 'completed', result: 'win', duration_seconds: 1700, scrim_id: 'mock-scrim-2' },
-      { id: 'g6', game_number: 3, status: 'completed', result: 'loss', duration_seconds: 2200, scrim_id: 'mock-scrim-2' },
-    ]
-  },
-  {
-    id: 'mock-scrim-3',
-    tenant_id: 'demo',
-    opponent_name: 'KCB Blue',
-    match_date: new Date(Date.now() - 86400000 * 8).toISOString(),
-    scheduled_time: '17:00',
-    format: 'Bo3',
-    status: 'completed',
-    result: 'win',
-    our_score: 2,
-    opponent_score: 0,
-    duration_minutes: 65,
-    created_at: new Date().toISOString(),
-    created_by: 'demo',
-    updated_at: new Date().toISOString(),
-    notes: 'Clean sweep. Great objective control.',
-    scrim_games: [
-      { id: 'g7', game_number: 1, status: 'completed', result: 'win', duration_seconds: 1600, scrim_id: 'mock-scrim-3' },
-      { id: 'g8', game_number: 2, status: 'completed', result: 'win', duration_seconds: 1850, scrim_id: 'mock-scrim-3' },
-    ]
-  }
-];
 
 export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = {}) => {
   const { tenant } = useTenant();
@@ -108,14 +61,30 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
     status,
     dateFrom,
     dateTo,
-    includeGames = false
+    includeGames = false,
+    mode = 'all',
+    opponent,
+    result,
+    reviewStatus,
   } = options;
 
   return useQuery({
-    queryKey: ['scrims-optimized', tenant?.id, page, pageSize, status, dateFrom, dateTo, includeGames],
+    queryKey: [
+      'scrims-optimized',
+      tenant?.id,
+      page,
+      pageSize,
+      status,
+      dateFrom,
+      dateTo,
+      includeGames,
+      mode,
+      opponent,
+      result,
+      reviewStatus,
+    ],
     queryFn: async (): Promise<{ scrims: Scrim[], totalCount: number }> => {
-      // Return mock data if no tenant for demo
-      if (!tenant?.id) return { scrims: MOCK_SCRIMS, totalCount: MOCK_SCRIMS.length };
+      if (!tenant?.id) return { scrims: [], totalCount: 0 };
 
       let query = supabase
         .from('scrims')
@@ -135,9 +104,32 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
         query = query.lte('match_date', dateTo);
       }
 
+      const now = new Date().toISOString();
+      if (mode === 'upcoming') {
+        query = query
+          .gte('starts_at', now)
+          .not('status', 'in', '("completed","cancelled")');
+      } else if (mode === 'history') {
+        query = query.or(`starts_at.lt.${now},status.in.(completed,cancelled)`);
+      }
+
+      if (opponent?.trim()) {
+        query = query.ilike('opponent_name', `%${opponent.trim()}%`);
+      }
+
+      if (result === 'unrecorded') {
+        query = query.is('result', null);
+      } else if (result) {
+        query = query.eq('result', result);
+      }
+
+      if (reviewStatus) {
+        query = query.eq('review_status', reviewStatus);
+      }
+
       // Apply sorting and pagination
       query = query
-        .order('match_date', { ascending: false })
+        .order('starts_at', { ascending: mode === 'upcoming' })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       const { data: scrimsData, error: scrimsError, count } = await query;
@@ -148,11 +140,6 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
       }
 
       let scrims = scrimsData || [];
-
-      // Fallback for demo if DB is empty
-      if (scrims.length === 0 && !status && !dateFrom && !dateTo) {
-        return { scrims: MOCK_SCRIMS, totalCount: MOCK_SCRIMS.length };
-      }
 
       // If includeGames is true, fetch scrim_games separately
       if (includeGames && scrims.length > 0) {
@@ -167,7 +154,7 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
           console.error('Error fetching scrim games:', gamesError);
         } else {
           // Group games by scrim_id and attach to scrims
-          const gamesByScrimId = (gamesData || []).reduce((acc: any, game: any) => {
+          const gamesByScrimId = (gamesData || []).reduce<Record<string, ScrimGameSummary[]>>((acc, game) => {
             if (!acc[game.scrim_id]) {
               acc[game.scrim_id] = [];
             }
@@ -184,7 +171,7 @@ export const useOptimizedScrimsData = (options: UseOptimizedScrimsDataOptions = 
 
       return {
         scrims,
-        totalCount: count || (scrims.length === MOCK_SCRIMS.length ? MOCK_SCRIMS.length : 0)
+        totalCount: count || 0
       };
     },
     enabled: true,

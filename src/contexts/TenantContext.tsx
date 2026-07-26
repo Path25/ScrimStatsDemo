@@ -1,13 +1,12 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
-type TenantUser = Database['public']['Tables']['tenant_users']['Row'];
 
-interface TenantConfig {
+export interface TenantConfig {
   id: string;
   slug: string;
   name: string;
@@ -16,133 +15,120 @@ interface TenantConfig {
   subscriptionTier: 'free' | 'pro' | 'elite';
   subscriptionStatus: string;
   isActive: boolean;
-  userRole?: string;
-  settings?: Record<string, any>;
-  grid_api_key?: string;
-  grid_team_id?: string;
-  grid_integration_enabled?: boolean;
+  userRole: string;
+  settings: Record<string, unknown>;
 }
 
 interface TenantContextType {
   tenant: TenantConfig | null;
+  memberships: TenantConfig[];
   isLoading: boolean;
   error: string | null;
-  hasNoTenant: boolean; // New flag to indicate user has no tenant but is authenticated
+  hasNoTenant: boolean;
+  requiresWorkspaceSelection: boolean;
+  chooseTenant: (tenantId: string) => void;
   refreshTenant: () => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
+const activeTenantStorageKey = 'scrimstats.active-tenant';
+
+function toTenantConfig(row: { role: string; tenants: Tenant | Tenant[] | null }): TenantConfig | null {
+  const rawTenant = Array.isArray(row.tenants) ? row.tenants[0] : row.tenants;
+  if (!rawTenant) return null;
+
+  const settings = { ...((rawTenant.settings as Record<string, unknown>) || {}) };
+  delete settings.riot_api_key;
+  delete settings.grid_api_key;
+
+  return {
+    id: rawTenant.id,
+    slug: rawTenant.slug,
+    name: rawTenant.name,
+    logo: typeof settings.logo_url === 'string' ? settings.logo_url : undefined,
+    primaryColor: typeof settings.primary_color === 'string' ? settings.primary_color : '#18b8a6',
+    subscriptionTier: rawTenant.subscription_tier as TenantConfig['subscriptionTier'],
+    subscriptionStatus: rawTenant.subscription_status || 'inactive',
+    isActive: ['active', 'trial'].includes(rawTenant.subscription_status || ''),
+    userRole: row.role,
+    settings,
+  };
+}
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
-  const [tenant, setTenant] = useState<TenantConfig | null>(null);
+  const [memberships, setMemberships] = useState<TenantConfig[]>([]);
+  const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasNoTenant, setHasNoTenant] = useState(false);
 
-  const loadUserTenant = async () => {
+  const loadUserTenants = useCallback(async () => {
     if (!user) {
-      setTenant(null);
-      setHasNoTenant(false);
-      setIsLoading(false);
+      setMemberships([]);
+      setActiveTenantId(null);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
-    try {
-      setIsLoading(true);
-      console.log('Loading tenant for user:', user.email);
-      
-      // First, find which tenant(s) this user belongs to
-      const { data: tenantUsers, error: tenantUserError } = await supabase
-        .from('tenant_users')
-        .select(`
-          tenant_id,
-          role,
-          tenants (
-            id,
-            slug,
-            name,
-            settings,
-            subscription_tier,
-            subscription_status,
-            grid_api_key,
-            grid_team_id,
-            grid_integration_enabled,
-            created_at
-          )
-        `)
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
+    setIsLoading(true);
+    const { data, error: tenantError } = await supabase
+      .from('tenant_users')
+      .select('tenant_id, role, tenants (id, slug, name, settings, subscription_tier, subscription_status, created_at, updated_at)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
 
-      if (tenantUserError) {
-        console.error('Tenant user error:', tenantUserError);
-        setError('Failed to load user tenant information');
-        setHasNoTenant(false);
-        return;
-      }
-
-      if (!tenantUsers || !tenantUsers.tenants) {
-        console.log('No tenant found for user - they may need to accept an invitation');
-        setTenant(null);
-        setHasNoTenant(true); // User is authenticated but has no tenant
-        setError(null);
-        return;
-      }
-
-      const tenantData = tenantUsers.tenants as Tenant;
-      console.log('Loaded tenant:', tenantData.name, 'with role:', tenantUsers.role);
-
-      // Check if tenant is active (including trial status)
-      const isActive = tenantData.subscription_status === 'active' || tenantData.subscription_status === 'trial';
-
-      // Safely parse settings JSON and include created_at
-      const settings = (tenantData.settings as Record<string, any>) || {};
-      settings.created_at = tenantData.created_at;
-
-      // Convert to TenantConfig format
-      const tenantConfig: TenantConfig = {
-        id: tenantData.id,
-        slug: tenantData.slug,
-        name: tenantData.name,
-        logo: settings.logo_url as string || undefined,
-        primaryColor: settings.primary_color as string || '#00f5ff',
-        subscriptionTier: tenantData.subscription_tier as 'free' | 'pro' | 'elite',
-        subscriptionStatus: tenantData.subscription_status || 'inactive',
-        isActive,
-        userRole: tenantUsers.role,
-        settings: settings,
-        grid_api_key: tenantData.grid_api_key || undefined,
-        grid_team_id: tenantData.grid_team_id || undefined,
-        grid_integration_enabled: tenantData.grid_integration_enabled || false
-      };
-
-      setTenant(tenantConfig);
-      setHasNoTenant(false);
-      setError(null);
-    } catch (err) {
-      console.error('Error loading tenant:', err);
-      setError('Failed to load tenant configuration');
-      setHasNoTenant(false);
-    } finally {
+    if (tenantError) {
+      setMemberships([]);
+      setError('We could not load your team access. Please try again.');
       setIsLoading(false);
+      return;
     }
-  };
 
-  const refreshTenant = async () => {
-    await loadUserTenant();
-  };
+    const nextMemberships = (data || [])
+      .map((membership) => toTenantConfig(membership as unknown as { role: string; tenants: Tenant | Tenant[] | null }))
+      .filter((membership): membership is TenantConfig => membership !== null);
+    const storedTenantId = window.localStorage.getItem(activeTenantStorageKey);
+    const selectedTenantId = nextMemberships.some((membership) => membership.id === storedTenantId)
+      ? storedTenantId
+      : nextMemberships.length === 1
+        ? nextMemberships[0].id
+        : null;
+
+    setMemberships(nextMemberships);
+    setActiveTenantId(selectedTenantId);
+    setError(null);
+    setIsLoading(false);
+  }, [user]);
 
   useEffect(() => {
-    // Only load tenant when auth is not loading and we have a stable auth state
-    if (!authLoading) {
-      loadUserTenant();
-    }
-  }, [user, authLoading]);
+    if (!authLoading) void loadUserTenants();
+  }, [authLoading, loadUserTenants]);
+
+  const chooseTenant = useCallback((tenantId: string) => {
+    if (!memberships.some((membership) => membership.id === tenantId)) return;
+    window.localStorage.setItem(activeTenantStorageKey, tenantId);
+    setActiveTenantId(tenantId);
+  }, [memberships]);
+
+  const tenant = useMemo(
+    () => memberships.find((membership) => membership.id === activeTenantId) || null,
+    [activeTenantId, memberships],
+  );
 
   return (
-    <TenantContext.Provider value={{ tenant, isLoading: isLoading || authLoading, error, hasNoTenant, refreshTenant }}>
+    <TenantContext.Provider
+      value={{
+        tenant,
+        memberships,
+        isLoading: isLoading || authLoading,
+        error,
+        hasNoTenant: Boolean(user) && !isLoading && memberships.length === 0,
+        requiresWorkspaceSelection: Boolean(user) && memberships.length > 1 && !tenant,
+        chooseTenant,
+        refreshTenant: loadUserTenants,
+      }}
+    >
       {children}
     </TenantContext.Provider>
   );
@@ -150,8 +136,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
 export function useTenant() {
   const context = useContext(TenantContext);
-  if (context === undefined) {
-    throw new Error('useTenant must be used within a TenantProvider');
-  }
+  if (context === undefined) throw new Error('useTenant must be used within a TenantProvider');
   return context;
 }

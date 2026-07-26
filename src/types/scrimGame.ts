@@ -25,6 +25,11 @@ export interface ScrimGameDB {
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
+  performance_rating?: number | null;
+  performance_summary?: string | null;
+  early_game_rating?: number | null;
+  mid_game_rating?: number | null;
+  late_game_rating?: number | null;
   // New fields for auto-monitoring
   grid_series_number?: number;
   desktop_session_id?: string;
@@ -55,6 +60,11 @@ export interface ScrimGame {
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
+  performance_rating?: number | null;
+  performance_summary?: string | null;
+  early_game_rating?: number | null;
+  mid_game_rating?: number | null;
+  late_game_rating?: number | null;
   // New fields for auto-monitoring
   grid_series_number?: number;
   desktop_session_id?: string;
@@ -133,6 +143,14 @@ export interface ScrimParticipant {
   damage_dealt: number;
   damage_taken: number;
   vision_score: number;
+  // Detailed Analytical Metrics
+  gold_diff_at_15?: number;
+  cs_diff_at_15?: number;
+  xp_diff_at_15?: number;
+  damage_percentage?: number;
+  gold_percentage?: number;
+  kill_participation?: number;
+  performance_status?: string;
   items: GameItem[];
   runes: RuneSetup;
   summoner_spells: SummonerSpell[];

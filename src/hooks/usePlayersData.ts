@@ -1,235 +1,162 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
-import { toast } from 'sonner';
-import type { Database } from '@/integrations/supabase/types';
+import { useAuth } from "@/contexts/AuthContext";
+import { useTenant } from "@/contexts/TenantContext";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-type Player = Database['public']['Tables']['players']['Row'];
-type PlayerInsert = Database['public']['Tables']['players']['Insert'];
-type PlayerUpdate = Database['public']['Tables']['players']['Update'];
+type Player = Database["public"]["Tables"]["players"]["Row"];
+type PlayerInsert = Database["public"]["Tables"]["players"]["Insert"];
+type PlayerUpdate = Database["public"]["Tables"]["players"]["Update"];
 
-// High quality mock data for demo fallback
-const MOCK_PLAYERS: Player[] = [
-  {
-    id: 'mock-player-1',
-    summoner_name: 'Theory',
-    role: 'mid',
-    rank: 'Challenger',
-    main_champions: ['Azir', 'Orianna', 'Sylas'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo',
-    tenant_id: 'demo',
-    avatar_url: null,
-    discord_username: null,
-    join_date: null,
-    last_soloq_sync: null,
-    lp: 0,
-    puuid: null,
-    region: 'EUW',
-    riot_id: 'Theory',
-    riot_tag_line: 'EUW',
-    summoner_id: null,
-    notes: 'Primary shotcaller.'
-  },
-  {
-    id: 'mock-player-2',
-    summoner_name: 'Vortex',
-    role: 'jungle',
-    rank: 'Grandmaster',
-    main_champions: ['Lee Sin', 'Nidalee', 'Viego'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo',
-    tenant_id: 'demo',
-    avatar_url: null,
-    discord_username: null,
-    join_date: null,
-    last_soloq_sync: null,
-    lp: 0,
-    puuid: null,
-    region: 'EUW',
-    riot_id: 'Vortex',
-    riot_tag_line: 'EUW',
-    summoner_id: null,
-    notes: 'Strong early game pressure.'
-  },
-  {
-    id: 'mock-player-3',
-    summoner_name: 'Shield',
-    role: 'top',
-    rank: 'Master',
-    main_champions: ['K\'Sante', 'Jax', 'Renekton'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo',
-    tenant_id: 'demo',
-    avatar_url: null,
-    discord_username: null,
-    join_date: null,
-    last_soloq_sync: null,
-    lp: 0,
-    puuid: null,
-    region: 'EUW',
-    riot_id: 'Shield',
-    riot_tag_line: 'EUW',
-    summoner_id: null,
-    notes: 'Consistent weakside player.'
-  },
-  {
-    id: 'mock-player-4',
-    summoner_name: 'Pulse',
-    role: 'adc',
-    rank: 'Challenger',
-    main_champions: ['Kai\'Sa', 'Xayah', 'Ezreal'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo',
-    tenant_id: 'demo',
-    avatar_url: null,
-    discord_username: null,
-    join_date: null,
-    last_soloq_sync: null,
-    lp: 0,
-    puuid: null,
-    region: 'EUW',
-    riot_id: 'Pulse',
-    riot_tag_line: 'EUW',
-    summoner_id: null,
-    notes: 'Excellent teamfight positioning.'
-  },
-  {
-    id: 'mock-player-5',
-    summoner_name: 'Aura',
-    role: 'support',
-    rank: 'Grandmaster',
-    main_champions: ['Rakan', 'Thresh', 'Nautilus'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: 'demo',
-    tenant_id: 'demo',
-    avatar_url: null,
-    discord_username: null,
-    join_date: null,
-    last_soloq_sync: null,
-    lp: 0,
-    puuid: null,
-    region: 'EUW',
-    riot_id: 'Aura',
-    riot_tag_line: 'EUW',
-    summoner_id: null,
-    notes: 'High vision control score.'
+function mutationMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
   }
-];
+  return fallback;
+}
 
+/** Live tenant-scoped roster data only. No demo roster is returned on error or an empty workspace. */
 export function usePlayersData() {
   const { tenant } = useTenant();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: players, isLoading } = useQuery({
-    queryKey: ['players', tenant?.id],
+  const rosterQuery = useQuery({
+    queryKey: ["players", tenant?.id],
+    enabled: Boolean(tenant?.id),
     queryFn: async () => {
-      if (!tenant?.id) return MOCK_PLAYERS;
-
+      if (!tenant?.id) return [] as Player[];
       const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('tenant_id', tenant.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
+        .from("players")
+        .select("*")
+        .eq("tenant_id", tenant.id)
+        .order("is_active", { ascending: false })
+        .order("created_at", { ascending: false });
       if (error) throw error;
-
-      // Fallback for demo if DB is empty
-      if (!data || data.length === 0) {
-        return MOCK_PLAYERS;
-      }
-
-      return data as Player[];
+      return (data || []) as Player[];
     },
-    enabled: true,
   });
 
   const createPlayerMutation = useMutation({
-    mutationFn: async (playerData: Omit<PlayerInsert, 'tenant_id' | 'created_by'>) => {
-      if (!tenant?.id) throw new Error('No tenant selected');
-
-      const { data, error } = await supabase
-        .from('players')
-        .insert({
-          ...playerData,
-          tenant_id: tenant.id,
-          created_by: tenant.id, // We'll use tenant.id for now since we don't have user.id
-        })
-        .select()
-        .single();
-
+    mutationFn: async (playerData: Omit<PlayerInsert, "tenant_id" | "created_by">) => {
+      if (!tenant?.id || !user?.id) throw new Error("No active team workspace");
+      const { data, error } = await supabase.from("players").insert({ ...playerData, tenant_id: tenant.id, created_by: user.id }).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast.success('Player created successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to create player');
-    },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["players"] }); toast.success("Player added to the roster."); },
+    onError: (error: unknown) => toast.error(mutationMessage(error, "Failed to add player")),
   });
 
   const updatePlayerMutation = useMutation({
     mutationFn: async ({ id, ...updates }: PlayerUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from('players')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      if (!tenant?.id) throw new Error("No active team workspace");
+      const { data, error } = await supabase.from("players").update(updates).eq("id", id).eq("tenant_id", tenant.id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["players"] }); toast.success("Roster profile updated."); },
+    onError: (error: unknown) => toast.error(mutationMessage(error, "Failed to update player")),
+  });
 
+  const savePlayerProfileMutation = useMutation({
+    mutationFn: async ({
+      id,
+      summonerName,
+      riotId,
+      tagLine,
+      region,
+      role,
+      champions,
+      discordUsername,
+      notes,
+    }: {
+      id: string;
+      summonerName: string;
+      riotId: string;
+      tagLine: string;
+      region: string;
+      role: string;
+      champions: string[];
+      discordUsername?: string;
+      notes?: string;
+    }) => {
+      const { data, error } = await supabase.rpc("update_roster_player", {
+        p_player_id: id,
+        p_summoner_name: summonerName,
+        p_riot_id: riotId,
+        p_riot_tag_line: tagLine,
+        p_region: region,
+        p_role: role,
+        p_main_champions: champions,
+        p_discord_username: discordUsername,
+        p_notes: notes,
+      });
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast.success('Player updated successfully');
+      void queryClient.invalidateQueries({ queryKey: ["players"] });
+      toast.success("Roster profile updated.");
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update player');
-    },
+    onError: (error: unknown) =>
+      toast.error(mutationMessage(error, "Failed to update player")),
   });
 
   const deletePlayerMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      // Soft delete by setting is_active to false
-      const { error } = await supabase
-        .from('players')
-        .update({ is_active: false })
-        .eq('id', playerId);
+      if (!tenant?.id) throw new Error("No active team workspace");
+      const { error } = await supabase.rpc("set_roster_player_state", {
+        p_player_id: playerId,
+        p_active: false,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["players"] }); toast.success("Player removed from the active roster."); },
+    onError: (error: unknown) => toast.error(mutationMessage(error, "Failed to remove player")),
+  });
 
+  const reactivatePlayerMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      const { error } = await supabase.rpc("set_roster_player_state", {
+        p_player_id: playerId,
+        p_active: true,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast.success('Player removed from roster');
+      void queryClient.invalidateQueries({ queryKey: ["players"] });
+      toast.success("Player returned to the active roster.");
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to remove player');
-    },
+    onError: (error: unknown) =>
+      toast.error(mutationMessage(error, "Failed to reactivate player")),
   });
 
+  const allPlayers = rosterQuery.data || [];
+
   return {
-    players: players || [],
-    isLoading,
+    players: allPlayers.filter((player) => player.is_active !== false),
+    archivedPlayers: allPlayers.filter((player) => player.is_active === false),
+    isLoading: rosterQuery.isLoading,
+    error: rosterQuery.error ? mutationMessage(rosterQuery.error, "The roster could not be loaded.") : null,
+    refetch: rosterQuery.refetch,
     createPlayer: createPlayerMutation.mutate,
     updatePlayer: updatePlayerMutation.mutate,
+    savePlayerProfile: savePlayerProfileMutation.mutate,
     deletePlayer: deletePlayerMutation.mutate,
+    reactivatePlayer: reactivatePlayerMutation.mutate,
     isCreating: createPlayerMutation.isPending,
-    isUpdating: updatePlayerMutation.isPending,
-    isDeleting: deletePlayerMutation.isPending,
+    isUpdating: updatePlayerMutation.isPending || savePlayerProfileMutation.isPending,
+    isDeleting: deletePlayerMutation.isPending || reactivatePlayerMutation.isPending,
+    pendingPlayerId:
+      deletePlayerMutation.variables || reactivatePlayerMutation.variables || null,
   };
 }

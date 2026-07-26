@@ -36,8 +36,9 @@ serve(async (req) => {
     // Get all tenants with GRID integration enabled
     const { data: tenants, error: tenantError } = await supabaseClient
       .from('tenants')
-      .select('id, grid_api_key, grid_team_id, settings, grid_integration_enabled, name')
+      .select('id, grid_api_key, grid_team_id, settings, grid_integration_enabled, name, tenant_capture_settings!inner(profile)')
       .eq('grid_integration_enabled', true)
+      .eq('tenant_capture_settings.profile', 'grid_manual')
       .not('grid_api_key', 'is', null)
       .not('grid_team_id', 'is', null)
 
@@ -520,6 +521,24 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
     // Create participants if we have participant data
     if (summaryData.participants && summaryData.participants.length > 0) {
       await createParticipantsForGame(supabaseClient, gameId, summaryData.participants, ourTeamSide)
+    }
+
+    const { error: evidenceError } = await supabaseClient
+      .from('scrim_game_evidence')
+      .insert({
+        tenant_id: tenant.id,
+        scrim_game_id: gameId,
+        provider: 'grid',
+        provider_record_id: `${seriesId}:1`,
+        payload_version: 'grid-v1',
+        captured_at: new Date().toISOString(),
+        capabilities: ['result', 'draft', 'participant_stats'],
+        metadata: { has_summary: !!summaryData, has_details: !!detailsData }
+      })
+
+    if (evidenceError && evidenceError.code !== '23505') {
+      console.error('Error recording GRID provenance:', evidenceError)
+      return false
     }
 
     return true

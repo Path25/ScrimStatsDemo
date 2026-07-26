@@ -332,7 +332,7 @@ const PlayersPage: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           {player.linked_profile_id ? (
-                            <Badge variant="success" className="flex items-center gap-1">
+                            <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1">
                               <span className="h-2 w-2 bg-gaming-green rounded-full animate-pulse"></span>
                               Linked
                             </Badge>

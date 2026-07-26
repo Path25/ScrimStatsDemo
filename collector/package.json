@@ -1,0 +1,31 @@
+{
+  "name": "scrimstats-collector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows companion for post-game ScrimStats captures",
+  "author": "ScrimStats",
+  "license": "UNLICENSED",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && electron .",
+    "test": "tsx --test test/**/*.test.ts",
+    "dist:win": "npm run build && electron-builder --win nsis"
+  },
+  "build": {
+    "directories": { "output": "release" },
+    "appId": "gg.scrimstats.collector",
+    "productName": "ScrimStats Collector",
+    "files": ["dist/**", "src/renderer.html", "package.json"],
+    "win": { "target": ["nsis"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "asar": true
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}

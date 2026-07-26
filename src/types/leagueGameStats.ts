@@ -16,6 +16,14 @@ export interface PlayerGameStats {
   TOTAL_DAMAGE_TAKEN?: number;
   PERK_PRIMARY_STYLE?: number; // Primary rune tree ID
   PERK_SUB_STYLE?: number; // Secondary rune tree ID
+  // Detailed Analytical Metrics
+  GOLD_DIFF_AT_15?: number;
+  CS_DIFF_AT_15?: number;
+  XP_DIFF_AT_15?: number;
+  DAMAGE_PERCENTAGE?: number; // 0-1 range
+  GOLD_PERCENTAGE?: number;   // 0-1 range
+  KILL_PARTICIPATION?: number; // 0-1 range
+  PERFORMANCE_STATUS?: 'overperforming' | 'normal' | 'underperforming' | 'striving';
   // Add other specific stats as needed
 }
 

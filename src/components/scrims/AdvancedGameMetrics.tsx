@@ -13,6 +13,7 @@ import {
   Crown,
   Zap
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { ScrimGame, ScrimParticipant } from '@/types/scrimGame';
 
 interface AdvancedGameMetricsProps {
@@ -127,6 +128,37 @@ export const AdvancedGameMetrics: React.FC<AdvancedGameMetricsProps> = ({
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Avg: {(ourTeam.reduce((sum, p) => sum + (p.vision_score || 0), 0) / ourTeam.length).toFixed(1)}
+                </div>
+              </div>
+            </div>
+
+            {/* Early Game Advantage (GD@15) */}
+            <div className="text-center col-span-1 md:col-span-3 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-center gap-2 mb-2 text-brand-primary">
+                <TrendingUp className="h-4 w-4" />
+                <span className="text-sm font-bold uppercase tracking-widest">Early Game Advantage (15m)</span>
+              </div>
+              <div className="flex justify-around items-center">
+                <div className="text-center">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold">Gold Diff</div>
+                  <div className={cn("text-xl font-black font-mono", ourTeam.reduce((sum, p) => sum + (p.gold_diff_at_15 || 0), 0) > 0 ? "text-brand-primary" : "text-red-400")}>
+                    {ourTeam.reduce((sum, p) => sum + (p.gold_diff_at_15 || 0), 0) > 0 ? '+' : ''}
+                    {ourTeam.reduce((sum, p) => sum + (p.gold_diff_at_15 || 0), 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold">CS Diff</div>
+                  <div className={cn("text-xl font-black font-mono", ourTeam.reduce((sum, p) => sum + (p.cs_diff_at_15 || 0), 0) > 0 ? "text-brand-primary" : "text-red-400")}>
+                    {ourTeam.reduce((sum, p) => sum + (p.cs_diff_at_15 || 0), 0) > 0 ? '+' : ''}
+                    {ourTeam.reduce((sum, p) => sum + (p.cs_diff_at_15 || 0), 0).toFixed(1)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold">XP Diff</div>
+                  <div className={cn("text-xl font-black font-mono", ourTeam.reduce((sum, p) => sum + (p.xp_diff_at_15 || 0), 0) > 0 ? "text-brand-primary" : "text-red-400")}>
+                    {ourTeam.reduce((sum, p) => sum + (p.xp_diff_at_15 || 0), 0) > 0 ? '+' : ''}
+                    {ourTeam.reduce((sum, p) => sum + (p.xp_diff_at_15 || 0), 0).toLocaleString()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -273,6 +305,12 @@ export const AdvancedGameMetrics: React.FC<AdvancedGameMetricsProps> = ({
                     <div>
                       <div className="text-muted-foreground">Vision</div>
                       <div className="font-medium">{player.vision_score || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-brand-primary font-bold">GD@15</div>
+                      <div className={cn("font-mono font-bold", (player.gold_diff_at_15 || 0) > 0 ? "text-brand-primary" : (player.gold_diff_at_15 || 0) < 0 ? "text-red-400" : "text-zinc-500")}>
+                        {(player.gold_diff_at_15 || 0) > 0 ? '+' : ''}{player.gold_diff_at_15 || 0}
+                      </div>
                     </div>
                   </div>
                 </div>

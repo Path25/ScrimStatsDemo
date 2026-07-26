@@ -42,11 +42,13 @@ export function PlayerReportsTab({ data }: PlayerReportsTabProps) {
                                 <TableHead className="text-label text-zinc-500 text-center">Role</TableHead>
                                 <TableHead className="text-label text-zinc-500 text-center">Games</TableHead>
                                 <TableHead className="text-label text-zinc-500 text-center">Win Rate</TableHead>
+                                <TableHead className="text-label text-zinc-500 text-center text-brand-primary">GD@15</TableHead>
                                 <TableHead className="text-label text-zinc-500 text-center">KDA</TableHead>
-                                <TableHead className="text-label text-zinc-500 text-center">Avg CS</TableHead>
-                                <TableHead className="text-label text-zinc-500 text-center">Vision</TableHead>
+                                <TableHead className="text-label text-zinc-500 text-center">Dmg%</TableHead>
+                                <TableHead className="text-label text-zinc-500 text-center">Gold%</TableHead>
+                                <TableHead className="text-label text-zinc-500 text-center">KP%</TableHead>
                                 <TableHead className="text-label text-zinc-500 text-center">Score</TableHead>
-                                <TableHead className="text-label text-zinc-500 text-right">Top Champs</TableHead>
+                                <TableHead className="text-label text-zinc-500 text-right pr-6">Top Champs</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -88,6 +90,11 @@ export function PlayerReportsTab({ data }: PlayerReportsTabProps) {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-center p-4">
+                                            <span className={cn("text-sm font-bold font-mono", player.avgGD15 > 0 ? "text-brand-primary" : player.avgGD15 < 0 ? "text-red-400" : "text-zinc-500")}>
+                                                {player.avgGD15 > 0 ? '+' : ''}{player.avgGD15}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-center p-4">
                                             <div className="flex flex-col items-center">
                                                 <span className={cn("text-sm font-bold font-mono", player.kda >= 3 ? "text-brand-primary" : "text-white")}>
                                                     {player.kda.toFixed(2)}
@@ -98,10 +105,13 @@ export function PlayerReportsTab({ data }: PlayerReportsTabProps) {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center p-4">
-                                            <span className="text-zinc-300 font-mono text-sm">{player.avgCS}</span>
+                                            <span className="text-zinc-300 font-mono text-sm">{Math.round(player.avgDmgPct * 100)}%</span>
                                         </TableCell>
                                         <TableCell className="text-center p-4">
-                                            <span className="text-zinc-300 font-mono text-sm">{player.avgVisionScore}</span>
+                                            <span className="text-zinc-300 font-mono text-sm">{Math.round(player.avgGoldPct * 100)}%</span>
+                                        </TableCell>
+                                        <TableCell className="text-center p-4">
+                                            <span className="text-zinc-300 font-mono text-sm">{Math.round(player.avgKP * 100)}%</span>
                                         </TableCell>
                                         <TableCell className="text-center p-4">
                                             <div className="inline-flex flex-col items-center justify-center">

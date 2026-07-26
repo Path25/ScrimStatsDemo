@@ -14,6 +14,543 @@ export type Database = {
   }
   public: {
     Tables: {
+      discord_channel_subscriptions: {
+        Row: {
+          channel_id: string
+          channel_name: string | null
+          created_at: string
+          enabled: boolean
+          event_type: string
+          id: string
+          installation_id: string
+          tenant_id: string
+        }
+        Insert: {
+          channel_id: string
+          channel_name?: string | null
+          created_at?: string
+          enabled?: boolean
+          event_type: string
+          id?: string
+          installation_id: string
+          tenant_id: string
+        }
+        Update: {
+          channel_id?: string
+          channel_name?: string | null
+          created_at?: string
+          enabled?: boolean
+          event_type?: string
+          id?: string
+          installation_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      discord_installations: {
+        Row: {
+          guild_id: string
+          guild_name: string | null
+          id: string
+          installed_at: string
+          installed_by: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          guild_id: string
+          guild_name?: string | null
+          id?: string
+          installed_at?: string
+          installed_by: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          guild_id?: string
+          guild_name?: string | null
+          id?: string
+          installed_at?: string
+          installed_by?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      draft_scenario_actions: {
+        Row: {
+          action_type: string
+          assigned_role: string | null
+          champion_name: string
+          created_at: string
+          id: string
+          phase: string
+          rationale: string
+          scenario_id: string
+          sequence_number: number
+          team_side: string
+          tenant_id: string
+        }
+        Insert: {
+          action_type: string
+          assigned_role?: string | null
+          champion_name: string
+          created_at?: string
+          id?: string
+          phase: string
+          rationale?: string
+          scenario_id: string
+          sequence_number: number
+          team_side: string
+          tenant_id: string
+        }
+        Update: {
+          action_type?: string
+          assigned_role?: string | null
+          champion_name?: string
+          created_at?: string
+          id?: string
+          phase?: string
+          rationale?: string
+          scenario_id?: string
+          sequence_number?: number
+          team_side?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      draft_scenarios: {
+        Row: {
+          brief_id: string
+          contingency_notes: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          parent_scenario_id: string | null
+          rationale: string
+          side: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          brief_id: string
+          contingency_notes?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          parent_scenario_id?: string | null
+          rationale?: string
+          side: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          brief_id?: string
+          contingency_notes?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          parent_scenario_id?: string | null
+          rationale?: string
+          side?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_delivery_attempts: {
+        Row: {
+          attempted_at: string
+          error_message: string | null
+          event_id: string
+          id: string
+          outcome: string
+          provider: string
+          provider_reference: string | null
+          tenant_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          error_message?: string | null
+          event_id: string
+          id?: string
+          outcome: string
+          provider: string
+          provider_reference?: string | null
+          tenant_id: string
+        }
+        Update: {
+          attempted_at?: string
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          outcome?: string
+          provider?: string
+          provider_reference?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      integration_events: {
+        Row: {
+          aggregate_id: string | null
+          aggregate_type: string
+          attempt_count: number
+          available_at: string
+          created_at: string
+          dedupe_key: string
+          delivered_at: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          payload: Json
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          aggregate_id?: string | null
+          aggregate_type: string
+          attempt_count?: number
+          available_at?: string
+          created_at?: string
+          dedupe_key: string
+          delivered_at?: string | null
+          event_type: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          aggregate_id?: string | null
+          aggregate_type?: string
+          attempt_count?: number
+          available_at?: string
+          created_at?: string
+          dedupe_key?: string
+          delivered_at?: string | null
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      opponent_external_draft_games: {
+        Row: {
+          blue_bans: Json
+          blue_picks: Json
+          blue_team: string
+          created_at: string
+          fetched_at: string
+          id: string
+          opponent_team_id: string
+          patch: string | null
+          played_at: string | null
+          provider: string
+          provider_game_id: string
+          provider_match_id: string | null
+          provider_page: string | null
+          provider_tournament: string | null
+          raw_source: Json
+          red_bans: Json
+          red_picks: Json
+          red_team: string
+          source_revision: string | null
+          source_url: string
+          tenant_id: string
+          updated_at: string
+          winner_side: string | null
+        }
+        Insert: {
+          blue_bans?: Json
+          blue_picks?: Json
+          blue_team: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          opponent_team_id: string
+          patch?: string | null
+          played_at?: string | null
+          provider?: string
+          provider_game_id: string
+          provider_match_id?: string | null
+          provider_page?: string | null
+          provider_tournament?: string | null
+          raw_source?: Json
+          red_bans?: Json
+          red_picks?: Json
+          red_team: string
+          source_revision?: string | null
+          source_url: string
+          tenant_id: string
+          updated_at?: string
+          winner_side?: string | null
+        }
+        Update: {
+          blue_bans?: Json
+          blue_picks?: Json
+          blue_team?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          opponent_team_id?: string
+          patch?: string | null
+          played_at?: string | null
+          provider?: string
+          provider_game_id?: string
+          provider_match_id?: string | null
+          provider_page?: string | null
+          provider_tournament?: string | null
+          raw_source?: Json
+          red_bans?: Json
+          red_picks?: Json
+          red_team?: string
+          source_revision?: string | null
+          source_url?: string
+          tenant_id?: string
+          updated_at?: string
+          winner_side?: string | null
+        }
+        Relationships: []
+      }
+      preparation_brief_external_drafts: {
+        Row: {
+          brief_id: string
+          created_at: string
+          display_order: number
+          external_draft_game_id: string
+          tenant_id: string
+        }
+        Insert: {
+          brief_id: string
+          created_at?: string
+          display_order?: number
+          external_draft_game_id: string
+          tenant_id: string
+        }
+        Update: {
+          brief_id?: string
+          created_at?: string
+          display_order?: number
+          external_draft_game_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      preparation_briefs: {
+        Row: {
+          created_at: string
+          created_by: string
+          executive_summary: string
+          id: string
+          opponent_team_id: string
+          parent_brief_id: string | null
+          patch_label: string | null
+          priorities: Json
+          published_at: string | null
+          revision: number
+          scheduled_for: string | null
+          scrim_id: string | null
+          snapshot: Json | null
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          executive_summary?: string
+          id?: string
+          opponent_team_id: string
+          parent_brief_id?: string | null
+          patch_label?: string | null
+          priorities?: Json
+          published_at?: string | null
+          revision?: number
+          scheduled_for?: string | null
+          scrim_id?: string | null
+          snapshot?: Json | null
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          executive_summary?: string
+          id?: string
+          opponent_team_id?: string
+          parent_brief_id?: string | null
+          patch_label?: string | null
+          priorities?: Json
+          published_at?: string | null
+          revision?: number
+          scheduled_for?: string | null
+          scrim_id?: string | null
+          snapshot?: Json | null
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scouting_evidence: {
+        Row: {
+          confidence: number
+          created_at: string
+          created_by: string
+          evidence_type: string
+          game_time_seconds: number | null
+          id: string
+          lifecycle_state: string
+          observation: string
+          observed_at: string
+          opponent_team_id: string
+          sample_context: string | null
+          scrim_game_id: string | null
+          scrim_id: string | null
+          source_kind: string
+          superseded_at: string | null
+          superseded_by: string | null
+          superseded_by_evidence_id: string | null
+          superseded_reason: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          created_by: string
+          evidence_type: string
+          game_time_seconds?: number | null
+          id?: string
+          lifecycle_state?: string
+          observation: string
+          observed_at?: string
+          opponent_team_id: string
+          sample_context?: string | null
+          scrim_game_id?: string | null
+          scrim_id?: string | null
+          source_kind: string
+          superseded_at?: string | null
+          superseded_by?: string | null
+          superseded_by_evidence_id?: string | null
+          superseded_reason?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          created_by?: string
+          evidence_type?: string
+          game_time_seconds?: number | null
+          id?: string
+          lifecycle_state?: string
+          observation?: string
+          observed_at?: string
+          opponent_team_id?: string
+          sample_context?: string | null
+          scrim_game_id?: string | null
+          scrim_id?: string | null
+          source_kind?: string
+          superseded_at?: string | null
+          superseded_by?: string | null
+          superseded_by_evidence_id?: string | null
+          superseded_reason?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scouting_tendencies: {
+        Row: {
+          category: string
+          confidence: number
+          created_at: string
+          created_by: string
+          id: string
+          opponent_team_id: string
+          status: string
+          summary: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          confidence?: number
+          created_at?: string
+          created_by: string
+          id?: string
+          opponent_team_id: string
+          status?: string
+          summary: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          confidence?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          opponent_team_id?: string
+          status?: string
+          summary?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tenant_feature_access: {
+        Row: {
+          is_enabled: boolean
+          module_key: string
+          release_state: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          is_enabled?: boolean
+          module_key: string
+          release_state: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          is_enabled?: boolean
+          module_key?: string
+          release_state?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           attendees: Json | null
@@ -656,6 +1193,162 @@ export type Database = {
           },
         ]
       }
+      opponent_soloq_sync_state: {
+        Row: {
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          status: string
+          last_attempt_at: string | null
+          last_success_at: string | null
+          next_allowed_at: string | null
+          error_code: string | null
+          error_message: string | null
+          updated_at: string
+        }
+        Insert: {
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          status?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          next_allowed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          opponent_player_id?: string
+          opponent_team_id?: string
+          tenant_id?: string
+          status?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          next_allowed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      opponent_soloq_daily_snapshots: {
+        Row: {
+          id: string
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          snapshot_date: string
+          queue_type: string
+          tier: string
+          division: string
+          league_points: number
+          wins: number
+          losses: number
+          captured_at: string
+        }
+        Insert: {
+          id?: string
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          snapshot_date?: string
+          queue_type?: string
+          tier: string
+          division: string
+          league_points: number
+          wins: number
+          losses: number
+          captured_at?: string
+        }
+        Update: {
+          id?: string
+          opponent_player_id?: string
+          opponent_team_id?: string
+          tenant_id?: string
+          snapshot_date?: string
+          queue_type?: string
+          tier?: string
+          division?: string
+          league_points?: number
+          wins?: number
+          losses?: number
+          captured_at?: string
+        }
+        Relationships: []
+      }
+      opponent_soloq_recent_matches: {
+        Row: {
+          id: string
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          match_id: string
+          played_at: string
+          game_duration_seconds: number
+          queue_id: number
+          game_version: string | null
+          champion_id: number
+          champion_name: string
+          team_position: string | null
+          win: boolean
+          kills: number
+          deaths: number
+          assists: number
+          cs: number
+          gold_earned: number | null
+          damage_to_champions: number | null
+          vision_score: number | null
+          synced_at: string
+        }
+        Insert: {
+          id?: string
+          opponent_player_id: string
+          opponent_team_id: string
+          tenant_id: string
+          match_id: string
+          played_at: string
+          game_duration_seconds: number
+          queue_id: number
+          game_version?: string | null
+          champion_id: number
+          champion_name: string
+          team_position?: string | null
+          win: boolean
+          kills: number
+          deaths: number
+          assists: number
+          cs: number
+          gold_earned?: number | null
+          damage_to_champions?: number | null
+          vision_score?: number | null
+          synced_at?: string
+        }
+        Update: {
+          id?: string
+          opponent_player_id?: string
+          opponent_team_id?: string
+          tenant_id?: string
+          match_id?: string
+          played_at?: string
+          game_duration_seconds?: number
+          queue_id?: number
+          game_version?: string | null
+          champion_id?: number
+          champion_name?: string
+          team_position?: string | null
+          win?: boolean
+          kills?: number
+          deaths?: number
+          assists?: number
+          cs?: number
+          gold_earned?: number | null
+          damage_to_champions?: number | null
+          vision_score?: number | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
       opponent_playstyle_tags: {
         Row: {
           confidence_level: number | null
@@ -697,11 +1390,16 @@ export type Database = {
       }
       opponent_teams: {
         Row: {
+          archived_at: string | null
           created_at: string
           created_by: string
           description: string | null
           fandom_links: Json | null
           id: string
+          leaguepedia_last_synced_at: string | null
+          leaguepedia_name: string | null
+          leaguepedia_sync_error: string | null
+          leaguepedia_sync_locked_until: string | null
           logo_url: string | null
           name: string
           region: string | null
@@ -711,11 +1409,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           fandom_links?: Json | null
           id?: string
+          leaguepedia_last_synced_at?: string | null
+          leaguepedia_name?: string | null
+          leaguepedia_sync_error?: string | null
+          leaguepedia_sync_locked_until?: string | null
           logo_url?: string | null
           name: string
           region?: string | null
@@ -725,11 +1428,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           fandom_links?: Json | null
           id?: string
+          leaguepedia_last_synced_at?: string | null
+          leaguepedia_name?: string | null
+          leaguepedia_sync_error?: string | null
+          leaguepedia_sync_locked_until?: string | null
           logo_url?: string | null
           name?: string
           region?: string | null
@@ -950,8 +1658,338 @@ export type Database = {
         }
         Relationships: []
       }
+      soloq_sync_runs: {
+        Row: {
+          id: string
+          tenant_id: string
+          run_kind: string
+          local_date: string | null
+          timezone: string
+          status: string
+          total_jobs: number
+          completed_jobs: number
+          succeeded_jobs: number
+          skipped_jobs: number
+          failed_jobs: number
+          requested_by: string | null
+          scheduled_at: string
+          started_at: string | null
+          completed_at: string | null
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          run_kind?: string
+          local_date?: string | null
+          timezone?: string
+          status?: string
+          total_jobs?: number
+          completed_jobs?: number
+          succeeded_jobs?: number
+          skipped_jobs?: number
+          failed_jobs?: number
+          requested_by?: string | null
+          scheduled_at?: string
+          started_at?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          run_kind?: string
+          local_date?: string | null
+          timezone?: string
+          status?: string
+          total_jobs?: number
+          completed_jobs?: number
+          succeeded_jobs?: number
+          skipped_jobs?: number
+          failed_jobs?: number
+          requested_by?: string | null
+          scheduled_at?: string
+          started_at?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      soloq_sync_jobs: {
+        Row: {
+          id: string
+          run_id: string
+          tenant_id: string
+          player_id: string
+          status: string
+          priority: number
+          attempts: number
+          available_at: string
+          locked_at: string | null
+          locked_by: string | null
+          last_error_code: string | null
+          last_error_message: string | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          tenant_id: string
+          player_id: string
+          status?: string
+          priority?: number
+          attempts?: number
+          available_at?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          tenant_id?: string
+          player_id?: string
+          status?: string
+          priority?: number
+          attempts?: number
+          available_at?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      soloq_sync_state: {
+        Row: {
+          tenant_id: string
+          player_id: string
+          status: string
+          last_attempt_at: string | null
+          last_success_at: string | null
+          next_allowed_at: string | null
+          error_code: string | null
+          error_message: string | null
+          updated_at: string
+        }
+        Insert: {
+          tenant_id: string
+          player_id: string
+          status?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          next_allowed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          tenant_id?: string
+          player_id?: string
+          status?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          next_allowed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      soloq_daily_snapshots: {
+        Row: {
+          id: string
+          tenant_id: string
+          player_id: string
+          snapshot_date: string
+          queue_type: string
+          tier: string
+          division: string
+          league_points: number
+          wins: number
+          losses: number
+          captured_at: string
+          source: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          player_id: string
+          snapshot_date?: string
+          queue_type?: string
+          tier: string
+          division: string
+          league_points: number
+          wins: number
+          losses: number
+          captured_at?: string
+          source?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          player_id?: string
+          snapshot_date?: string
+          queue_type?: string
+          tier?: string
+          division?: string
+          league_points?: number
+          wins?: number
+          losses?: number
+          captured_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      soloq_recent_matches: {
+        Row: {
+          id: string
+          tenant_id: string
+          player_id: string
+          match_id: string
+          played_at: string
+          game_duration_seconds: number
+          queue_id: number
+          game_version: string | null
+          champion_id: number
+          champion_name: string
+          team_position: string | null
+          win: boolean
+          kills: number
+          deaths: number
+          assists: number
+          cs: number
+          gold_earned: number
+          damage_to_champions: number
+          vision_score: number
+          items: Json
+          match_context: Json
+          synced_at: string
+          source: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          player_id: string
+          match_id: string
+          played_at: string
+          game_duration_seconds: number
+          queue_id: number
+          game_version?: string | null
+          champion_id: number
+          champion_name: string
+          team_position?: string | null
+          win: boolean
+          kills: number
+          deaths: number
+          assists: number
+          cs: number
+          gold_earned: number
+          damage_to_champions: number
+          vision_score: number
+          items?: Json
+          match_context?: Json
+          synced_at?: string
+          source?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          player_id?: string
+          match_id?: string
+          played_at?: string
+          game_duration_seconds?: number
+          queue_id?: number
+          game_version?: string | null
+          champion_id?: number
+          champion_name?: string
+          team_position?: string | null
+          win?: boolean
+          kills?: number
+          deaths?: number
+          assists?: number
+          cs?: number
+          gold_earned?: number
+          damage_to_champions?: number
+          vision_score?: number
+          items?: Json
+          match_context?: Json
+          synced_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      player_availability: {
+        Row: {
+          created_at: string
+          created_by: string
+          end_time: string
+          id: string
+          is_available: boolean
+          notes: string | null
+          player_id: string
+          recurrence_rule: string | null
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          player_id: string
+          recurrence_rule?: string | null
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          player_id?: string
+          recurrence_rule?: string | null
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_availability_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
+          archived_at: string | null
           avatar_url: string | null
           created_at: string
           created_by: string
@@ -961,7 +1999,9 @@ export type Database = {
           join_date: string | null
           last_soloq_sync: string | null
           lp: number | null
+          linked_user_id: string | null
           main_champions: Json | null
+          membership_state: string
           notes: string | null
           puuid: string | null
           rank: string | null
@@ -969,12 +2009,15 @@ export type Database = {
           riot_id: string | null
           riot_tag_line: string | null
           role: string | null
+          role_assigned_at: string | null
+          role_assigned_by: string | null
           summoner_id: string | null
           summoner_name: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           avatar_url?: string | null
           created_at?: string
           created_by: string
@@ -984,7 +2027,9 @@ export type Database = {
           join_date?: string | null
           last_soloq_sync?: string | null
           lp?: number | null
+          linked_user_id?: string | null
           main_champions?: Json | null
+          membership_state?: string
           notes?: string | null
           puuid?: string | null
           rank?: string | null
@@ -992,12 +2037,15 @@ export type Database = {
           riot_id?: string | null
           riot_tag_line?: string | null
           role?: string | null
+          role_assigned_at?: string | null
+          role_assigned_by?: string | null
           summoner_id?: string | null
           summoner_name: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           avatar_url?: string | null
           created_at?: string
           created_by?: string
@@ -1007,7 +2055,9 @@ export type Database = {
           join_date?: string | null
           last_soloq_sync?: string | null
           lp?: number | null
+          linked_user_id?: string | null
           main_champions?: Json | null
+          membership_state?: string
           notes?: string | null
           puuid?: string | null
           rank?: string | null
@@ -1015,6 +2065,8 @@ export type Database = {
           riot_id?: string | null
           riot_tag_line?: string | null
           role?: string | null
+          role_assigned_at?: string | null
+          role_assigned_by?: string | null
           summoner_id?: string | null
           summoner_name?: string
           tenant_id?: string
@@ -1130,15 +2182,20 @@ export type Database = {
           grid_series_number: number | null
           id: string
           match_history_url: string | null
+          late_game_rating: number | null
+          mid_game_rating: number | null
           notes: string | null
           objectives: Json | null
           our_team_gold: number | null
           our_team_kills: number | null
+          performance_rating: number | null
+          performance_summary: string | null
           replay_url: string | null
           result: string | null
           scrim_id: string
           side: string | null
           status: string
+          early_game_rating: number | null
           updated_at: string
         }
         Insert: {
@@ -1160,15 +2217,20 @@ export type Database = {
           grid_series_number?: number | null
           id?: string
           match_history_url?: string | null
+          late_game_rating?: number | null
+          mid_game_rating?: number | null
           notes?: string | null
           objectives?: Json | null
           our_team_gold?: number | null
           our_team_kills?: number | null
+          performance_rating?: number | null
+          performance_summary?: string | null
           replay_url?: string | null
           result?: string | null
           scrim_id: string
           side?: string | null
           status?: string
+          early_game_rating?: number | null
           updated_at?: string
         }
         Update: {
@@ -1190,15 +2252,20 @@ export type Database = {
           grid_series_number?: number | null
           id?: string
           match_history_url?: string | null
+          late_game_rating?: number | null
+          mid_game_rating?: number | null
           notes?: string | null
           objectives?: Json | null
           our_team_gold?: number | null
           our_team_kills?: number | null
+          performance_rating?: number | null
+          performance_summary?: string | null
           replay_url?: string | null
           result?: string | null
           scrim_id?: string
           side?: string | null
           status?: string
+          early_game_rating?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1272,16 +2339,22 @@ export type Database = {
           deaths: number | null
           gold: number | null
           id: string
+          identity_source: string | null
+          identity_status: string
           is_our_team: boolean
           items: Json | null
           kills: number | null
           level: number | null
           player_id: string | null
+          region: string | null
+          riot_id: string | null
+          riot_tag_line: string | null
           role: string | null
           runes: Json | null
           scrim_game_id: string
           summoner_name: string
           summoner_spells: Json | null
+          tenant_id: string
           updated_at: string
           vision_score: number | null
         }
@@ -1295,16 +2368,22 @@ export type Database = {
           deaths?: number | null
           gold?: number | null
           id?: string
+          identity_source?: string | null
+          identity_status?: string
           is_our_team?: boolean
           items?: Json | null
           kills?: number | null
           level?: number | null
           player_id?: string | null
+          region?: string | null
+          riot_id?: string | null
+          riot_tag_line?: string | null
           role?: string | null
           runes?: Json | null
           scrim_game_id: string
           summoner_name: string
           summoner_spells?: Json | null
+          tenant_id: string
           updated_at?: string
           vision_score?: number | null
         }
@@ -1318,16 +2397,22 @@ export type Database = {
           deaths?: number | null
           gold?: number | null
           id?: string
+          identity_source?: string | null
+          identity_status?: string
           is_our_team?: boolean
           items?: Json | null
           kills?: number | null
           level?: number | null
           player_id?: string | null
+          region?: string | null
+          riot_id?: string | null
+          riot_tag_line?: string | null
           role?: string | null
           runes?: Json | null
           scrim_game_id?: string
           summoner_name?: string
           summoner_spells?: Json | null
+          tenant_id?: string
           updated_at?: string
           vision_score?: number | null
         }
@@ -1355,6 +2440,7 @@ export type Database = {
           created_by: string
           data_source: string | null
           duration_minutes: number | null
+          ends_at: string | null
           external_match_data: Json | null
           format: string | null
           games: Json | null
@@ -1365,11 +2451,18 @@ export type Database = {
           monitoring_start_time: string | null
           notes: string | null
           opponent_name: string
+          opponent_team_id: string | null
           opponent_score: number | null
           our_score: number | null
           replay_file_url: string | null
           result: string | null
+          result_override_reason: string | null
+          result_source: string
+          review_completed_at: string | null
+          review_completed_by: string | null
+          review_status: string
           scheduled_time: string | null
+          starts_at: string
           status: string | null
           tenant_id: string
           timezone: string | null
@@ -1382,6 +2475,7 @@ export type Database = {
           created_by: string
           data_source?: string | null
           duration_minutes?: number | null
+          ends_at?: string | null
           external_match_data?: Json | null
           format?: string | null
           games?: Json | null
@@ -1392,11 +2486,18 @@ export type Database = {
           monitoring_start_time?: string | null
           notes?: string | null
           opponent_name: string
+          opponent_team_id?: string | null
           opponent_score?: number | null
           our_score?: number | null
           replay_file_url?: string | null
           result?: string | null
+          result_override_reason?: string | null
+          result_source?: string
+          review_completed_at?: string | null
+          review_completed_by?: string | null
+          review_status?: string
           scheduled_time?: string | null
+          starts_at: string
           status?: string | null
           tenant_id: string
           timezone?: string | null
@@ -1409,6 +2510,7 @@ export type Database = {
           created_by?: string
           data_source?: string | null
           duration_minutes?: number | null
+          ends_at?: string | null
           external_match_data?: Json | null
           format?: string | null
           games?: Json | null
@@ -1419,11 +2521,18 @@ export type Database = {
           monitoring_start_time?: string | null
           notes?: string | null
           opponent_name?: string
+          opponent_team_id?: string | null
           opponent_score?: number | null
           our_score?: number | null
           replay_file_url?: string | null
           result?: string | null
+          result_override_reason?: string | null
+          result_source?: string
+          review_completed_at?: string | null
+          review_completed_by?: string | null
+          review_status?: string
           scheduled_time?: string | null
+          starts_at?: string
           status?: string | null
           tenant_id?: string
           timezone?: string | null
@@ -1573,6 +2682,7 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string
+          player_id: string | null
           role: Database["public"]["Enums"]["tenant_role"]
           tenant_id: string
           token: string
@@ -1585,6 +2695,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by: string
+          player_id?: string | null
           role?: Database["public"]["Enums"]["tenant_role"]
           tenant_id: string
           token: string
@@ -1597,12 +2708,20 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string
+          player_id?: string | null
           role?: Database["public"]["Enums"]["tenant_role"]
           tenant_id?: string
           token?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_invitations_player_tenant_fkey"
+            columns: ["player_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id", "tenant_id"]
+          },
           {
             foreignKeyName: "team_invitations_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1611,6 +2730,158 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenant_riot_integrations: {
+        Row: {
+          tenant_id: string
+          secret_id: string
+          key_kind: string
+          key_hint: string
+          status: string
+          last_tested_at: string | null
+          last_success_at: string | null
+          last_error_code: string | null
+          last_error_message: string | null
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          tenant_id: string
+          secret_id: string
+          key_kind?: string
+          key_hint: string
+          status?: string
+          last_tested_at?: string | null
+          last_success_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          tenant_id?: string
+          secret_id?: string
+          key_kind?: string
+          key_hint?: string
+          status?: string
+          last_tested_at?: string | null
+          last_success_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_riot_integrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrim_game_evidence: {
+        Row: {
+          capabilities: string[]
+          captured_at: string
+          created_at: string
+          id: string
+          metadata: Json
+          payload_version: string
+          provider: string
+          provider_record_id: string | null
+          scrim_game_id: string
+          tenant_id: string
+        }
+        Insert: {
+          capabilities?: string[]
+          captured_at: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          payload_version?: string
+          provider: string
+          provider_record_id?: string | null
+          scrim_game_id: string
+          tenant_id: string
+        }
+        Update: {
+          capabilities?: string[]
+          captured_at?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          payload_version?: string
+          provider?: string
+          provider_record_id?: string | null
+          scrim_game_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrim_game_evidence_scrim_game_id_fkey"
+            columns: ["scrim_game_id"]
+            isOneToOne: true
+            referencedRelation: "scrim_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scrim_game_evidence_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrim_game_reconciliations: {
+        Row: {
+          accepted_game_id: string | null
+          created_at: string
+          first_game_id: string
+          id: string
+          match_reasons: string[]
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          second_game_id: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          accepted_game_id?: string | null
+          created_at?: string
+          first_game_id: string
+          id?: string
+          match_reasons?: string[]
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          second_game_id: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          accepted_game_id?: string | null
+          created_at?: string
+          first_game_id?: string
+          id?: string
+          match_reasons?: string[]
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          second_game_id?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: []
       }
       tenant_users: {
         Row: {
@@ -1645,6 +2916,38 @@ export type Database = {
             foreignKeyName: "tenant_users_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_capture_settings: {
+        Row: {
+          profile: string
+          selected_at: string
+          selected_by: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          profile?: string
+          selected_at?: string
+          selected_by?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          profile?: string
+          selected_at?: string
+          selected_by?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_capture_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1751,6 +3054,195 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      finalize_scrim_block_review: {
+        Args: {
+          p_opponent_score: number | null
+          p_our_score: number | null
+          p_override_reason: string | null
+          p_result_source: string
+          p_scrim_id: string
+        }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      reopen_scrim_block_review: {
+        Args: { p_scrim_id: string }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      save_scrim_game_review: {
+        Args: {
+          p_duration_seconds: number | null
+          p_early_game_rating: number | null
+          p_enemy_team_gold: number | null
+          p_enemy_team_kills: number | null
+          p_game_id: string | null
+          p_game_number: number
+          p_late_game_rating: number | null
+          p_mid_game_rating: number | null
+          p_notes: string | null
+          p_our_team_gold: number | null
+          p_our_team_kills: number | null
+          p_performance_rating: number | null
+          p_performance_summary: string | null
+          p_result: string | null
+          p_scrim_id: string
+          p_side: string | null
+          p_status: string
+        }
+        Returns: Database["public"]["Tables"]["scrim_games"]["Row"]
+      }
+      create_scrim_block: {
+        Args: {
+          p_duration_minutes?: number
+          p_format?: string
+          p_local_date: string
+          p_local_time: string
+          p_notes?: string
+          p_opponent_name: string
+          p_opponent_team_id?: string
+          p_tenant_id: string
+          p_timezone: string
+        }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      schedule_scrim_block: {
+        Args: {
+          p_duration_minutes?: number
+          p_format?: string
+          p_notes?: string
+          p_opponent_name: string
+          p_opponent_team_id?: string
+          p_starts_at: string
+          p_tenant_id: string
+          p_timezone: string
+        }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      delete_workspace_calendar_event: {
+        Args: { p_event_id: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      configure_discord_channel: {
+        Args: {
+          p_channel_id: string
+          p_channel_name: string
+          p_event_types: string[]
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
+      create_preparation_brief_revision: {
+        Args: { p_brief_id: string }
+        Returns: string
+      }
+      create_preparation_brief: {
+        Args: {
+          p_evidence_ids?: string[]
+          p_opponent_team_id: string
+          p_scheduled_for?: string
+          p_summary?: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: string
+      }
+      create_scouting_tendency: {
+        Args: {
+          p_category: string
+          p_confidence: number
+          p_evidence_ids?: string[]
+          p_opponent_team_id: string
+          p_summary: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: string
+      }
+      supersede_scouting_evidence: {
+        Args: {
+          p_confidence: number
+          p_evidence_id: string
+          p_evidence_type: string
+          p_observation: string
+          p_reason?: string
+          p_sample_context?: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: string
+      }
+      disconnect_discord_installation: {
+        Args: { p_tenant_id: string }
+        Returns: undefined
+      }
+      get_team_performance_summary: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      get_team_performance_summary_filtered: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_format?: string
+          p_opponent_id?: string
+          p_side?: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      get_team_analytics_dataset: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      set_workspace_capture_profile: {
+        Args: {
+          p_profile: string
+          p_tenant_id: string
+        }
+        Returns: Database["public"]["Tables"]["tenant_capture_settings"]["Row"]
+      }
+      resolve_game_reconciliation: {
+        Args: {
+          p_action: string
+          p_accepted_game_id?: string
+          p_notes?: string
+          p_reconciliation_id: string
+        }
+        Returns: Database["public"]["Tables"]["scrim_game_reconciliations"]["Row"]
+      }
+      get_competitive_draft_analytics: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_format?: string
+          p_opponent_id?: string
+          p_side?: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      publish_preparation_brief: {
+        Args: { p_brief_id: string }
+        Returns: Json
+      }
+      set_preparation_brief_external_drafts: {
+        Args: { p_brief_id: string; p_external_draft_ids: string[] }
+        Returns: undefined
+      }
+      set_preparation_brief_evidence: {
+        Args: {
+          p_brief_id: string
+          p_evidence_ids: string[]
+        }
+        Returns: undefined
+      }
       accept_team_invitation: {
         Args: { invitation_token: string }
         Returns: Json
@@ -1766,6 +3258,29 @@ export type Database = {
           _subscription_tier: Database["public"]["Enums"]["subscription_tier"]
         }
         Returns: Json
+      }
+      create_team_invitation: {
+        Args: {
+          p_email: string
+          p_role: Database["public"]["Enums"]["tenant_role"]
+          p_tenant_id: string
+        }
+        Returns: {
+          expires_at: string
+          token: string
+        }[]
+      }
+      create_roster_invitation: {
+        Args: {
+          p_email: string
+          p_player_id: string
+          p_role: Database["public"]["Enums"]["tenant_role"]
+          p_tenant_id: string
+        }
+        Returns: {
+          expires_at: string
+          token: string
+        }[]
       }
       decrypt_sensitive_data: {
         Args: { encrypted_data: string }
@@ -1867,13 +3382,77 @@ export type Database = {
         }
         Returns: string
       }
+      reconcile_scrim_participant: {
+        Args: {
+          p_ignore?: boolean
+          p_participant_id: string
+          p_player_id?: string
+        }
+        Returns: Database["public"]["Tables"]["scrim_participants"]["Row"]
+      }
+      resolve_workspace_local_time: {
+        Args: {
+          p_local_date: string
+          p_local_time: string
+          p_timezone: string
+        }
+        Returns: string
+      }
+      set_roster_player_state: {
+        Args: { p_active: boolean; p_player_id: string }
+        Returns: Database["public"]["Tables"]["players"]["Row"]
+      }
+      set_scrim_block_state: {
+        Args: { p_action: string; p_scrim_id: string }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      update_roster_player: {
+        Args: {
+          p_discord_username?: string
+          p_main_champions: Json
+          p_notes?: string
+          p_player_id: string
+          p_region: string
+          p_riot_id: string
+          p_riot_tag_line: string
+          p_role: string
+          p_summoner_name: string
+        }
+        Returns: Database["public"]["Tables"]["players"]["Row"]
+      }
+      update_scrim_block_schedule: {
+        Args: {
+          p_duration_minutes?: number
+          p_local_date: string
+          p_local_time: string
+          p_scrim_id: string
+          p_status?: string
+          p_timezone: string
+        }
+        Returns: Database["public"]["Tables"]["scrims"]["Row"]
+      }
+      upsert_workspace_calendar_event: {
+        Args: {
+          p_description?: string
+          p_duration_minutes?: number
+          p_event_id?: string
+          p_event_type: Database["public"]["Enums"]["event_type"]
+          p_local_date: string
+          p_local_time: string
+          p_location?: string
+          p_tenant_id: string
+          p_timezone: string
+          p_title: string
+        }
+        Returns: Database["public"]["Tables"]["calendar_events"]["Row"]
+      }
       user_belongs_to_tenant: {
         Args: { tenant_uuid: string }
         Returns: boolean
       }
       user_has_tenant_role: {
         Args: {
-          required_role: Database["public"]["Enums"]["tenant_role"]
+          required_roles: Database["public"]["Enums"]["tenant_role"][]
           tenant_uuid: string
         }
         Returns: boolean

@@ -1,242 +1,377 @@
+import { useState } from "react";
 import {
-  Calendar,
-  Clock,
-  Video,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
   MoreHorizontal,
   Plus,
-  Filter,
   Search,
-  ChevronRight,
-  Trash2
+  Swords,
+  Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { ScheduleScrimDialog } from "@/components/scrims/ScheduleScrimDialog";
-import { useOptimizedScrimsData, Scrim } from "@/hooks/useOptimizedScrimsData";
-import { useScrimsData } from "@/hooks/useScrimsData";
+import { useNavigate } from "react-router-dom";
+
 import { EditScrimDialog } from "@/components/scrims/EditScrimDialog";
-import { format, parseISO, isAfter, isBefore, startOfToday } from "date-fns";
+import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
+import { ScheduleScrimDialog } from "@/components/scrims/ScheduleScrimDialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DataSurface } from "@/components/workspace/DataSurface";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceState } from "@/components/workspace/WorkspaceState";
 import { useRole } from "@/contexts/RoleContext";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { type Scrim, useOptimizedScrimsData } from "@/hooks/useOptimizedScrimsData";
+import { useScrimsData } from "@/hooks/useScrimsData";
+import { blockScoreLabel, type ReviewStatus } from "@/lib/scrim-review";
+import { cn } from "@/lib/utils";
+
+const HISTORY_PAGE_SIZE = 12;
+
+function localDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { date: "Date not recorded", time: "Time not recorded" };
+  }
+  return {
+    date: date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
+    time: date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+  };
+}
+
+function ResultMark({ scrim }: { scrim: Scrim }) {
+  const label = blockScoreLabel({
+    opponent_score: scrim.opponent_score,
+    our_score: scrim.our_score,
+    result: scrim.result,
+    result_source: scrim.result_source === "manual" ? "manual" : "games",
+    review_status: (scrim.review_status || "not_started") as ReviewStatus,
+  });
+  if (scrim.our_score === null || scrim.opponent_score === null) {
+    return <span className="text-sm text-[var(--workspace-subtle)]">Outcome not recorded</span>;
+  }
+  return (
+    <span
+      className={cn(
+        "ss-mono inline-flex min-w-20 justify-center border px-2 py-1 text-xs font-medium",
+        scrim.result === "win"
+          ? "border-emerald-400/25 bg-emerald-400/[0.07] text-emerald-300"
+          : scrim.result === "loss"
+            ? "border-rose-400/25 bg-rose-400/[0.07] text-rose-300"
+            : "border-white/10 bg-white/[0.035] text-[var(--workspace-muted)]",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
 
 export default function Scrims() {
-  const { isManager, isCoach } = useRole();
-  const hasEditPermission = isManager || isCoach;
-  const [editingScrim, setEditingScrim] = useState<Scrim | null>(null);
+  const { isCoach, isManager } = useRole();
+  const canEdit = isManager || isCoach;
   const navigate = useNavigate();
-
-  const today = new Date().toISOString().split('T')[0];
-
-  // Upcoming Scrims
-  const { data: upcomingData, isLoading: isLoadingUpcoming } = useOptimizedScrimsData({
-    dateFrom: today,
-    pageSize: 6,
-    // We might want to filter out 'Completed' if they are in the future (rare but possible)
-  });
-  const upcomingScrims = upcomingData?.scrims || [];
-
-  // Match History
-  // We want filtering for history, but for now simple fetch
-  const { data: historyData, isLoading: isLoadingHistory } = useOptimizedScrimsData({
-    // dateTo: today, // causing query overlap if not careful? 
-    // specific statuses?
-    // For now just fetch all and filter in client or rely on sort? 
-    // Actually useOptimizedScrimsData sorts by match_date desc.
-    // History is dateTo today.
-    dateTo: today,
-    pageSize: 20
-  });
-  const historyScrims = historyData?.scrims || [];
-
   const { deleteScrim } = useScrimsData();
+  const [editingScrim, setEditingScrim] = useState<Scrim | null>(null);
+  const [opponentSearch, setOpponentSearch] = useState("");
+  const [resultFilter, setResultFilter] = useState("all");
+  const [reviewFilter, setReviewFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this scrim?")) {
-      deleteScrim(id);
-    }
+  const upcomingQuery = useOptimizedScrimsData({
+    includeGames: true,
+    mode: "upcoming",
+    pageSize: 4,
+  });
+  const historyQuery = useOptimizedScrimsData({
+    includeGames: true,
+    mode: "history",
+    opponent: opponentSearch,
+    page,
+    pageSize: HISTORY_PAGE_SIZE,
+    result: resultFilter === "all" ? undefined : resultFilter as "win" | "loss" | "draw" | "unrecorded",
+    reviewStatus:
+      reviewFilter === "all"
+        ? undefined
+        : reviewFilter as "not_started" | "in_review" | "complete",
+  });
+
+  const upcoming = upcomingQuery.data?.scrims || [];
+  const featured = upcoming[0];
+  const queue = upcoming.slice(1);
+  const history = historyQuery.data?.scrims || [];
+  const historyCount = historyQuery.data?.totalCount || 0;
+  const totalPages = Math.max(1, Math.ceil(historyCount / HISTORY_PAGE_SIZE));
+
+  function deleteBlock(scrim: Scrim) {
+    const confirmed = window.confirm(
+      `Delete the block against ${scrim.opponent_name}? Its recorded games will also be removed. This cannot be undone.`,
+    );
+    if (confirmed) deleteScrim(scrim.id);
   }
 
-  // Helper to format time
-  const formatTime = (timeStr?: string | null) => {
-    if (!timeStr) return "TBD";
-    // timeStr is "HH:mm:ss" or "HH:mm"
-    return timeStr.substring(0, 5);
-  };
-
-  // Helper to format date
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), "MMM dd");
-    } catch (e) {
-      return dateStr;
-    }
-  };
+  function resetPage() {
+    setPage(1);
+  }
 
   return (
-    <div className="space-y-6 max-w-[1920px] mx-auto pb-10">
-      {/* 1. Compact Header & Quick Actions Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl sticky top-24 z-20">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground pl-2">
-          <span className="text-zinc-500">ScrimStats</span>
-          <ChevronRight className="w-4 h-4 text-zinc-700" />
-          <span className="text-white font-medium glow-text">Scrimmage Schedule</span>
-          {hasEditPermission && (
-            <span className="text-xs ml-2 bg-brand-primary/10 px-2 py-0.5 rounded text-brand-primary font-mono uppercase">Editor</span>
-          )}
-        </div>
+    <div className="space-y-8 pb-10">
+      <WorkspacePageHeader
+        eyebrow="Practice workspace"
+        title="Scrim blocks"
+        description="Plan practice, capture confirmed outcomes, and finish each coaching review."
+        actions={
+          canEdit ? (
+            <ScheduleScrimDialog
+              trigger={
+                <Button><Plus className="h-4 w-4" /> Schedule scrim</Button>
+              }
+            />
+          ) : undefined
+        }
+      />
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-          <Button variant="outline" className="glass-button h-9 px-4 text-xs font-medium border-white/5 hover:border-brand-primary/30 hover:bg-brand-primary/10 transition-all whitespace-nowrap">
-            <Calendar className="w-3.5 h-3.5 mr-2" />
-            Sync Calendar
-          </Button>
-          {hasEditPermission && <ScheduleScrimDialog />}
-        </div>
-      </div>
-
-      {/* Upcoming Blocks */}
-      <section>
-        <h2 className="text-label text-zinc-500 mb-4 pl-1">Upcoming Blocks</h2>
-
-        {isLoadingUpcoming ? (
-          <div className="text-zinc-500">Loading upcoming scrims...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingScrims.filter(s => s.status !== 'Completed').map((scrim) => (
-              <div key={scrim.id} className="glass-card p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-brand-primary/30 transition-all"
-                onClick={() => navigate(`/scrims/${scrim.id}?opponent=${encodeURIComponent(scrim.opponent_name)}&date=${scrim.match_date}&format=${scrim.format || ''}&result=${scrim.result || ''}`)}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 font-bold text-lg text-white group-hover:text-brand-primary group-hover:border-brand-primary/30 transition-all">
-                    {scrim.opponent_name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg">{scrim.opponent_name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-zinc-400">
-                      <span className={cn("px-1.5 py-0.5 rounded text-[10px] uppercase font-bold", scrim.status === 'Confirmed' ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-500")}>
-                        {scrim.status}
-                      </span>
-                      <span>•</span>
-                      <span>{scrim.format}</span>
-                    </div>
-                  </div>
+      {upcomingQuery.isLoading ? (
+        <WorkspaceState icon={Clock3} title="Loading upcoming practice" description="Reading the current team schedule." />
+      ) : upcomingQuery.error ? (
+        <WorkspaceState icon={Clock3} title="Upcoming practice is unavailable" description="Refresh the page to try again." />
+      ) : featured ? (
+        <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <DataSurface elevated className="overflow-hidden">
+            <div className="border-b border-[var(--workspace-rule)] px-5 py-4">
+              <p className="workspace-eyebrow">Next practice block</p>
+            </div>
+            <div className="grid gap-6 p-5 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <h2 className="text-3xl font-semibold tracking-[-0.04em]">vs {featured.opponent_name}</h2>
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--workspace-muted)]">
+                  <span className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    {localDateTime(featured.starts_at).date}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Clock3 className="h-4 w-4" />
+                    {localDateTime(featured.starts_at).time}
+                  </span>
+                  <span>{featured.format || "Format not recorded"}</span>
+                  <span className="capitalize">{featured.status.replace("_", " ")}</span>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-white">{formatTime(scrim.scheduled_time)}</p>
-                  <p className="text-xs text-zinc-500">{formatDate(scrim.match_date)}</p>
+                <div className="mt-6 border-l-2 border-[var(--workspace-accent)] pl-4">
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Focus</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">
+                    {featured.notes?.trim() || "No block focus has been saved."}
+                  </p>
                 </div>
               </div>
-            ))}
-
-            {hasEditPermission && (
-              <ScheduleScrimDialog trigger={
-                <div className="border border-dashed border-zinc-800 rounded-2xl p-5 flex items-center justify-center text-zinc-600 hover:text-brand-primary hover:bg-white/5 cursor-pointer transition-colors h-full min-h-[100px]">
-                  <span className="flex items-center font-medium"><Plus className="w-4 h-4 mr-2" /> Schedule New Block</span>
-                </div>
-              } />
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Match History */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-label text-zinc-500 pl-1">Match History</h2>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-              <Input placeholder="Search team..." className="h-9 w-64 pl-9 bg-black/20 border-white/5 text-sm" />
+              <div className="flex flex-wrap gap-2">
+                {canEdit && (
+                  <Button variant="secondary" onClick={() => setEditingScrim(featured)}>Edit block</Button>
+                )}
+                <Button onClick={() => navigate(`/scrims/${featured.id}`)}>Open block</Button>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white"><Filter className="w-4 h-4" /></Button>
-          </div>
-        </div>
+          </DataSurface>
 
-        <div className="glass-panel rounded-2xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/5 bg-white/5">
-                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Opponent</th>
-                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Result</th>
-                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Format</th>
-                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {isLoadingHistory ? (
-                <tr><td colSpan={5} className="px-6 py-4 text-zinc-500">Loading history...</td></tr>
-              ) : historyScrims.filter(s => s.match_date < today || s.status === 'Completed').length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-4 text-zinc-500">No match history found.</td></tr>
-              ) : (
-                historyScrims.filter(s => s.match_date < today || s.status === 'Completed').map((match) => (
-                  <tr key={match.id} className="hover:bg-white/5 transition-colors group cursor-pointer"
-                    onClick={() => navigate(`/scrims/${match.id}?opponent=${encodeURIComponent(match.opponent_name)}&date=${match.match_date}&format=${match.format || ''}&result=${match.result || ''}`)}
+          <DataSurface>
+            <div className="flex items-center justify-between border-b border-[var(--workspace-rule)] px-5 py-4">
+              <div>
+                <p className="workspace-eyebrow">Upcoming queue</p>
+                <h2 className="mt-2 font-semibold">Following blocks</h2>
+              </div>
+              <span className="ss-mono text-xs text-[var(--workspace-subtle)]">{queue.length}</span>
+            </div>
+            {queue.length ? (
+              <div className="divide-y divide-[var(--workspace-rule)]">
+                {queue.map((scrim) => (
+                  <button
+                    key={scrim.id}
+                    type="button"
+                    onClick={() => navigate(`/scrims/${scrim.id}`)}
+                    className="workspace-ledger-row flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                   >
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-white group-hover:text-brand-primary transition-colors">{match.opponent_name}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={cn("inline-flex items-center px-2 py-1 rounded text-xs font-bold", match.result?.startsWith('W') ? "bg-green-500/10 text-green-400" : match.result?.startsWith('L') ? "bg-red-500/10 text-red-400" : "bg-zinc-500/10 text-zinc-400")}>
-                        {match.result || "-"}
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">vs {scrim.opponent_name}</span>
+                      <span className="mt-1 block text-xs text-[var(--workspace-subtle)]">
+                        {localDateTime(scrim.starts_at).date} · {localDateTime(scrim.starts_at).time}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-400 text-sm">{match.format}</td>
-                    <td className="px-6 py-4 text-zinc-400 text-sm">{formatDate(match.match_date)} <span className="text-zinc-600 ml-1 text-xs">{match.duration_minutes ? `${match.duration_minutes}m` : ""}</span></td>
-                    <td className="px-6 py-4 text-right flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white h-8" onClick={(e) => e.stopPropagation()}>
-                        <Video className="w-3.5 h-3.5 mr-2" /> VOD
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-brand-primary h-8" onClick={(e) => { e.stopPropagation(); navigate(`/scrims/${match.id}?opponent=${encodeURIComponent(match.opponent_name)}&date=${match.match_date}&format=${match.format || ''}&result=${match.result || ''}`); }}>
-                        <Eye className="w-3.5 h-3.5 mr-2" /> View
-                      </Button>
-                      {hasEditPermission && (
-                        <>
-                          <EditScrimDialog scrim={match} trigger={<span hidden />} open={false} /> {/* Pre-load or conditional render? Better to use state for selected scrim */}
-
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white h-8 w-8 p-0">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-white">
-                              <DropdownMenuItem onClick={() => setEditingScrim(match)} className="cursor-pointer hover:bg-white/5">
-                                <Video className="w-4 h-4 mr-2" /> Edit / Log Result
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(match.id)} className="text-red-400 hover:text-red-300 hover:bg-white/5 cursor-pointer">
-                                <Trash2 className="w-4 h-4 mr-2" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                )))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Edit Dialog Wrapper */}
-      {editingScrim && (
-        <EditScrimDialog
-          scrim={editingScrim}
-          open={!!editingScrim}
-          onOpenChange={(open) => !open && setEditingScrim(null)}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--workspace-subtle)]" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="px-5 py-6 text-sm text-[var(--workspace-muted)]">No later blocks are scheduled.</p>
+            )}
+          </DataSurface>
+        </section>
+      ) : (
+        <WorkspaceState
+          icon={Swords}
+          title="No upcoming practice is scheduled"
+          description="Create a block when the opponent and time are confirmed."
+          action={canEdit ? <ScheduleScrimDialog /> : undefined}
         />
       )}
 
+      <section>
+        <div className="mb-4">
+          <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Scrim history</p>
+          <div className="mt-2 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
+            <div>
+              <h2 className="text-xl font-semibold">Completed and past blocks</h2>
+              <p className="mt-1 text-sm text-[var(--workspace-muted)]">
+                Find results and return to reviews that still need coaching detail.
+              </p>
+            </div>
+            <span className="ss-mono text-xs text-[var(--workspace-subtle)]">{historyCount} blocks</span>
+          </div>
+        </div>
+
+        <DataSurface>
+          <div className="grid gap-3 border-b border-[var(--workspace-rule)] p-4 md:grid-cols-[minmax(14rem,1fr)_12rem_12rem]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--workspace-subtle)]" />
+              <Input
+                value={opponentSearch}
+                onChange={(event) => {
+                  setOpponentSearch(event.target.value);
+                  resetPage();
+                }}
+                placeholder="Search opponent"
+                aria-label="Search scrim history by opponent"
+                className="pl-9"
+              />
+            </div>
+            <Select
+              value={resultFilter}
+              onValueChange={(value) => {
+                setResultFilter(value);
+                resetPage();
+              }}
+            >
+              <SelectTrigger aria-label="Filter by result"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All outcomes</SelectItem>
+                <SelectItem value="win">Wins</SelectItem>
+                <SelectItem value="loss">Losses</SelectItem>
+                <SelectItem value="draw">Draws</SelectItem>
+                <SelectItem value="unrecorded">Not recorded</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={reviewFilter}
+              onValueChange={(value) => {
+                setReviewFilter(value);
+                resetPage();
+              }}
+            >
+              <SelectTrigger aria-label="Filter by review progress"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All review states</SelectItem>
+                <SelectItem value="not_started">Not started</SelectItem>
+                <SelectItem value="in_review">In review</SelectItem>
+                <SelectItem value="complete">Complete</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {historyQuery.isLoading ? (
+            <WorkspaceState icon={Clock3} title="Loading team history" description="Reading the saved practice blocks." className="m-4" />
+          ) : historyQuery.error ? (
+            <WorkspaceState icon={Clock3} title="Team history is unavailable" description="Refresh the page to try again." className="m-4" />
+          ) : history.length ? (
+            <>
+              <div className="hidden grid-cols-[minmax(13rem,1.2fr)_0.7fr_0.6fr_0.8fr_0.8fr_auto] gap-4 border-b border-[var(--workspace-rule)] px-5 py-3 md:grid">
+                {["Opponent", "Score", "Games", "Date", "Review", ""].map((heading) => (
+                  <span key={heading} className="workspace-eyebrow text-[var(--workspace-subtle)]">{heading}</span>
+                ))}
+              </div>
+              <div className="divide-y divide-[var(--workspace-rule)]">
+                {history.map((scrim) => (
+                  <article
+                    key={scrim.id}
+                    className="workspace-ledger-row px-5 py-5 md:grid md:grid-cols-[minmax(13rem,1.2fr)_0.7fr_0.6fr_0.8fr_0.8fr_auto] md:items-center md:gap-4 md:py-4"
+                  >
+                    <button
+                      type="button"
+                      className="text-left font-semibold hover:text-[var(--workspace-accent)]"
+                      onClick={() => navigate(`/scrims/${scrim.id}`)}
+                    >
+                      vs {scrim.opponent_name}
+                      <span className="mt-1 block text-xs font-normal text-[var(--workspace-subtle)]">
+                        {scrim.format || "Format not recorded"}
+                      </span>
+                    </button>
+                    <div className="mt-4 md:mt-0"><ResultMark scrim={scrim} /></div>
+                    <p className="ss-mono mt-3 text-sm text-[var(--workspace-muted)] md:mt-0">
+                      {scrim.scrim_games?.length || 0}
+                    </p>
+                    <p className="mt-3 text-sm text-[var(--workspace-muted)] md:mt-0">
+                      {localDateTime(scrim.starts_at).date}
+                    </p>
+                    <div className="mt-3 md:mt-0">
+                      <ReviewStatusBadge status={(scrim.review_status || "not_started") as ReviewStatus} />
+                    </div>
+                    <div className="mt-4 flex items-center justify-between border-t border-[var(--workspace-rule)] pt-4 md:mt-0 md:border-0 md:pt-0">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/scrims/${scrim.id}`)}>
+                        Review
+                      </Button>
+                      {canEdit && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={`Actions for ${scrim.opponent_name}`}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditingScrim(scrim)}>Edit block</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteBlock(scrim)}>
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete block
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="flex items-center justify-between border-t border-[var(--workspace-rule)] px-4 py-3">
+                <p className="text-xs text-[var(--workspace-subtle)]">Page {page} of {totalPages}</p>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} aria-label="Previous history page">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} aria-label="Next history page">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <WorkspaceState icon={Swords} title="No blocks match these filters" description="Adjust the opponent, outcome, or review filters." className="m-4" />
+          )}
+        </DataSurface>
+      </section>
+
+      {editingScrim && (
+        <EditScrimDialog
+          scrim={editingScrim}
+          open
+          onOpenChange={(open) => !open && setEditingScrim(null)}
+        />
+      )}
     </div>
   );
 }

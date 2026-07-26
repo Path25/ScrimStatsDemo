@@ -25,6 +25,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
+import { useOpponentTeams } from "@/hooks/useOpponentTeams";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface ScheduleScrimDialogProps {
     trigger?: React.ReactNode;
@@ -33,7 +36,9 @@ interface ScheduleScrimDialogProps {
 }
 
 export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChange: setControlledOpen }: ScheduleScrimDialogProps) {
-    const { createScrim, isCreating } = useScrimsData();
+    const { scheduleScrim, isCreating } = useScrimsData();
+    const { data: opponentTeams } = useOpponentTeams();
+    const { tenant } = useTenant();
     const [internalOpen, setInternalOpen] = useState(false);
     const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
     const setOpen = (val: boolean) => {
@@ -43,9 +48,16 @@ export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChang
     const [date, setDate] = useState<Date>();
     const [formData, setFormData] = useState({
         opponent_name: "",
+        opponent_team_id: "",
         time: "19:00", // Default time
         format: "BO3",
+        duration_minutes: 180,
+        notes: "",
     });
+    const timezone =
+        (typeof tenant?.settings?.timezone === "string" && tenant.settings.timezone)
+        || Intl.DateTimeFormat().resolvedOptions().timeZone
+        || "UTC";
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,20 +70,32 @@ export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChang
             return;
         }
 
-        createScrim(
+        const startsAt = fromZonedTime(
+            `${format(date, "yyyy-MM-dd")}T${formData.time}:00`,
+            timezone,
+        ).toISOString();
+
+        scheduleScrim(
             {
                 opponent_name: formData.opponent_name,
-                match_date: format(date, "yyyy-MM-dd"), // Store as YYYY-MM-DD
-                scheduled_time: formData.time,
+                opponent_team_id: formData.opponent_team_id || null,
+                starts_at: startsAt,
+                timezone,
+                duration_minutes: formData.duration_minutes,
                 format: formData.format,
-                status: "Pending", // Default scheduled status
-                result: null,
-                notes: null
+                notes: formData.notes || null,
             },
             {
                 onSuccess: () => {
                     setOpen(false);
-                    setFormData({ opponent_name: "", time: "19:00", format: "BO3" });
+                    setFormData({
+                        opponent_name: "",
+                        opponent_team_id: "",
+                        time: "19:00",
+                        format: "BO3",
+                        duration_minutes: 180,
+                        notes: "",
+                    });
                     setDate(undefined);
                 },
             }
@@ -82,38 +106,64 @@ export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChang
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {trigger || (
-                    <Button className="bg-brand-primary text-black hover:bg-brand-primary/80 shadow-[0_0_15px_rgba(45,212,191,0.3)]">
+                    <Button>
                         <Plus className="w-4 h-4 mr-2" /> Schedule Scrim
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-[#0A0A0B] border-white/10 text-white">
+            <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Schedule Scrimmage</DialogTitle>
-                    <DialogDescription className="text-zinc-400">
+                    <DialogDescription>
                         Set up a new scrim block against an opponent.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    {opponentTeams.length > 0 && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="opponent-record">Private opponent record</Label>
+                            <Select
+                                value={formData.opponent_team_id || "manual"}
+                                onValueChange={(value) => {
+                                    const team = opponentTeams.find((item) => item.id === value);
+                                    setFormData({
+                                        ...formData,
+                                        opponent_team_id: value === "manual" ? "" : value,
+                                        opponent_name: team?.name || formData.opponent_name,
+                                    });
+                                }}
+                            >
+                                <SelectTrigger id="opponent-record" className="border-white/10 bg-white/[0.035]">
+                                    <SelectValue placeholder="Choose a saved opponent" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                                    <SelectItem value="manual">Manual name only</SelectItem>
+                                    {opponentTeams.map((team) => (
+                                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                     <div className="grid gap-2">
-                        <Label htmlFor="opponent" className="text-zinc-300">Opponent Team</Label>
+                        <Label htmlFor="opponent">Opponent team</Label>
                         <Input
                             id="opponent"
                             value={formData.opponent_name}
                             onChange={(e) => setFormData({ ...formData, opponent_name: e.target.value })}
-                            className="bg-black/20 border-white/10 text-white"
+                            className="border-white/10 bg-white/[0.035]"
                             placeholder="e.g. G2 Academy"
                         />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label className="text-zinc-300">Date</Label>
+                        <Label>Date</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "w-full justify-start text-left font-normal bg-black/20 border-white/10 text-white hover:bg-white/5 hover:text-white",
+                                        "w-full justify-start border-white/10 bg-white/[0.035] text-left font-normal text-white hover:bg-white/[0.06] hover:text-white",
                                         !date && "text-muted-foreground"
                                     )}
                                 >
@@ -135,22 +185,35 @@ export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChang
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="time" className="text-zinc-300">Time (CET)</Label>
+                            <Label htmlFor="time">Local time</Label>
                             <Input
                                 id="time"
                                 type="time"
                                 value={formData.time}
                                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                className="bg-black/20 border-white/10 text-white"
+                                className="border-white/10 bg-white/[0.035]"
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="format" className="text-zinc-300">Format</Label>
+                            <Label htmlFor="format">Format</Label>
                             <Select
                                 value={formData.format}
-                                onValueChange={(value) => setFormData({ ...formData, format: value })}
+                                onValueChange={(value) => {
+                                    const durations: Record<string, number> = {
+                                        BO1: 60,
+                                        BO3: 180,
+                                        BO5: 300,
+                                        BLOCK_3: 180,
+                                        BLOCK_5: 300,
+                                    };
+                                    setFormData({
+                                        ...formData,
+                                        format: value,
+                                        duration_minutes: durations[value] || 180,
+                                    });
+                                }}
                             >
-                                <SelectTrigger className="bg-black/20 border-white/10 text-white">
+                                <SelectTrigger className="border-white/10 bg-white/[0.035]">
                                     <SelectValue placeholder="Format" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-900 border-white/10 text-white">
@@ -163,15 +226,28 @@ export function ScheduleScrimDialog({ trigger, open: controlledOpen, onOpenChang
                             </Select>
                         </div>
                     </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="scrim-notes">Block notes</Label>
+                        <Input
+                            id="scrim-notes"
+                            value={formData.notes}
+                            onChange={(event) =>
+                                setFormData({ ...formData, notes: event.target.value })
+                            }
+                            placeholder="Focus, contact, or lobby context"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Scheduled in {timezone}.
+                        </p>
+                    </div>
                 </form>
                 <DialogFooter>
-                    <Button variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
+                    <Button variant="ghost" onClick={() => setOpen(false)}>
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={isCreating}
-                        className="bg-brand-primary text-black hover:bg-brand-primary/80"
                     >
                         {isCreating ? "Scheduling..." : "Schedule Scrim"}
                     </Button>

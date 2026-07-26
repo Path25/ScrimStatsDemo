@@ -19,55 +19,7 @@ export interface CreateFeedbackData {
   is_during_game: boolean;
 }
 
-export interface UpdateFeedbackData extends Partial<CreateFeedbackData> { }
-
-const MOCK_FEEDBACK: CoachFeedback[] = [
-  {
-    id: 'f1',
-    scrim_game_id: 'mock',
-    coach_id: 'coach1',
-    feedback_type: 'General',
-    player_name: 'Theory',
-    timestamp_seconds: 420,
-    title: 'Mid lane priority',
-    content: 'Great rotate at 7:00 to help with Crab. Azir spacing was excellent.',
-    priority: 'medium',
-    tags: ['Positioning', 'Tactical'],
-    is_during_game: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'f2',
-    scrim_game_id: 'mock',
-    coach_id: 'coach1',
-    feedback_type: 'Objective',
-    player_name: 'Vortex',
-    timestamp_seconds: 1340,
-    title: 'Baron Setup',
-    content: 'Viego pathing around Baron pit was a bit exposed. Need to wait for Shield to lead.',
-    priority: 'high',
-    tags: ['Objective Control', 'Teamfight'],
-    is_during_game: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'f3',
-    scrim_game_id: 'mock',
-    coach_id: 'coach1',
-    feedback_type: 'Communications',
-    player_name: 'Pulse',
-    timestamp_seconds: 960,
-    title: 'Dive Coordination',
-    content: 'Clean dive bot lane. Kai\'Sa ult timing was perfect for the reset.',
-    priority: 'low',
-    tags: ['Communication', 'Execution'],
-    is_during_game: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+export type UpdateFeedbackData = Partial<CreateFeedbackData>;
 
 export const useCoachFeedback = (gameId?: string) => {
   const { user } = useAuth();
@@ -77,23 +29,14 @@ export const useCoachFeedback = (gameId?: string) => {
   const { data: feedback = [], isLoading, error } = useQuery({
     queryKey: ['coachFeedback', gameId, tenant?.id],
     queryFn: async () => {
-      if (!gameId || gameId.startsWith('mock')) return MOCK_FEEDBACK;
-
-      try {
-        const { data, error } = await supabase
-          .from('coach_feedback')
-          .select('*')
-          .eq('scrim_game_id', gameId)
-          .order('created_at', { ascending: false });
-
-        if (error || !data || data.length === 0) {
-          return MOCK_FEEDBACK;
-        }
-
-        return data as CoachFeedback[];
-      } catch (err) {
-        return MOCK_FEEDBACK;
-      }
+      if (!gameId) return [];
+      const { data, error } = await supabase
+        .from('coach_feedback')
+        .select('*')
+        .eq('scrim_game_id', gameId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as CoachFeedback[];
     },
     enabled: !!gameId,
   });
@@ -103,8 +46,6 @@ export const useCoachFeedback = (gameId?: string) => {
       if (!user || !tenant?.id) {
         throw new Error('User not authenticated or no tenant selected');
       }
-
-      console.log('Creating feedback with data:', feedbackData);
 
       const { data, error } = await supabase
         .from('coach_feedback')
@@ -131,14 +72,10 @@ export const useCoachFeedback = (gameId?: string) => {
 
   const updateFeedbackMutation = useMutation({
     mutationFn: async ({ id, ...updateData }: UpdateFeedbackData & { id: string }) => {
-      console.log('Updating feedback with ID:', id, 'and data:', updateData);
-
       const updatePayload = {
         ...updateData,
         updated_at: new Date().toISOString(),
       };
-
-      console.log('Final update payload:', updatePayload);
 
       const { data, error } = await supabase
         .from('coach_feedback')
@@ -152,7 +89,6 @@ export const useCoachFeedback = (gameId?: string) => {
         throw error;
       }
 
-      console.log('Successfully updated feedback:', data);
       return data;
     },
     onSuccess: () => {

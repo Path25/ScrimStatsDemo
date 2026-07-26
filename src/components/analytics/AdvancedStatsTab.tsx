@@ -26,12 +26,27 @@ export function AdvancedStatsTab({ data }: AdvancedStatsTabProps) {
     // Mock "League Average" for comparison (since we don't have real benchmark data yet)
     // In a real app, this would come from an external API or database of averages
     const radarData = [
-        { subject: 'Aggression', A: Math.min(100, (team.avgKills / 15) * 100), B: 65, fullMark: 100 }, // based on kills
-        { subject: 'Control', A: Math.min(100, (team.objectives?.dragonRate || 0) * 25), B: 50, fullMark: 100 }, // based on dragons
-        { subject: 'Economy', A: Math.min(100, (team.avgGold / 50000) * 100), B: 70, fullMark: 100 }, // based on gold
-        { subject: 'Vision', A: Math.min(100, (avgTeamVision / 150) * 100), B: 60, fullMark: 100 }, // based on vision score
-        { subject: 'Survival', A: Math.min(100, (team.winRate)), B: 50, fullMark: 100 }, // based on winrate
+        { subject: 'Aggression', A: Math.min(100, (team.avgKills / 15) * 100), B: 65, fullMark: 100 },
+        { subject: 'Early Game', A: Math.min(100, 50 + (team.avgGD15 / 2000) * 100), B: 50, fullMark: 100 },
+        { subject: 'Economy', A: Math.min(100, (team.avgGold / 50000) * 100), B: 70, fullMark: 100 },
+        { subject: 'Vision', A: Math.min(100, (avgTeamVision / 150) * 100), B: 60, fullMark: 100 },
+        { subject: 'Objective Control', A: Math.min(100, (team.objectives?.dragonRate || 0) * 25), B: 50, fullMark: 100 },
     ];
+
+    // Resource Efficiency Data (Dmg% vs Gold%)
+    const resourceData = players.map(p => ({
+        name: p.name,
+        dmgPct: Math.round(p.avgDmgPct * 100),
+        goldPct: Math.round(p.avgGoldPct * 100),
+        efficiency: p.avgGoldPct > 0 ? (p.avgDmgPct / p.avgGoldPct).toFixed(2) : '0'
+    }));
+
+    // GD15 Data
+    const gd15Data = players.map(p => ({
+        name: p.name,
+        gd15: p.avgGD15,
+        fill: p.avgGD15 >= 0 ? '#2DD4BF' : '#ef4444'
+    })).sort((a, b) => b.gd15 - a.gd15);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -156,6 +171,57 @@ export function AdvancedStatsTab({ data }: AdvancedStatsTabProps) {
                             {team.objectives?.baronRate.toFixed(2)} <span className="text-xs font-normal text-zinc-600">/ g</span>
                         </div>
                         <p className="text-[10px] text-zinc-600 uppercase tracking-widest mt-1">Avg Barons taken</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                {/* GD15 Distribution */}
+                <Card className="glass-card">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-brand-primary">
+                            <Activity className="w-5 h-5" /> GD@15 Distribution
+                        </CardTitle>
+                        <CardDescription>Average gold difference at 15 minutes per player</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={gd15Data}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                <XAxis dataKey="name" stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    cursor={{ fill: 'white', opacity: 0.05 }}
+                                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#ffffff10', borderRadius: '12px' }}
+                                />
+                                <Bar dataKey="gd15" name="Avg GD@15" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                {/* Damage vs Gold % */}
+                <Card className="glass-card">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-purple-400">
+                            <Swords className="w-5 h-5" /> Resource Efficiency
+                        </CardTitle>
+                        <CardDescription>Comparison of team damage share vs gold share</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={resourceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                <XAxis dataKey="name" stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#ffffff10', borderRadius: '12px' }}
+                                />
+                                <Legend />
+                                <Bar dataKey="dmgPct" name="Damage %" fill="#2DD4BF" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="goldPct" name="Gold %" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>

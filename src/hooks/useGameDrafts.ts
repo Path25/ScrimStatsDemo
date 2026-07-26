@@ -19,39 +19,6 @@ export interface UpdateDraftData extends Partial<CreateDraftData> {
   completed_at?: string;
 }
 
-const MOCK_DRAFT: GameDraft = {
-  id: 'mock-draft',
-  scrim_game_id: 'mock',
-  draft_mode: 'client',
-  our_team_side: 'blue',
-  draft_data: {
-    phase: 'completed',
-    completed: true,
-    picks: [
-      { order: 1, team: 'blue', champion: 'Azir', role: 'mid' },
-      { order: 2, team: 'red', champion: 'Orianna', role: 'mid' },
-      { order: 3, team: 'red', champion: 'Lee Sin', role: 'jungle' },
-      { order: 4, team: 'blue', champion: 'Viego', role: 'jungle' },
-      { order: 5, team: 'blue', champion: "K'Sante", role: 'top' },
-      { order: 6, team: 'red', champion: 'Renekton', role: 'top' },
-      { order: 7, team: 'red', champion: 'Xayah', role: 'adc' },
-      { order: 8, team: 'blue', champion: "Kai'Sa", role: 'adc' },
-      { order: 9, team: 'blue', champion: 'Rell', role: 'support' },
-      { order: 10, team: 'red', champion: 'Rakan', role: 'support' },
-    ],
-    bans: [
-      { order: 1, team: 'blue', champion: 'LeBlanc' },
-      { order: 2, team: 'red', champion: 'Sylas' },
-      { order: 3, team: 'blue', champion: 'Maokai' },
-      { order: 4, team: 'red', champion: 'Sejuani' },
-      { order: 5, team: 'blue', champion: 'Jax' },
-      { order: 6, team: 'red', champion: 'Fiora' },
-    ]
-  },
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
 export const useGameDrafts = (gameId?: string) => {
   const { user } = useAuth();
   const { tenant } = useTenant();
@@ -60,7 +27,7 @@ export const useGameDrafts = (gameId?: string) => {
   const { data: draft, isLoading, error } = useQuery({
     queryKey: ['gameDraft', gameId, tenant?.id],
     queryFn: async () => {
-      if (gameId?.startsWith('mock') || !tenant?.id || !gameId) return MOCK_DRAFT;
+      if (!tenant?.id || !gameId) return null;
 
       const { data, error } = await supabase
         .from('game_drafts')
@@ -68,12 +35,8 @@ export const useGameDrafts = (gameId?: string) => {
         .eq('scrim_game_id', gameId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching game draft:', error);
-        return MOCK_DRAFT;
-      }
-
-      if (!data) return MOCK_DRAFT;
+      if (error) throw error;
+      if (!data) return null;
 
       // Safely parse draft_data as DraftData
       const draftData = data.draft_data as unknown as DraftData;

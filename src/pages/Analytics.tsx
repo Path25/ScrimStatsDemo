@@ -1,86 +1,52 @@
-import { useState } from "react";
-import { useOptimizedScrimsData } from "@/hooks/useOptimizedScrimsData";
-import { useScrimAnalytics } from "@/hooks/useScrimAnalytics";
-import { AnalyticsFilterBar } from "@/components/analytics/AnalyticsFilterBar";
-import { OverviewTab } from "@/components/analytics/OverviewTab";
-import { AdvancedStatsTab } from "@/components/analytics/AdvancedStatsTab";
-import { PlayerReportsTab } from "@/components/analytics/PlayerReportsTab";
-import { DraftAnalysisTab } from "@/components/analytics/DraftAnalysisTab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, BarChart2, Users, FileText, ChevronRight } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BarChart3, CalendarRange, Database } from "lucide-react";
+
+import { TeamAnalyticsWorkspace } from "@/components/analytics/TeamAnalyticsWorkspace";
+import { Button } from "@/components/ui/button";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceState } from "@/components/workspace/WorkspaceState";
+import { useTeamAnalytics } from "@/hooks/useTeamAnalytics";
+import { useWorkspaceModules } from "@/hooks/useWorkspaceModules";
+
+type Range = "all" | 30 | 90 | 180;
 
 export default function Analytics() {
-  // State for filters
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'season'>('month');
-  const [matchType, setMatchType] = useState<'all' | 'scrim' | 'official'>('all');
-
-  // Fetch data
-  const { data, isLoading } = useOptimizedScrimsData();
-  const scrims = data?.scrims || [];
-  const analyticsData = useScrimAnalytics(scrims, timeRange);
-
-  if (isLoading) {
-    return (
-      <div className="h-[80vh] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
-      </div>
-    );
-  }
+  const { modules } = useWorkspaceModules();
+  const moduleEnabled = modules.analytics.enabled;
+  const [range, setRange] = useState<Range>("all");
+  const dateTo = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const dateFrom = useMemo(() => {
+    if (range === "all") return "2000-01-01";
+    const date = new Date();
+    date.setDate(date.getDate() - (range - 1));
+    return date.toISOString().slice(0, 10);
+  }, [range]);
+  const analytics = useTeamAnalytics(dateFrom, dateTo, moduleEnabled);
 
   return (
-    <div className="space-y-6 max-w-[1920px] mx-auto pb-10">
-      {/* Compact Header & Filter Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl sticky top-24 z-20">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground pl-2">
-          <span className="text-zinc-500">ScrimStats</span>
-          <ChevronRight className="w-4 h-4 text-zinc-700" />
-          <span className="text-white font-medium glow-text">Analytics</span>
-        </div>
+    <div className="space-y-8 pb-12">
+      <WorkspacePageHeader
+        eyebrow="Coaching analytics"
+        title="Team performance"
+        description="Compare improvement, inspect team and draft patterns, and trace every metric back to its qualifying practice games."
+        actions={
+          <div className="flex items-center gap-1 border border-[var(--workspace-rule)] p-1" aria-label="Analytics date range">
+            {(["all", 30, 90, 180] as const).map((option) => (
+              <Button key={option} size="sm" variant={range === option ? "secondary" : "ghost"} onClick={() => setRange(option)}>
+                {option === "all" ? "All history" : `${option} days`}
+              </Button>
+            ))}
+          </div>
+        }
+      />
 
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
-          <AnalyticsFilterBar
-            timeRange={timeRange}
-            onTimeRangeChange={setTimeRange}
-            matchType={matchType}
-            onMatchTypeChange={setMatchType}
-          />
-        </div>
-      </div>
-
-      {/* Main Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="w-full flex justify-start overflow-x-auto no-scrollbar bg-black/40 border-white/5 p-1 rounded-2xl h-auto">
-          <TabsTrigger value="overview" className="flex items-center gap-2 px-4 py-2 text-xs font-bold data-[state=active]:bg-brand-primary/20 data-[state=active]:text-brand-primary rounded-xl transition-all">
-            <LayoutDashboard className="w-3.5 h-3.5" /> Overview
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-2 px-4 py-2 text-xs font-bold data-[state=active]:bg-brand-primary/20 data-[state=active]:text-brand-primary rounded-xl transition-all">
-            <BarChart2 className="w-3.5 h-3.5" /> Advanced Stats
-          </TabsTrigger>
-          <TabsTrigger value="players" className="flex items-center gap-2 px-4 py-2 text-xs font-bold data-[state=active]:bg-brand-primary/20 data-[state=active]:text-brand-primary rounded-xl transition-all">
-            <Users className="w-3.5 h-3.5" /> Player Reports
-          </TabsTrigger>
-          <TabsTrigger value="draft" className="flex items-center gap-2 px-4 py-2 text-xs font-bold data-[state=active]:bg-brand-primary/20 data-[state=active]:text-brand-primary rounded-xl transition-all">
-            <FileText className="w-3.5 h-3.5" /> Draft Analysis
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <OverviewTab data={analyticsData} />
-        </TabsContent>
-
-        <TabsContent value="advanced">
-          <AdvancedStatsTab data={analyticsData} />
-        </TabsContent>
-
-        <TabsContent value="players">
-          <PlayerReportsTab data={analyticsData} />
-        </TabsContent>
-
-        <TabsContent value="draft">
-          <DraftAnalysisTab data={analyticsData} />
-        </TabsContent>
-      </Tabs>
+      {!moduleEnabled ? (
+        <WorkspaceState icon={BarChart3} title="Team analytics is not enabled" description="An owner can enable analytics for this workspace when its evidence workflow is ready." />
+      ) : analytics.isLoading ? (
+        <WorkspaceState icon={CalendarRange} title="Building the performance workspace…" description="Normalizing factual game, participant, review, and evidence-capability records." />
+      ) : analytics.error || !analytics.data ? (
+        <WorkspaceState icon={Database} title="Team analytics could not be loaded" description={analytics.error instanceof Error ? analytics.error.message : "The tenant-authorized analytics contract is unavailable. No replacement values are estimated."} />
+      ) : <TeamAnalyticsWorkspace dataset={analytics.data} />}
     </div>
   );
 }

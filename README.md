@@ -1,73 +1,44 @@
-# Welcome to your Lovable project
+# ScrimStats by ProComps
 
-## Project info
+ScrimStats is a League of Legends team-operations workspace for planning scrims, tracking players, reviewing games, and organising coaching work.
 
-**URL**: https://lovable.dev/projects/5af4a944-63b3-4aa5-a5cb-e4f81dc4cbd2
+## Current focus
 
-## How can I edit this code?
+The production Operations Core covers tenant-safe team access, roster, scrim blocks, calendar, collector status, and post-game review. Public marketing and authenticated workspace routes are separate. Live workspace screens never fall back to sample team data: unavailable data is shown as unavailable.
 
-There are several ways of editing your application.
+## Invited-team collector beta
 
-**Use Lovable**
+`collector/` is the Windows Electron companion for invited teams. A coach, manager, or owner creates a one-time pairing code in the Scrim Block, then a designated host pairs the app, selects the scheduled scrim, and leaves it running. The app reads only the local League Game Client API and uploads the final review package after the game; it never asks a player for a Riot API key or exposes live telemetry to the browser.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5af4a944-63b3-4aa5-a5cb-e4f81dc4cbd2) and start prompting.
+The package is built with `npm --prefix collector run dist:win`. Before a pilot, apply the collector migration and deploy `collector-pairing`, `collector-pair`, `collector-status`, `collector-ingest`, and the retired `receive-game-stats` tombstone together. Do not publish the setup executable at `/downloads/ScrimStats-Collector-Setup.exe` until it has been signed and released through the invited-team channel.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Tech stack
 
-**Use your preferred IDE**
+- React, TypeScript, Vite, Tailwind, and shadcn/ui
+- Supabase for authentication, tenant data, storage, and edge functions
+- TanStack Query for server-state caching
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Create a production build with `npm run build`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deployment environment
 
-**Use GitHub Codespaces**
+Set these values in the Vercel project rather than committing a local `.env` file:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```text
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+SUPABASE_SECRET_KEY=<server-only-secret>
+```
 
-## What technologies are used for this project?
+`SUPABASE_SECRET_KEY` is used only by `/api/request-access`; it must never be exposed to browser code. Apply `supabase/migrations/20260724113000_production_access_hardening.sql` before enabling the public request-access form. The migration disables public tenant creation and makes access requests server-only.
 
-This project is built with:
+## Data and credentials
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5af4a944-63b3-4aa5-a5cb-e4f81dc4cbd2) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Provider credentials must stay server-side. The browser should receive connection status only, never a Riot, GRID, or service-role key. Riot personal keys are suitable for private testing; a production integration requires an approved production-key route.

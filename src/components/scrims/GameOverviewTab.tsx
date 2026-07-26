@@ -1,292 +1,182 @@
+import { BarChart3, Clock3, Coins, Shield, Swords, Users } from "lucide-react";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Trophy, Users, Target } from 'lucide-react';
-import { ChampionAvatar } from './ChampionAvatar';
-import { ItemIcon } from './ItemIcon';
-import { extractParticipantsFromExternalData } from '@/utils/gameDataTransform';
-import { determineGameResult } from '@/utils/gameResultHelpers';
-import type { ScrimGame, ScrimParticipant, PlayerRole } from '@/types/scrimGame';
+import { DataSurface } from "@/components/workspace/DataSurface";
+import { SourceBadge } from "@/components/workspace/SourceBadge";
+import { formatGameDuration } from "@/lib/scrim-review";
+import type { ScrimGame, ScrimParticipant } from "@/types/scrimGame";
 
 interface GameOverviewTabProps {
   game: ScrimGame;
   participants: ScrimParticipant[];
 }
 
-export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({ game, participants }) => {
-  // Extract participants with same logic as other components
-  const externalParticipants = extractParticipantsFromExternalData(game);
-  
-  // DEBUG: Log both sources to see which has correct order and items structure
-  console.log('🔧 PASSED participants:', participants.map(p => `${p.summoner_name} (${p.champion_name}) - Team: ${p.is_our_team ? 'OUR' : 'ENEMY'}`));
-  console.log('🔧 EXTRACTED participants:', externalParticipants.map(p => `${p.summoner_name} (${p.champion_name}) - Team: ${p.is_our_team ? 'OUR' : 'ENEMY'}`));
-  
-  // DEBUG: Check items structure
-  if (participants.length > 0) {
-    console.log('🔧 PASSED participant items sample:', participants[0].items);
-  }
-  if (externalParticipants.length > 0) {
-    console.log('🔧 EXTRACTED participant items sample:', externalParticipants[0].items);
-  }
-  
-  // Use extracted data for correct order, but merge with original data for items
-  const shouldUseExternalData = externalParticipants.length > 0;
-  
-  let effectiveParticipants = shouldUseExternalData ? externalParticipants : participants;
-  
-  // If using extracted data, merge items from original participants
-  if (shouldUseExternalData && participants.length > 0) {
-    effectiveParticipants = externalParticipants.map(extractedParticipant => {
-      // Find matching participant in original array by summoner name
-      const originalParticipant = participants.find(p => 
-        p.summoner_name === extractedParticipant.summoner_name
-      );
-      
-      // Use items from original participant if found, otherwise keep extracted
-      return {
-        ...extractedParticipant,
-        items: originalParticipant?.items || extractedParticipant.items
-      };
-    });
-    console.log('🔧 MERGED: Using extracted order with original items');
-  } else {
-    console.log('🔧 USING:', shouldUseExternalData ? 'EXTRACTED' : 'PASSED');
-  }
-  const gameResult = determineGameResult(game);
+function recordedNumber(value: number | null | undefined, suffix = "") {
+  return value === null || value === undefined ? "Not recorded" : `${value.toLocaleString()}${suffix}`;
+}
 
-  // Smart role assignment: use actual roles from data, fallback to standard order only when needed
-  const standardRoles: PlayerRole[] = ['top', 'jungle', 'mid', 'adc', 'support'];
-  
-  const assignRoles = (teamParticipants: ScrimParticipant[]) => {
-    // Log the exact order we receive the participants
-    console.log('📋 assignRoles input order:', teamParticipants.map(p => `${p.summoner_name} (${p.champion_name})`));
-    
-    // Assign roles based purely on the order we receive them - NO REORDERING
-    const result = teamParticipants.map((participant, index) => ({
-      ...participant,
-      role: standardRoles[index] || 'top'
-    }));
-    
-    console.log('📋 assignRoles output:', result.map(p => `${p.summoner_name}: ${p.role}`));
-    return result;
-  };
-
-  // Log the order BEFORE filtering to debug any reordering
-  console.log('🔍 effectiveParticipants order BEFORE filtering:', effectiveParticipants.map(p => `${p.summoner_name} (${p.champion_name}) - Team: ${p.is_our_team ? 'OUR' : 'ENEMY'}`));
-
-  const ourTeamRaw = effectiveParticipants.filter(p => p.is_our_team);
-  const enemyTeamRaw = effectiveParticipants.filter(p => !p.is_our_team);
-  
-  console.log('🔍 ourTeamRaw AFTER filtering:', ourTeamRaw.map(p => `${p.summoner_name} (${p.champion_name})`));
-  console.log('🔍 enemyTeamRaw AFTER filtering:', enemyTeamRaw.map(p => `${p.summoner_name} (${p.champion_name})`));
-  
-  const ourTeam = assignRoles(ourTeamRaw);
-  const enemyTeam = assignRoles(enemyTeamRaw);
-
-  // Calculate actual kill totals from participants
-  const ourTeamKills = ourTeam.reduce((sum, p) => sum + (p.kills || 0), 0);
-  const enemyTeamKills = enemyTeam.reduce((sum, p) => sum + (p.kills || 0), 0);
-
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'Unknown';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getResultColor = (result: string) => {
-    switch (result) {
-      case 'win': return 'text-green-400';
-      case 'loss': return 'text-red-400';
-      default: return 'text-muted-foreground';
-    }
-  };
-
-  const getSideColor = (side: string) => {
-    switch (side) {
-      case 'blue': return 'text-blue-400';
-      case 'red': return 'text-red-400';
-      default: return 'text-muted-foreground';
-    }
-  };
-
-  const ParticipantRow: React.FC<{ participant: ScrimParticipant }> = ({ participant }) => {
-    // Debug items structure
-    console.log(`🔧 Items for ${participant.summoner_name}:`, participant.items);
-    
-    // Handle different items structures between passed and extracted data
-    let itemIds: number[] = [];
-    
-    if (participant.items && Array.isArray(participant.items)) {
-      itemIds = participant.items
-        .map(item => {
-          // Handle both number[] format and {id: number}[] format
-          if (typeof item === 'number') return item;
-          if (typeof item === 'object' && item.id) return item.id;
-          return null;
-        })
-        .filter(Boolean) as number[];
-    }
-    
-    console.log(`🔧 Processed itemIds for ${participant.summoner_name}:`, itemIds);
-
-    const handleItemError = (itemId: number) => {
-      console.warn(`Failed to load item ${itemId} - may need manual endpoint configuration`);
-    };
-
-    return (
-      <div className="flex items-center justify-between p-3 rounded-lg border border-border/50">
-        <div className="flex items-center space-x-3">
-          <ChampionAvatar championName={participant.champion_name} size="sm" />
-          <div>
-            <div className="font-medium">{participant.summoner_name}</div>
-            <div className="text-sm text-muted-foreground">
-              {participant.champion_name}
-              {participant.role && (
-                <span className="ml-2">• {participant.role.charAt(0).toUpperCase() + participant.role.slice(1)}</span>
-              )}
-            </div>
-          </div>
+function ParticipantLedger({
+  label,
+  participants,
+}: {
+  label: string;
+  participants: ScrimParticipant[];
+}) {
+  return (
+    <DataSurface>
+      <div className="flex items-center justify-between border-b border-[var(--workspace-rule)] px-5 py-4">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-[var(--workspace-accent)]" />
+          <h3 className="font-semibold">{label}</h3>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="text-center">
-            <div className="text-sm font-medium">
-              {participant.kills}/{participant.deaths}/{participant.assists}
-            </div>
-            <div className="text-xs text-muted-foreground">K/D/A</div>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-sm font-medium">{participant.cs || 0}</div>
-            <div className="text-xs text-muted-foreground">CS</div>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-sm font-medium">{participant.gold?.toLocaleString() || 0}</div>
-            <div className="text-xs text-muted-foreground">Gold</div>
-          </div>
-
-          <div className="flex space-x-1">
-            {itemIds.slice(0, 6).map((itemId, index) => (
-              <div key={index} onError={() => handleItemError(itemId)}>
-                <ItemIcon 
-                  itemId={itemId} 
-                  size="sm" 
-                  showTooltip={false}
-                />
+        <span className="ss-mono text-xs text-[var(--workspace-subtle)]">
+          {participants.length} players
+        </span>
+      </div>
+      {participants.length ? (
+        <div className="divide-y divide-[var(--workspace-rule)]">
+          {participants.map((participant) => (
+            <div
+              key={participant.id}
+              className="workspace-ledger-row grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium">{participant.summoner_name || "Unnamed player"}</p>
+                <p className="mt-1 text-sm capitalize text-[var(--workspace-muted)]">
+                  {participant.champion_name || "Champion not recorded"} ·{" "}
+                  {participant.role || "role not recorded"}
+                </p>
               </div>
-            ))}
-          </div>
+              <div>
+                <p className="workspace-eyebrow text-[var(--workspace-subtle)]">KDA</p>
+                <p className="ss-mono mt-1 text-sm">
+                  {participant.kills ?? "—"}/{participant.deaths ?? "—"}/{participant.assists ?? "—"}
+                </p>
+              </div>
+              <div className="grid grid-cols-4 gap-4 sm:text-right">
+                <div>
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">CS</p>
+                  <p className="ss-mono mt-1 text-sm">{recordedNumber(participant.cs)}</p>
+                </div>
+                <div>
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Gold</p>
+                  <p className="ss-mono mt-1 text-sm">{recordedNumber(participant.gold)}</p>
+                </div>
+                <div>
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Damage</p>
+                  <p className="ss-mono mt-1 text-sm">{recordedNumber(participant.damage_dealt)}</p>
+                </div>
+                <div>
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Vision</p>
+                  <p className="ss-mono mt-1 text-sm">{recordedNumber(participant.vision_score)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-    );
-  };
+      ) : (
+        <p className="px-5 py-6 text-sm text-[var(--workspace-muted)]">
+          Participant statistics were not captured for this game.
+        </p>
+      )}
+    </DataSurface>
+  );
+}
 
-  if (effectiveParticipants.length === 0) {
-    return (
-      <div className="space-y-6">
-        <Card className="glass-card">
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No Game Data</h3>
-            <p className="text-muted-foreground">
-              Game overview will appear here when participant data is available
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+function PhaseRating({ label, value }: { label: string; value: number | null | undefined }) {
+  return (
+    <div>
+      <p className="workspace-eyebrow text-[var(--workspace-subtle)]">{label}</p>
+      <p className="ss-mono mt-2 text-lg">{value ? `${value}/5` : "Not recorded"}</p>
+    </div>
+  );
+}
+
+export function GameOverviewTab({ game, participants }: GameOverviewTabProps) {
+  const ourTeam = participants.filter((participant) => participant.is_our_team);
+  const opponent = participants.filter((participant) => !participant.is_our_team);
+  const source =
+    game.desktop_session_id || game.external_game_id || game.auto_created ? "collector" : "manual";
 
   return (
-    <div className="space-y-6">
-      {/* Game Summary */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Result</span>
+    <div className="space-y-5">
+      <DataSurface>
+        <div className="grid gap-5 p-5 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="flex gap-3">
+            <Swords className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
+            <div>
+              <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Outcome</p>
+              <p className="mt-2 text-lg font-semibold capitalize">{game.result || "Not recorded"}</p>
             </div>
-            <div className={`text-2xl font-bold ${getResultColor(gameResult)}`}>
-              {gameResult ? gameResult.toUpperCase() : 'PENDING'}
+          </div>
+          <div className="flex gap-3">
+            <Shield className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" />
+            <div>
+              <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Our side</p>
+              <p className="mt-2 text-lg capitalize">{game.side ? `${game.side} side` : "Not recorded"}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex gap-3">
+            <BarChart3 className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" />
+            <div>
+              <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Kills</p>
+              <p className="ss-mono mt-2 text-lg">
+                {game.our_team_kills === null || game.our_team_kills === undefined ||
+                game.enemy_team_kills === null || game.enemy_team_kills === undefined
+                  ? "Not recorded"
+                  : `${game.our_team_kills}–${game.enemy_team_kills}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Coins className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" />
+            <div>
+              <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Final gold</p>
+              <p className="ss-mono mt-2 text-lg">
+                {game.our_team_gold === null || game.our_team_gold === undefined ||
+                game.enemy_team_gold === null || game.enemy_team_gold === undefined
+                  ? "Not recorded"
+                  : `${game.our_team_gold.toLocaleString()}–${game.enemy_team_gold.toLocaleString()}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Clock3 className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" />
+            <div>
+              <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Duration</p>
+              <p className="ss-mono mt-2 text-lg">{formatGameDuration(game.duration_seconds)}</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 border-t border-[var(--workspace-rule)] px-5 py-3">
+          <span className="workspace-eyebrow text-[var(--workspace-subtle)]">Evidence source</span>
+          <SourceBadge source={source} compact />
+        </div>
+      </DataSurface>
 
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Duration</span>
-            </div>
-            <div className="text-2xl font-bold">
-              {formatDuration(game.duration_seconds)}
-            </div>
-          </CardContent>
-        </Card>
+      <DataSurface className="grid gap-5 p-5 lg:grid-cols-[0.7fr_1.3fr]">
+        <div>
+          <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Overall performance</p>
+          <p className="ss-mono mt-3 text-3xl">
+            {game.performance_rating ? `${game.performance_rating}/5` : "Not recorded"}
+          </p>
+        </div>
+        <div>
+          <p className="workspace-eyebrow text-[var(--workspace-subtle)]">Team review</p>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[var(--workspace-muted)]">
+            {game.performance_summary?.trim() || "Performance summary not recorded."}
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-4 border-t border-[var(--workspace-rule)] pt-5 lg:col-span-2">
+          <PhaseRating label="Early game" value={game.early_game_rating} />
+          <PhaseRating label="Mid game" value={game.mid_game_rating} />
+          <PhaseRating label="Late game" value={game.late_game_rating} />
+        </div>
+      </DataSurface>
 
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Kills</span>
-            </div>
-            <div className="text-2xl font-bold">
-              {ourTeamKills} - {enemyTeamKills}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Side</span>
-            </div>
-            <div className={`text-2xl font-bold ${getSideColor(game.side || '')}`}>
-              {game.side ? game.side.toUpperCase() : 'UNKNOWN'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team Performance */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="glass-card border-blue-500/20">
-          <CardHeader>
-            <CardTitle className="text-blue-400 flex items-center justify-between">
-              <span>Our Team</span>
-              <Badge className="bg-blue-500/20 text-blue-400">
-                {ourTeam.length} players
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {ourTeam.map((participant, index) => (
-              <ParticipantRow key={participant.id || index} participant={participant} />
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card border-red-500/20">
-          <CardHeader>
-            <CardTitle className="text-red-400 flex items-center justify-between">
-              <span>Enemy Team</span>
-              <Badge className="bg-red-500/20 text-red-400">
-                {enemyTeam.length} players
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {enemyTeam.map((participant, index) => (
-              <ParticipantRow key={participant.id || index} participant={participant} />
-            ))}
-          </CardContent>
-        </Card>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <ParticipantLedger label="Our roster" participants={ourTeam} />
+        <ParticipantLedger label="Opponent" participants={opponent} />
       </div>
     </div>
   );
-};
+}

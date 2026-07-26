@@ -2,71 +2,56 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
-import type { ScrimGame, CreateScrimGameData, UpdateScrimGameData, ScrimGameDB, transformScrimGameFromDB } from '@/types/scrimGame';
+import type {
+    ScrimGame,
+    CreateScrimGameData,
+    UpdateScrimGameData,
+    GameResult,
+    GameSide,
+    GameStatus,
+} from '@/types/scrimGame';
 
-// Mock games for demo
-const MOCK_GAMES: ScrimGame[] = [
-    {
-        id: 'mock-game-1',
-        scrim_id: 'mock-scrim-1',
-        game_number: 1,
-        status: 'completed',
-        side: 'blue',
-        result: 'win',
-        duration_seconds: 1842,
-        our_team_kills: 18,
-        enemy_team_kills: 9,
-        our_team_gold: 54200,
-        enemy_team_gold: 45800,
-        objectives: { dragons: [], barons: [], towers: [], inhibitors: [] },
-        bans: { our_bans: [], enemy_bans: [] },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    },
-    {
-        id: 'mock-game-2',
-        scrim_id: 'mock-scrim-1',
-        game_number: 2,
-        status: 'completed',
-        side: 'red',
-        result: 'loss',
-        duration_seconds: 2156,
-        our_team_kills: 11,
-        enemy_team_kills: 16,
-        our_team_gold: 48300,
-        enemy_team_gold: 56100,
-        objectives: { dragons: [], barons: [], towers: [], inhibitors: [] },
-        bans: { our_bans: [], enemy_bans: [] },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    },
-    {
-        id: 'mock-game-3',
-        scrim_id: 'mock-scrim-1',
-        game_number: 3,
-        status: 'completed',
-        side: 'blue',
-        result: 'win',
-        duration_seconds: 1654,
-        our_team_kills: 22,
-        enemy_team_kills: 7,
-        our_team_gold: 58900,
-        enemy_team_gold: 41200,
-        objectives: { dragons: [], barons: [], towers: [], inhibitors: [] },
-        bans: { our_bans: [], enemy_bans: [] },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    },
-];
+export interface SaveGameReviewInput {
+    id?: string;
+    gameNumber: number;
+    status: GameStatus;
+    side: GameSide | null;
+    result: GameResult | null;
+    durationSeconds: number | null;
+    ourTeamKills: number | null;
+    enemyTeamKills: number | null;
+    ourTeamGold: number | null;
+    enemyTeamGold: number | null;
+    performanceRating: number | null;
+    performanceSummary: string | null;
+    earlyGameRating: number | null;
+    midGameRating: number | null;
+    lateGameRating: number | null;
+    notes: string | null;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback;
+}
 
 export function useScrimGames(scrimId?: string) {
     const { tenant } = useTenant();
     const queryClient = useQueryClient();
 
-    const { data: scrimGames = [], isLoading } = useQuery({
-        queryKey: ['scrim-games', scrimId],
+    const { data: scrimGames = [], isLoading, error } = useQuery({
+        queryKey: ['scrim-games', tenant?.id, scrimId],
         queryFn: async () => {
-            if (!tenant?.id || !scrimId) return MOCK_GAMES;
+            if (!tenant?.id || !scrimId) return [];
+
+            const { data: block, error: blockError } = await supabase
+                .from('scrims')
+                .select('id')
+                .eq('tenant_id', tenant.id)
+                .eq('id', scrimId)
+                .maybeSingle();
+
+            if (blockError) throw blockError;
+            if (!block) throw new Error('Practice block was not found in this workspace');
 
             const { data, error } = await supabase
                 .from('scrim_games')
@@ -74,20 +59,56 @@ export function useScrimGames(scrimId?: string) {
                 .eq('scrim_id', scrimId)
                 .order('game_number', { ascending: true });
 
-            if (error) {
-                console.error('Error fetching scrim games:', error);
-                return MOCK_GAMES;
-            }
+            if (error) throw error;
 
-            if (!data || data.length === 0) return MOCK_GAMES;
-
-            return data as unknown as ScrimGame[];
+            return (data || []) as unknown as ScrimGame[];
         },
-        enabled: true,
+        enabled: Boolean(tenant?.id && scrimId),
+    });
+
+    const invalidate = () => {
+        queryClient.invalidateQueries({ queryKey: ['scrim-games', tenant?.id, scrimId] });
+        queryClient.invalidateQueries({ queryKey: ['scrim-block', tenant?.id, scrimId] });
+        queryClient.invalidateQueries({ queryKey: ['scrims-optimized'] });
+        queryClient.invalidateQueries({ queryKey: ['overview-briefing'] });
+    };
+
+    const saveGameReview = useMutation({
+        mutationFn: async (input: SaveGameReviewInput) => {
+            if (!scrimId) throw new Error('Practice block is unavailable');
+            const { data, error: saveError } = await supabase.rpc('save_scrim_game_review', {
+                p_scrim_id: scrimId,
+                p_game_id: input.id || null,
+                p_game_number: input.gameNumber,
+                p_status: input.status,
+                p_side: input.side,
+                p_result: input.result,
+                p_duration_seconds: input.durationSeconds,
+                p_our_team_kills: input.ourTeamKills,
+                p_enemy_team_kills: input.enemyTeamKills,
+                p_our_team_gold: input.ourTeamGold,
+                p_enemy_team_gold: input.enemyTeamGold,
+                p_performance_rating: input.performanceRating,
+                p_performance_summary: input.performanceSummary,
+                p_early_game_rating: input.earlyGameRating,
+                p_mid_game_rating: input.midGameRating,
+                p_late_game_rating: input.lateGameRating,
+                p_notes: input.notes,
+            });
+            if (saveError) throw saveError;
+            return data;
+        },
+        onSuccess: () => {
+            invalidate();
+            toast.success('Game review saved');
+        },
+        onError: (saveError: unknown) =>
+            toast.error(errorMessage(saveError, 'Failed to save the game review')),
     });
 
     const createScrimGame = useMutation({
         mutationFn: async (gameData: CreateScrimGameData) => {
+            if (!scrimId || gameData.scrim_id !== scrimId) throw new Error('Invalid practice block');
             const { data, error } = await supabase
                 .from('scrim_games')
                 .insert(gameData)
@@ -98,18 +119,21 @@ export function useScrimGames(scrimId?: string) {
             return data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['scrim-games', scrimId] });
+            invalidate();
             toast.success('Game created');
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to create game'),
+        onError: (error: unknown) => toast.error(errorMessage(error, 'Failed to create game')),
     });
 
     const updateScrimGame = useMutation({
         mutationFn: async ({ id, ...updates }: UpdateScrimGameData & { id: string }) => {
+            if (!scrimId) throw new Error('Invalid practice block');
+            const { scrim_id: _ignoredScrimId, ...safeUpdates } = updates;
             const { data, error } = await supabase
                 .from('scrim_games')
-                .update(updates)
+                .update(safeUpdates)
                 .eq('id', id)
+                .eq('scrim_id', scrimId)
                 .select()
                 .single();
 
@@ -117,32 +141,40 @@ export function useScrimGames(scrimId?: string) {
             return data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['scrim-games', scrimId] });
+            invalidate();
             toast.success('Game updated');
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to update game'),
+        onError: (error: unknown) => toast.error(errorMessage(error, 'Failed to update game')),
     });
 
     const deleteScrimGame = useMutation({
         mutationFn: async (gameId: string) => {
-            const { error } = await supabase.from('scrim_games').delete().eq('id', gameId);
+            if (!scrimId) throw new Error('Invalid practice block');
+            const { error } = await supabase
+                .from('scrim_games')
+                .delete()
+                .eq('id', gameId)
+                .eq('scrim_id', scrimId);
             if (error) throw error;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['scrim-games', scrimId] });
+            invalidate();
             toast.success('Game deleted');
         },
-        onError: (err: any) => toast.error(err.message || 'Failed to delete game'),
+        onError: (error: unknown) => toast.error(errorMessage(error, 'Failed to delete game')),
     });
 
     return {
         scrimGames,
         isLoading,
+        error: error ? errorMessage(error, 'Games could not be loaded') : null,
         createScrimGame: createScrimGame.mutate,
         updateScrimGame: updateScrimGame.mutate,
         deleteScrimGame: deleteScrimGame.mutate,
+        saveGameReview: saveGameReview.mutateAsync,
         isCreating: createScrimGame.isPending,
         isUpdating: updateScrimGame.isPending,
         isDeleting: deleteScrimGame.isPending,
+        isSavingReview: saveGameReview.isPending,
     };
 }

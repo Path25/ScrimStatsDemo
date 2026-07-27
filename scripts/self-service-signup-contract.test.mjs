@@ -23,6 +23,7 @@ test("signup creates an Auth account and supports confirmed and immediate sessio
   assert.match(signup, /emailRedirectTo: `\$\{window\.location\.origin\}\/create-workspace`/);
   assert.match(signup, /pending_team_name/);
   assert.match(signup, /data\.session/);
+  assert.match(signup, /We could not send your confirmation email/);
   assert.match(signup, /Accept the Terms and Privacy Policy/);
   assert.doesNotMatch(signup, /service_role|SUPABASE_SECRET_KEY|request-access/);
   assert.match(supabaseConfig, /enable_confirmations = true/);

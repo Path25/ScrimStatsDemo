@@ -3,6 +3,10 @@ import Stripe from "npm:stripe@18.4.0";
 import { createClient } from "npm:@supabase/supabase-js@2.110.0";
 
 const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const prices = {
+  pro: "price_1RWKZBCiOpn9NlRMoQBkc8Yv",
+  elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ",
+} as const;
 
 function periodEnd(subscription: Stripe.Subscription) {
   const value = (subscription as unknown as { current_period_end?: number }).current_period_end
@@ -63,10 +67,8 @@ Deno.serve(async (request) => {
       }
       if (!tenantId) throw new Error("Subscription is not linked to a workspace");
       const priceId = subscription.items.data[0]?.price.id || null;
-      const proPrice = Deno.env.get("STRIPE_PRICE_PRO_MONTHLY");
-      const elitePrice = Deno.env.get("STRIPE_PRICE_ELITE_MONTHLY");
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
-      const tier = active && priceId === elitePrice ? "elite" : active && priceId === proPrice ? "pro" : "free";
+      const tier = active && priceId === prices.elite ? "elite" : active && priceId === prices.pro ? "pro" : "free";
       if (active && tier === "free") throw new Error("Subscription price is not recognized");
       const { error } = await service.from("tenants").update({
         stripe_customer_id: customerId,

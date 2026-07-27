@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useLocation, useNavigate, useSearchParams } from "@/lib/router";
 
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -20,6 +20,17 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [redirectAfterSignIn, setRedirectAfterSignIn] = useState(false);
+
+  useEffect(() => {
+    if (!redirectAfterSignIn || !user) return;
+    const invitationToken = searchParams.get("invite");
+    if (invitationToken) {
+      navigate(`/accept-invite?token=${encodeURIComponent(invitationToken)}&mode=existing`, { replace: true });
+      return;
+    }
+    navigate((location.state as { from?: string } | null)?.from || "/overview", { replace: true });
+  }, [location.state, navigate, redirectAfterSignIn, searchParams, user]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -31,11 +42,7 @@ export default function SignIn() {
       setPending(false);
       return;
     }
-    const invitationToken = searchParams.get("invite");
-    if (invitationToken) return navigate(`/accept-invite?token=${encodeURIComponent(invitationToken)}&mode=existing`, { replace: true });
-    navigate((location.state as { from?: string } | null)?.from || "/overview", {
-      replace: true,
-    });
+    setRedirectAfterSignIn(true);
   }
 
   return (

@@ -106,3 +106,16 @@ test("font loading is local to the application bundle", async () => {
   assert.match(main, /@fontsource\/ibm-plex-mono\/latin-500\.css/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);
 });
+
+test("social previews use the dedicated ScrimStats launch card", async () => {
+  const html = await load("index.html");
+  const image = await readFile(new URL("../public/og.png", import.meta.url));
+
+  assert.match(html, /property="og:image" content="https:\/\/scrimstats\.gg\/og\.png"/);
+  assert.match(html, /name="twitter:image" content="https:\/\/scrimstats\.gg\/og\.png"/);
+  assert.match(html, /property="og:image:width" content="1200"/);
+  assert.match(html, /property="og:image:height" content="630"/);
+  assert.doesNotMatch(html, /rift_underlay\.png/);
+  assert.equal(image.readUInt32BE(16), 1200, "social card width must be 1200px");
+  assert.equal(image.readUInt32BE(20), 630, "social card height must be 630px");
+});

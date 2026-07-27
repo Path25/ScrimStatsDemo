@@ -3,6 +3,10 @@ import Stripe from "npm:stripe@18.4.0";
 import { createClient } from "npm:@supabase/supabase-js@2.110.0";
 
 const productionOrigin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
+const prices = {
+  pro: "price_1RWKZBCiOpn9NlRMoQBkc8Yv",
+  elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ",
+} as const;
 const developmentOrigins = new Set(["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5173", "http://127.0.0.1:5173"]);
 const requestOrigin = (request: Request) => {
   const origin = request.headers.get("origin");
@@ -20,8 +24,7 @@ Deno.serve(async (request) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const prices = { pro: Deno.env.get("STRIPE_PRICE_PRO_MONTHLY"), elite: Deno.env.get("STRIPE_PRICE_ELITE_MONTHLY") } as const;
-    if (!stripeKey || !url || !serviceKey || !prices.pro || !prices.elite) return respond({ error: "Billing is not configured" }, 503);
+    if (!stripeKey || !url || !serviceKey) return respond({ error: "Billing is not configured" }, 503);
 
     const authorization = request.headers.get("authorization");
     if (!authorization?.startsWith("Bearer ")) return respond({ error: "Authentication required" }, 401);
@@ -57,7 +60,7 @@ Deno.serve(async (request) => {
       cancel_url: `${origin}/settings?billing=cancelled`,
       metadata: { tenant_id: tenant.id, plan: input.plan, purchaser_user_id: auth.user.id },
       subscription_data: { metadata: { tenant_id: tenant.id, plan: input.plan } },
-    }, { idempotencyKey: `checkout-${tenant.id}-${input.plan}-${new Date().toISOString().slice(0, 13)}` });
+    }, { idempotencyKey: `checkout-${tenant.id}-${input.plan}-${prices[input.plan]}-${new Date().toISOString().slice(0, 13)}` });
     return respond({ url: session.url });
   } catch (error) {
     console.error(JSON.stringify({ event: "billing.checkout.failed", message: error instanceof Error ? error.message : String(error) }));

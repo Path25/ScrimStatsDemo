@@ -2,7 +2,7 @@
 
 ## Included
 
-- Managed tenant provisioning and operator oversight.
+- Self-service Free workspace creation plus platform-operator provisioning and oversight.
 - Invitation acceptance, password recovery, membership, and role-aware access.
 - Roster, availability, calendar, reminders, scrim blocks, review, and coaching actions.
 - Solo Queue, Team Analytics, Scouting, and Draft web workflows.
@@ -14,7 +14,6 @@
 ## Excluded
 
 - Native collector resilience, signing, packaging, and update delivery.
-- Self-serve workspace creation; tenant creation remains a managed operation.
 - Interactive Discord delivery until its complete support path is verified.
 - Unsupported analytics inferred from missing evidence.
 

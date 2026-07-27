@@ -13,13 +13,13 @@ test("invitations permit current Supabase browser headers and survive email deli
   assert.match(source, /http:\/\/localhost:8080/);
 });
 
-test("checkout is tenant-owned and maps only server-configured Pro and Elite prices", () => {
+test("checkout is tenant-owned and maps the confirmed live Pro and Elite prices", () => {
   const source = read("supabase/functions/create-checkout/index.ts");
-  assert.match(source, /STRIPE_PRICE_PRO_MONTHLY/);
-  assert.match(source, /STRIPE_PRICE_ELITE_MONTHLY/);
+  assert.match(source, /pro: "price_1RWKZBCiOpn9NlRMoQBkc8Yv"/);
+  assert.match(source, /elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ"/);
   assert.match(source, /tenant_id/);
   assert.match(source, /\["owner", "admin"\]/);
-  assert.doesNotMatch(source, /price_1[A-Za-z0-9]+/);
+  assert.match(source, /idempotencyKey: `checkout-\$\{tenant\.id\}-\$\{input\.plan\}-\$\{prices\[input\.plan\]\}/);
   assert.match(source, /developmentOrigins/);
 });
 
@@ -29,6 +29,8 @@ test("Stripe webhook verifies signatures and records idempotent events", () => {
   assert.match(source, /stripe_webhook_events/);
   assert.match(source, /subscription_tier/);
   assert.match(source, /Invalid Stripe signature/);
+  assert.match(source, /pro: "price_1RWKZBCiOpn9NlRMoQBkc8Yv"/);
+  assert.match(source, /elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ"/);
 });
 
 test("paid product routes have explicit plan gates", () => {

@@ -51,7 +51,11 @@ export default function SignUp() {
     setPending(false);
 
     if (signUpError) {
-      setError("Your account could not be created. Check the details and try again.");
+      setError(
+        signUpError.status && signUpError.status >= 500
+          ? "We could not send your confirmation email. Please try again shortly or contact support."
+          : "Your account could not be created. Check the details and try again.",
+      );
       return;
     }
 

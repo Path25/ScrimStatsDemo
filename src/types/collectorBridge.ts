@@ -1,7 +1,8 @@
 export type NativeCollectorStatus = {
-  state: "unpaired" | "ready" | "capturing" | "retrying" | "error";
+  state: "unpaired" | "ready" | "capturing" | "finalizing" | "retrying" | "error";
   message: string;
   queueDepth: number;
+  recordingArmed: boolean;
   lastCaptureAt?: string;
   selectedScrim?: {
     id: string;
@@ -21,7 +22,7 @@ export type NativeCollectorStatus = {
 
 export interface ScrimStatsCollectorBridge {
   getCapabilities(): Promise<{
-    bridgeVersion: 1;
+    bridgeVersion: 3;
     capture: true;
     secureStorage: boolean;
     platform: string;
@@ -30,7 +31,11 @@ export interface ScrimStatsCollectorBridge {
   pair(code: string, label: string): Promise<{
     scrims: NonNullable<NativeCollectorStatus["scrims"]>;
   }>;
+  refreshConfiguration(): Promise<{
+    scrims: NonNullable<NativeCollectorStatus["scrims"]>;
+  }>;
   selectScrim(scrimId: string): Promise<void>;
+  setRecordingEnabled(enabled: boolean): Promise<void>;
   exportDiagnostics(): Promise<void>;
   onStatus(callback: (status: NativeCollectorStatus) => void): () => void;
 }

@@ -159,8 +159,8 @@ export default function ScoutingTeamReport() {
     return (
       <WorkspaceState
         icon={Target}
-        title="Private scouting is in controlled beta"
-        description="This workspace does not currently have access to living opponent reports."
+        title="Scouting is not enabled for this workspace"
+        description="Opponent reports are unavailable with the current workspace settings."
         action={<Button asChild variant="outline"><Link to="/scouting">Return to scouting</Link></Button>}
       />
     );
@@ -588,7 +588,7 @@ export default function ScoutingTeamReport() {
                   >
                     <option value="manual">Manual staff observation</option>
                     <option value="scrim">Saved practice block</option>
-                    <option value="collector">Collector-captured game</option>
+                    <option value="collector">Captured game</option>
                   </select>
                 </div>
                 {sourceKind !== "manual" && (

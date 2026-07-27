@@ -11,7 +11,7 @@ async function signIn(page: Page, email: string, password: string) {
 }
 
 test.describe("public launch surface", () => {
-  for (const route of ["/", "/request-access", "/sign-in", "/privacy", "/terms", "/support", "/status"]) {
+  for (const route of ["/", "/sign-up", "/request-access", "/sign-in", "/privacy", "/terms", "/support", "/status"]) {
     test(`${route} renders without a runtime failure`, async ({ page }) => {
       await page.goto(route);
       await expect(page.locator("body")).not.toContainText("Cannot read properties of undefined");

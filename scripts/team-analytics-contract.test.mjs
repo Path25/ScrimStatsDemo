@@ -4,6 +4,9 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/20260726150000_capture_profiles_and_team_analytics.sql");
+const collectorV3Migration = read("supabase/migrations/20260726234404_collector_json_analytics_v3.sql");
+const analyticsV3Migration = read("supabase/migrations/20260727144415_game_capture_v5_team_analytics.sql");
+const gridDraftMigration = read("supabase/migrations/20260727152749_normalize_grid_drafts_for_analytics.sql");
 const page = read("src/pages/Analytics.tsx");
 const workspace = read("src/components/analytics/TeamAnalyticsWorkspace.tsx");
 const collector = read("supabase/functions/collector-ingest/index.ts");
@@ -30,7 +33,9 @@ test("one provider is enforced while manual evidence remains valid", () => {
 
 test("analytics exposes normalized facts rather than raw provider payloads", () => {
   assert.match(migration, /get_team_analytics_dataset/);
-  assert.match(migration, /contract_version', 'team-analytics-v2'/);
+  assert.match(analyticsV3Migration, /contract_version', 'team-analytics-v3'/);
+  assert.match(analyticsV3Migration, /scrim_game_events/);
+  assert.match(analyticsV3Migration, /advanced_stats/);
   assert.doesNotMatch(workspace, /external_game_data|grid_metadata|raw_game_data/);
   assert.match(workspace, /Improvement comparison/);
   assert.match(workspace, /Not available for this capture profile/);
@@ -39,13 +44,59 @@ test("analytics exposes normalized facts rather than raw provider payloads", () 
   assert.match(migration, /reconciliation\.accepted_game_id <> game\.id/);
 });
 
-test("active page uses the v2 workspace and Scrim Review exposes evidence coverage", () => {
+test("collector game mode and map context reach analytics without exposing the raw payload", () => {
+  assert.match(collectorV3Migration, /game_context' ->> 'mode'/);
+  assert.match(collectorV3Migration, /game_context' ->> 'map_name'/);
+  assert.match(collectorV3Migration, /'game_modes'/);
+  assert.match(workspace, /All game modes/);
+  assert.doesNotMatch(workspace, /external_game_data|game_context/);
+});
+
+test("GRID examples use the canonical draft contract and spatial modules stay profile scoped", () => {
+  assert.match(gridDraftMigration, /'grid'::public\.draft_mode/);
+  assert.match(gridDraftMigration, /'picks', grid\.picks/);
+  assert.match(gridDraftMigration, /'completed', jsonb_array_length\(grid\.picks\) = 10 and jsonb_array_length\(grid\.bans\) = 10/);
+  assert.match(workspace, /dataset\.capture_profile !== "grid_manual"/);
+  assert.doesNotMatch(workspace, /TemporalHeatmap/);
+});
+
+test("GRID monitoring writes tenant-safe normalized analytics without raw end-state payloads", () => {
+  assert.match(grid, /scrims!inner\(tenant_id\)/);
+  assert.match(grid, /\.eq\('scrims\.tenant_id', tenant\.id\)/);
+  assert.match(grid, /tenant_id: tenantId/);
+  assert.match(grid, /function createDraftForGame/);
+  assert.match(grid, /advanced_stats:/);
+  assert.match(grid, /payload_version: 'grid-normalized-v2'/);
+  assert.match(grid, /position_samples: false/);
+  assert.match(grid, /Unable to identify the team side/);
+  assert.doesNotMatch(grid, /post_game_data\s*:/);
+  assert.doesNotMatch(grid, /position_samples: true/);
+});
+
+test("GRID monitoring discovers and idempotently imports every Series State game", () => {
+  assert.match(grid, /live-data-feed\/series-state\/graphql/);
+  assert.match(grid, /games \{[\s\S]*sequenceNumber[\s\S]*teams \{ id won side \}/);
+  assert.match(grid, /fetchSeriesStateGames/);
+  assert.match(grid, /synchronizeSeriesGames/);
+  assert.match(grid, /grid:\$\{series\.id\}:\$\{gameNumber\}/);
+  assert.match(grid, /games\/\$\{gameNumber\}\/summary/);
+  assert.match(grid, /games\/\$\{gameNumber\}\/details/);
+  assert.match(grid, /provider_record_id: `\$\{seriesId\}:\$\{gameNumber\}`/);
+  assert.match(grid, /String\(team\.id\) === String\(tenant\.grid_team_id\)/);
+  assert.match(grid, /assignedScrimId && assignedScrimId !== scrim\.id/);
+  assert.doesNotMatch(grid, /games\/1\/(?:summary|details)/);
+});
+
+test("active page uses the v3 workspace and Scrim Review exposes evidence coverage", () => {
   assert.match(page, /useTeamAnalytics/);
   assert.match(page, /All history/);
   assert.match(page, /useState<Range>\("all"\)/);
   assert.doesNotMatch(page, /analytics\.data\.games\.length\s*\?/);
-  assert.match(workspace, /Your analytics workspace is ready/);
+  assert.match(workspace, /Analytics will appear after completed games/);
   assert.match(workspace, /Empty metrics remain visible/);
+  assert.match(workspace, /Game type/);
+  assert.match(workspace, /PerformanceIndexPanel/);
+  assert.doesNotMatch(workspace, /TemporalHeatmap/);
   assert.doesNotMatch(workspace, /!filtered\.games\.length\s*\?\s*<WorkspaceState/);
   assert.doesNotMatch(page, /useTeamPerformanceSummary|useCompetitiveDraftAnalytics|Collector coverage/);
   assert.match(block, /GameEvidenceDialog/);

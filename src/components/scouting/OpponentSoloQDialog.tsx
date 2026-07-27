@@ -49,7 +49,7 @@ export function OpponentSoloQDialog({
           <WorkspaceState
             icon={Database}
             title="Ranked history unavailable"
-            description="Confirm the opponent tracking migration and tenant Riot connection."
+            description="Check the workspace Riot connection, then try again."
           />
         ) : (
           <div className="space-y-5">
@@ -118,7 +118,7 @@ export function OpponentSoloQDialog({
               <WorkspaceState
                 icon={TrendingUp}
                 title="No ranked matches cached"
-                description="Staff can request the latest 20 Solo/Duo games after the Riot identity and tenant credential are configured."
+                description="Staff can request the latest 20 Solo/Duo games after the Riot identity and workspace connection are configured."
               />
             )}
           </div>

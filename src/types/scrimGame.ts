@@ -22,6 +22,10 @@ export interface ScrimGameDB {
   bans: unknown; // Json type from DB
   external_game_id?: string;
   external_game_data?: unknown; // Added this field for desktop app data
+  game_mode?: string;
+  map_name?: string;
+  map_number?: number;
+  map_terrain?: string;
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
@@ -57,6 +61,10 @@ export interface ScrimGame {
   bans: GameBans;
   external_game_id?: string;
   external_game_data?: unknown; // Added this field for desktop app data
+  game_mode?: string;
+  map_name?: string;
+  map_number?: number;
+  map_terrain?: string;
   match_history_url?: string;
   replay_url?: string;
   notes?: string;
@@ -337,11 +345,97 @@ export interface ChampionPool {
 }
 
 // Utility functions to transform data
+function gameObjectives(value: unknown): GameObjectives {
+  const source = value && typeof value === 'object' ? value as Partial<GameObjectives> : {};
+  return {
+    dragons: Array.isArray(source.dragons) ? source.dragons : [],
+    barons: Array.isArray(source.barons) ? source.barons : [],
+    towers: Array.isArray(source.towers) ? source.towers : [],
+    inhibitors: Array.isArray(source.inhibitors) ? source.inhibitors : [],
+  };
+}
+
+function gameBans(value: unknown): GameBans {
+  const source = value && typeof value === 'object' ? value as Partial<GameBans> : {};
+  return {
+    our_bans: Array.isArray(source.our_bans) ? source.our_bans : [],
+    enemy_bans: Array.isArray(source.enemy_bans) ? source.enemy_bans : [],
+  };
+}
+
+function gameItems(value: unknown): GameItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item, index) => {
+    if (typeof item === 'number' && Number.isFinite(item) && item > 0) {
+      return [{ id: item, name: `Item ${item}`, slot: index }];
+    }
+    if (!item || typeof item !== 'object') return [];
+    const source = item as Record<string, unknown>;
+    const id = Number(source.id ?? source.itemID);
+    const slot = Number(source.slot ?? index);
+    if (!Number.isFinite(id) || !Number.isFinite(slot)) return [];
+    return [{ id, name: String(source.name ?? source.displayName ?? `Item ${id}`), slot }];
+  });
+}
+
+function summonerSpells(value: unknown): SummonerSpell[] {
+  if (Array.isArray(value)) return value as SummonerSpell[];
+  if (!value || typeof value !== 'object') return [];
+  const source = value as Record<string, unknown>;
+  return ['summonerSpellOne', 'summonerSpellTwo'].flatMap((key, index) => {
+    const spell = source[key];
+    if (!spell || typeof spell !== 'object') return [];
+    const details = spell as Record<string, unknown>;
+    return [{
+      id: Number(details.id ?? 0),
+      name: String(details.name ?? details.displayName ?? 'Unknown spell'),
+      slot: (index + 1) as 1 | 2,
+    }];
+  });
+}
+
+function runeSetup(value: unknown): RuneSetup {
+  if (!value || typeof value !== 'object') return { primary_tree: '', secondary_tree: '', runes: [], stat_mods: [] };
+  const source = value as Record<string, unknown>;
+  if ('primary_tree' in source || 'secondary_tree' in source) {
+    return {
+      primary_tree: String(source.primary_tree ?? ''),
+      secondary_tree: String(source.secondary_tree ?? ''),
+      runes: Array.isArray(source.runes) ? source.runes.map(Number).filter(Number.isFinite) : [],
+      stat_mods: Array.isArray(source.stat_mods) ? source.stat_mods.map(Number).filter(Number.isFinite) : [],
+    };
+  }
+  const runeId = (entry: unknown) => entry && typeof entry === 'object' && Number.isFinite(Number((entry as Record<string, unknown>).id))
+    ? Number((entry as Record<string, unknown>).id)
+    : undefined;
+  const runeName = (entry: unknown) => entry && typeof entry === 'object'
+    ? String((entry as Record<string, unknown>).displayName ?? '')
+    : '';
+  const general = Array.isArray(source.generalRunes) ? source.generalRunes : [];
+  const stats = Array.isArray(source.statRunes) ? source.statRunes : [];
+  return {
+    primary_tree: runeName(source.primaryRuneTree),
+    secondary_tree: runeName(source.secondaryRuneTree),
+    runes: general.map(runeId).filter((id): id is number => id !== undefined),
+    stat_mods: stats.map(runeId).filter((id): id is number => id !== undefined),
+  };
+}
+
 export const transformScrimGameFromDB = (dbGame: ScrimGameDB & { participants?: ScrimParticipantDB[]; live_data?: LiveGameDataDB[] }): ScrimGame => {
+  const external = dbGame.external_game_data && typeof dbGame.external_game_data === 'object'
+    ? dbGame.external_game_data as Record<string, unknown>
+    : {};
+  const context = external.game_context && typeof external.game_context === 'object'
+    ? external.game_context as Record<string, unknown>
+    : {};
   return {
     ...dbGame,
-    objectives: (dbGame.objectives as GameObjectives | null) || { dragons: [], barons: [], towers: [], inhibitors: [] },
-    bans: (dbGame.bans as GameBans | null) || { our_bans: [], enemy_bans: [] },
+    objectives: gameObjectives(dbGame.objectives),
+    bans: gameBans(dbGame.bans),
+    game_mode: typeof context.mode === 'string' ? context.mode : undefined,
+    map_name: typeof context.map_name === 'string' ? context.map_name : undefined,
+    map_number: typeof context.map_number === 'number' ? context.map_number : undefined,
+    map_terrain: typeof context.map_terrain === 'string' ? context.map_terrain : undefined,
     participants: dbGame.participants?.map(transformParticipantFromDB),
     live_data: dbGame.live_data?.map(transformLiveDataFromDB),
   };
@@ -350,9 +444,9 @@ export const transformScrimGameFromDB = (dbGame: ScrimGameDB & { participants?: 
 export const transformParticipantFromDB = (dbParticipant: ScrimParticipantDB): ScrimParticipant => {
   return {
     ...dbParticipant,
-    items: Array.isArray(dbParticipant.items) ? dbParticipant.items : [],
-    runes: (dbParticipant.runes as RuneSetup | null) || { primary_tree: '', secondary_tree: '', runes: [], stat_mods: [] },
-    summoner_spells: Array.isArray(dbParticipant.summoner_spells) ? dbParticipant.summoner_spells : [],
+    items: gameItems(dbParticipant.items),
+    runes: runeSetup(dbParticipant.runes),
+    summoner_spells: summonerSpells(dbParticipant.summoner_spells),
   };
 };
 

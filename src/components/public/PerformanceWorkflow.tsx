@@ -22,7 +22,7 @@ const stages = [
 ] as const;
 
 const sourceStates = [
-  ["Collector-captured", "bg-[var(--public-accent)]"],
+  ["Automatically captured", "bg-[var(--public-accent)]"],
   ["Manual", "bg-[#d7b66f]"],
   ["Awaiting", "bg-[#80909b]"],
   ["Unavailable", "bg-[#66737d]"],

@@ -24,7 +24,6 @@ import { Link, useLocation } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
-import { ModuleStateBadge } from "@/components/workspace/ModuleStateBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,16 +56,17 @@ const navigation = [
     label: "Practice",
     items: [
       { title: "Scrim blocks", href: "/scrims", icon: Swords },
+      { title: "Game Capture", href: "/collector", icon: MonitorCheck },
       { title: "Coaching actions", href: "/actions", icon: ClipboardCheck },
       { title: "Solo Queue", href: "/soloq", icon: TrendingUp },
-      { title: "Team analytics", href: "/analytics", icon: BarChart3, module: "analytics" as const },
+      { title: "Team analytics", href: "/analytics", icon: BarChart3 },
     ],
   },
   {
-    label: "Intelligence",
+    label: "Pre-game prep",
     items: [
-      { title: "Scouting", href: "/scouting", icon: ScanSearch, module: "scouting" as const },
-      { title: "Draft", href: "/draft", icon: Workflow, module: "draft_preparation" as const },
+      { title: "Scouting", href: "/scouting", icon: ScanSearch },
+      { title: "Draft", href: "/draft", icon: Workflow },
     ],
   },
 ] as const;
@@ -77,6 +77,7 @@ const pageTitles: Record<string, string> = {
   "/scrims": "Scrim blocks",
   "/calendar": "Team calendar",
   "/actions": "Coaching actions",
+  "/collector": "Game Capture",
   "/analytics": "Team trends",
   "/soloq": "Solo Queue tracker",
   "/scouting": "Private scouting",
@@ -123,7 +124,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, signOut } = useAuth();
   const { connectionInfo, isLoading: collectorLoading, error: collectorError } =
     useDesktopConnection();
-  const { modules, isError: modulesUnavailable, retry: retryModules } = useWorkspaceModules();
+  const { isError: modulesUnavailable, retry: retryModules } = useWorkspaceModules();
 
   const tenantName = tenant?.name || "Team workspace";
   const userName =
@@ -235,13 +236,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div key={group.label}>
               <p className="workspace-eyebrow px-3 text-[var(--workspace-subtle)]">{group.label}</p>
               <div className="mt-2 space-y-1">
-                {group.items.map((item) => {
+                {group.items.filter((item) => !("nativeOnly" in item) || Boolean(window.scrimstatsCollector)).map((item) => {
                   const Icon = item.icon;
                   const active =
                     location.pathname === item.href ||
                     (item.href === "/scrims" && location.pathname.startsWith("/scrims/")) ||
                     (item.href === "/scouting" && location.pathname.startsWith("/scouting/"));
-                  const module = "module" in item ? modules[item.module] : null;
                   return (
                     <Link
                       key={item.href}
@@ -254,9 +254,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                       <Icon className={cn("h-4 w-4", active && "text-[var(--team-accent)]")} aria-hidden="true" />
                       <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                      {module && module.state !== "live" && (
-                        <ModuleStateBadge state={module.state} className="scale-90" />
-                      )}
                     </Link>
                   );
                 })}
@@ -275,7 +272,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <Bot className="h-4 w-4" aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">Integrations</span>
-            <ModuleStateBadge state={modules.discord.state} className="scale-90" />
           </Link>
           <Link
             to="/settings"
@@ -355,7 +351,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {modulesUnavailable && (
             <div role="alert" className="mb-6 flex flex-col gap-3 border border-amber-400/25 bg-amber-400/5 p-4 text-sm sm:flex-row sm:items-center">
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-300" />
-              <p className="flex-1 text-[var(--workspace-muted)]"><span className="font-semibold text-[var(--workspace-foreground)]">Workspace configuration is temporarily unavailable.</span> Your last known navigation remains visible, but module access could not be confirmed.</p>
+              <p className="flex-1 text-[var(--workspace-muted)]"><span className="font-semibold text-[var(--workspace-foreground)]">Workspace settings are temporarily unavailable.</span> Navigation remains visible, but feature access could not be confirmed.</p>
               <Button size="sm" variant="outline" onClick={() => void retryModules()}>Try again</Button>
             </div>
           )}

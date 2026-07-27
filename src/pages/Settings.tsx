@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Copy, Database, KeyRound, RefreshCw, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
+import { Copy, Database, KeyRound, LockKeyhole, RefreshCw, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
 import { toast } from "sonner";
 
-import { DesktopCollectorIntegration } from "@/components/integrations/DesktopCollectorIntegration";
 import { DesktopAppStatus } from "@/components/scrims/DesktopAppStatus";
 import { InviteTeamMemberDialog } from "@/components/team/InviteTeamMemberDialog";
 import { BillingPanel } from "@/components/billing/BillingPanel";
@@ -19,6 +18,8 @@ import { useTenant } from "@/contexts/TenantContext";
 import { usePlayersData } from "@/hooks/usePlayersData";
 import { useWorkspaceAdministration } from "@/hooks/useWorkspaceAdministration";
 import type { Database as SupabaseDatabase } from "@/integrations/supabase/types";
+import { planIncludes } from "@/lib/plan-entitlements";
+import { Link } from "@/lib/router";
 
 type TenantRole = SupabaseDatabase["public"]["Enums"]["tenant_role"];
 const commonTimezones = ["UTC", "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Warsaw", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Asia/Seoul", "Asia/Tokyo", "Australia/Sydney"];
@@ -36,6 +37,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { activeRole, isManager } = useRole();
+  const hasDesktopAccess = planIncludes(tenant?.subscriptionTier || "free", "pro");
   const administration = useWorkspaceAdministration();
   const { players } = usePlayersData();
   const displayName =
@@ -63,7 +65,7 @@ export default function Settings() {
       <WorkspacePageHeader
         eyebrow="Workspace administration"
         title="Settings"
-        description="Account security, team membership, scheduling preferences and collector configuration."
+        description="Account security, team membership, scheduling preferences, and workspace settings."
         actions={isManager ? <InviteTeamMemberDialog /> : undefined}
       />
 
@@ -149,21 +151,24 @@ export default function Settings() {
 
         <div className="space-y-6">
           <DesktopAppStatus />
-          {isManager ? (
-            <DesktopCollectorIntegration />
-          ) : (
-            <DataSurface className="p-5">
-              <div className="flex gap-3">
-                <Database className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" />
-                <div>
-                  <h2 className="font-semibold">Collector administration</h2>
-                  <p className="mt-2 text-sm text-[var(--workspace-muted)]">
-                    An owner or admin can pair the Windows collector.
-                  </p>
-                </div>
+          <DataSurface className="p-5">
+            <div className="flex gap-3">
+              {hasDesktopAccess ? <Database className="mt-0.5 h-5 w-5 text-[var(--workspace-subtle)]" /> : <LockKeyhole className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />}
+              <div>
+                <h2 className="font-semibold">Game Capture</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">
+                  {hasDesktopAccess
+                    ? "Connection, block selection, and capture status now live together on the Game Capture page."
+                    : "Game Capture is included with Pro. Riot credentials remain available to every plan in Integrations."}
+                </p>
+                <Button asChild variant="link" className="mt-2 h-auto justify-start p-0">
+                  <Link to={hasDesktopAccess ? "/collector" : "/integrations"}>
+                    {hasDesktopAccess ? "Open Game Capture" : "View integration capabilities"}
+                  </Link>
+                </Button>
               </div>
-            </DataSurface>
-          )}
+            </div>
+          </DataSurface>
 
           <DataSurface>
             <div className="flex items-start gap-3 border-b border-[var(--workspace-rule)] p-5">

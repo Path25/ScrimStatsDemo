@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -16,7 +16,11 @@ import { BlockReviewDialog } from "@/components/scrims/BlockReviewDialog";
 import { EditScrimDialog } from "@/components/scrims/EditScrimDialog";
 import { GameReviewDialog } from "@/components/scrims/GameReviewDialog";
 import { GameEvidenceDialog } from "@/components/scrims/GameEvidenceDialog";
+import { GameOverviewTab } from "@/components/scrims/GameOverviewTab";
+import { DraftView } from "@/components/scrims/DraftView";
+import { CoachFeedback } from "@/components/scrims/CoachFeedback";
 import { CoachingActionDialog } from "@/components/actions/CoachingActionDialog";
+import { ActionCycleRail } from "@/components/actions/ActionCycleRail";
 import { ReviewChecklist } from "@/components/scrims/ReviewChecklist";
 import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -37,16 +41,6 @@ import {
   type ReviewStatus,
 } from "@/lib/scrim-review";
 import type { ScrimGame } from "@/types/scrimGame";
-
-const GameOverviewTab = lazy(() =>
-  import("./GameOverviewTab").then((module) => ({ default: module.GameOverviewTab })),
-);
-const DraftView = lazy(() =>
-  import("./DraftView").then((module) => ({ default: module.DraftView })),
-);
-const CoachFeedback = lazy(() =>
-  import("./CoachFeedback").then((module) => ({ default: module.CoachFeedback })),
-);
 
 function localDateTime(value: string) {
   const date = new Date(value);
@@ -138,7 +132,7 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
       <WorkspaceState
         icon={Clock3}
         title="This practice block could not be loaded."
-        description={gamesError || (blockError instanceof Error ? blockError.message : "Try again shortly.")}
+        description="Try again shortly, or return to the scrim list and reopen this block."
         action={<Button onClick={onClose}>Back to scrim blocks</Button>}
       />
     );
@@ -333,6 +327,7 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
         </div>
       ) : (
         <div className="space-y-5">
+          <ActionCycleRail scrimId={scrimId} scrimGameId={selectedGame.id} compact />
           <DataSurface className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -377,13 +372,11 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
               <TabsTrigger value="feedback" className="min-h-10 text-xs sm:text-sm"><MessageSquareText className="mr-2 h-4 w-4" /> Review notes</TabsTrigger>
             </TabsList>
             <div className="mt-5">
-              <Suspense fallback={<PanelLoading />}>
                 <TabsContent value="overview" className="mt-0">
                   {participantsLoading ? <PanelLoading label="Loading participant evidence…" /> : <GameOverviewTab game={selectedGame} participants={participants} />}
                 </TabsContent>
                 <TabsContent value="draft" className="mt-0"><DraftView game={selectedGame} participants={participants} /></TabsContent>
                 <TabsContent value="feedback" className="mt-0"><CoachFeedback game={selectedGame} participants={participants} canEdit={canManageTeam} /></TabsContent>
-              </Suspense>
             </div>
           </Tabs>
 

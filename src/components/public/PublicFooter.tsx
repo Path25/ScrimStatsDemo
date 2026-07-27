@@ -15,13 +15,13 @@ export function PublicFooter() {
               to="/sign-in"
               className="transition-colors hover:text-[var(--public-foreground)]"
             >
-              Member sign in
+              Sign in
             </Link>
             <Link
-              to="/request-access"
+              to="/sign-up"
               className="transition-colors hover:text-[var(--public-foreground)]"
             >
-              Request access
+              Create account
             </Link>
             <Link to="/support" className="transition-colors hover:text-[var(--public-foreground)]">Support</Link>
             <Link to="/status" className="transition-colors hover:text-[var(--public-foreground)]">Status</Link>

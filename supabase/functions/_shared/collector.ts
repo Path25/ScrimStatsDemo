@@ -17,6 +17,26 @@ export const serviceClient = () => createClient(
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
+type ScheduledScrim = {
+  id: string;
+  opponent_name: string;
+  starts_at?: string | null;
+  scheduled_time?: string | null;
+  ends_at?: string | null;
+  format?: string | null;
+  status: string;
+};
+
+export function eligibleCollectorScrims(scrims: ScheduledScrim[], now = Date.now()) {
+  const graceCutoff = now - 90 * 60_000;
+  return scrims.filter((scrim) => {
+    if (scrim.status === 'in_progress') return true;
+    if (scrim.status !== 'scheduled') return false;
+    const relevantTime = Date.parse(scrim.ends_at ?? scrim.starts_at ?? scrim.scheduled_time ?? '');
+    return Number.isFinite(relevantTime) && relevantTime >= graceCutoff;
+  });
+}
+
 export async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);

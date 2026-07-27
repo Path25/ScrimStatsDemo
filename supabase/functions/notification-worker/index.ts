@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { operationalNotificationEmail } from "../_shared/email.ts";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-const safe = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character);
 
 Deno.serve(async (request) => {
   const supplied = request.headers.get("x-worker-secret") || "";
@@ -44,7 +44,8 @@ Deno.serve(async (request) => {
     try {
       const payload = delivery.payload as Record<string, unknown>;
       const destination = new URL(String(payload.href || "/overview"), Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg").toString();
-      const result = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "content-type": "application/json" }, body: JSON.stringify({ from: Deno.env.get("NOTIFICATION_FROM") || "ScrimStats <team@scrimstats.gg>", to: [delivery.recipient_email], subject: String(payload.title || "ScrimStats update"), html: `<div style="font-family:Inter,Arial,sans-serif;background:#090e13;color:#eef4f6;padding:32px"><h1 style="font-size:22px">${safe(payload.title)}</h1><p style="color:#aebac1;line-height:1.6">${safe(payload.body)}</p><a href="${safe(destination)}" style="color:#11e2d0">Open ScrimStats</a></div>` }) });
+      const message = operationalNotificationEmail({ templateKey: delivery.template_key, title: String(payload.title || "ScrimStats update"), body: String(payload.body || "Open your workspace for details."), actionUrl: destination });
+      const result = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "content-type": "application/json" }, body: JSON.stringify({ from: Deno.env.get("NOTIFICATION_FROM") || "ScrimStats <team@scrimstats.gg>", to: [delivery.recipient_email], ...message }) });
       if (!result.ok) throw new Error(`email_provider_${result.status}`);
       await supabase.from("notification_deliveries").update({ status: "delivered", delivered_at: new Date().toISOString(), locked_at: null, last_error: null, updated_at: new Date().toISOString() }).eq("id", delivery.id); delivered++;
       if (payload.reminder_id) await supabase.from("notification_reminders").update({ status: "sent" }).eq("id", String(payload.reminder_id));

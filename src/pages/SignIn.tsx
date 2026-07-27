@@ -27,7 +27,7 @@ export default function SignIn() {
     setError("");
     const { error: signInError } = await signIn(email.trim(), password);
     if (signInError) {
-      setError(signInError.message);
+      setError("Sign-in was unsuccessful. Check your email and password, then try again.");
       setPending(false);
       return;
     }
@@ -60,8 +60,7 @@ export default function SignIn() {
             </div>
           </div>
           <p className="max-w-md border-l border-[var(--public-accent)]/50 pl-5 text-base leading-7 text-[var(--public-muted)]">
-            Access is issued by your team owner or manager. ScrimStats does not create public
-            workspaces from this screen.
+            Create a team workspace as an owner, or sign in with the account your team invited.
           </p>
         </section>
 
@@ -81,7 +80,7 @@ export default function SignIn() {
               />
             </div>
             <div className="mt-7">
-              <SectionLabel>Member access</SectionLabel>
+              <SectionLabel>Account access</SectionLabel>
             </div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.025em]">
               Sign in to your team workspace.
@@ -139,6 +138,7 @@ export default function SignIn() {
                 {!pending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
               </Button>
               <Link to="/forgot-password" className="block text-center text-sm text-[var(--public-muted)] hover:text-[var(--public-foreground)]">Forgot your password?</Link>
+              <p className="text-center text-sm text-[var(--public-muted)]">New to ScrimStats? <Link to="/sign-up" className="text-[var(--public-foreground)] hover:underline">Create a Free workspace</Link></p>
             </form>
           </div>
         </section>

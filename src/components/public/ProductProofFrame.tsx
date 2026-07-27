@@ -7,7 +7,7 @@ type ProductProofFrameProps = {
 
 export function ProductProofFrame({
   alt = "An anonymised ScrimStats team workspace",
-  caption = "Private by design. Team workspaces remain invitation-only, so this preview intentionally conceals team data.",
+  caption = "Private by design. Workspace membership is controlled by your team, and team data is never displayed publicly.",
   desktopSrc,
   mobileSrc,
 }: ProductProofFrameProps) {
@@ -16,25 +16,26 @@ export function ProductProofFrame({
   return (
     <figure className="public-proof">
       <div className="public-proof-frame">
-        {hasCapture ? (
-          <picture>
-            {mobileSrc && <source media="(max-width: 639px)" srcSet={mobileSrc} />}
-            <img
-              src={desktopSrc}
-              alt={alt}
-              width={1440}
-              height={900}
-              className="h-auto w-full object-cover"
-              loading="eager"
-              fetchPriority="high"
-            />
-          </picture>
-        ) : (
-          <div
-            className="public-proof-placeholder"
-            role="img"
-            aria-label="A privacy-obscured preview of the ScrimStats team workspace"
-          >
+        <div
+          className={`public-proof-placeholder${hasCapture ? " public-proof-placeholder--capture" : ""}`}
+          role={hasCapture ? undefined : "img"}
+          aria-label={hasCapture ? undefined : "A privacy-obscured preview of the ScrimStats team workspace"}
+        >
+          {hasCapture ? (
+            <picture className="absolute inset-0 z-0 block">
+              {mobileSrc && <source media="(max-width: 639px)" srcSet={mobileSrc} />}
+              <img
+                src={desktopSrc}
+                alt={alt}
+                width={1753}
+                height={897}
+                className="h-full w-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+              />
+            </picture>
+          ) : (
+            <>
             <div className="public-proof-rail" aria-hidden="true">
               <span />
               <span />
@@ -53,16 +54,17 @@ export function ProductProofFrame({
                 <span className="col-span-2 h-12 sm:h-16" />
               </div>
             </div>
-            <div className="public-proof-veil" aria-hidden="true" />
-            <div className="public-proof-scan" aria-hidden="true" />
-            <div className="public-proof-mark">
-              <img src="/ScrimStats logo.png" alt="" className="h-8 w-auto sm:h-10" />
-              <span className="ss-mono text-[13px] uppercase tracking-[0.13em] text-white/70">
-                Private team workspace
-              </span>
-            </div>
+            </>
+          )}
+          <div className="public-proof-veil" aria-hidden="true" />
+          <div className="public-proof-scan" aria-hidden="true" />
+          <div className="public-proof-mark">
+            <img src="/ScrimStats logo.png" alt="" className="h-8 w-auto sm:h-10" />
+            <span className="ss-mono text-[13px] uppercase tracking-[0.13em] text-white/70">
+              Private team workspace
+            </span>
           </div>
-        )}
+        </div>
       </div>
 
       <figcaption className="mt-4 flex flex-col gap-2 text-sm leading-6 text-[var(--public-muted)] sm:flex-row sm:items-center sm:justify-between">

@@ -300,7 +300,7 @@ export function CompetitiveAnalyticsPanels({
   ];
 
   if (isLoading) return <WorkspaceState icon={BarChart3} title="Building draft evidence…" description="Aggregating qualifying participant and draft records inside this workspace." />;
-  if (error || !data) return <WorkspaceState icon={BarChart3} title="Draft analytics unavailable" description="The tenant-authorized analytics contract could not be loaded. No replacement values are shown." />;
+  if (error || !data) return <WorkspaceState icon={BarChart3} title="Draft analytics unavailable" description="Draft analysis could not be loaded. No estimates or sample results are shown." />;
 
   return (
     <section className="space-y-5">

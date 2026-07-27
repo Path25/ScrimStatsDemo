@@ -1,6 +1,7 @@
-import { BarChart3, Clock3, Coins, Shield, Swords, Users } from "lucide-react";
+import { BarChart3, Clock3, Coins, Map, Shield, Swords, Target, Users } from "lucide-react";
 
 import { DataSurface } from "@/components/workspace/DataSurface";
+import { ItemBuild } from "@/components/scrims/ItemBuild";
 import { SourceBadge } from "@/components/workspace/SourceBadge";
 import { formatGameDuration } from "@/lib/scrim-review";
 import type { ScrimGame, ScrimParticipant } from "@/types/scrimGame";
@@ -70,6 +71,20 @@ function ParticipantLedger({
                   <p className="ss-mono mt-1 text-sm">{recordedNumber(participant.vision_score)}</p>
                 </div>
               </div>
+              <div className="border-t border-[var(--workspace-rule)] pt-3 sm:col-span-3">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-[var(--workspace-subtle)]">
+                  <span>Level {recordedNumber(participant.level)}</span>
+                  <span>
+                    Spells: {participant.summoner_spells.length
+                      ? participant.summoner_spells.map((spell) => spell.name).join(" + ")
+                      : "Not recorded"}
+                  </span>
+                  <span>
+                    Runes: {[participant.runes.primary_tree, participant.runes.secondary_tree].filter(Boolean).join(" + ") || "Not recorded"}
+                  </span>
+                </div>
+                <ItemBuild items={participant.items} />
+              </div>
             </div>
           ))}
         </div>
@@ -96,6 +111,13 @@ export function GameOverviewTab({ game, participants }: GameOverviewTabProps) {
   const opponent = participants.filter((participant) => !participant.is_our_team);
   const source =
     game.desktop_session_id || game.external_game_id || game.auto_created ? "collector" : "manual";
+  const objectiveRows = [
+    ["Towers", game.objectives.towers],
+    ["Inhibitors", game.objectives.inhibitors],
+    ["Dragons", game.objectives.dragons],
+    ["Baron / Herald", game.objectives.barons],
+  ] as const;
+  const hasObjectives = objectiveRows.some(([, rows]) => rows.length > 0);
 
   return (
     <div className="space-y-5">
@@ -147,11 +169,39 @@ export function GameOverviewTab({ game, participants }: GameOverviewTabProps) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 border-t border-[var(--workspace-rule)] px-5 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--workspace-rule)] px-5 py-3">
           <span className="workspace-eyebrow text-[var(--workspace-subtle)]">Evidence source</span>
           <SourceBadge source={source} compact />
+          {(game.game_mode || game.map_name) && (
+            <span className="ml-auto flex items-center gap-2 text-xs text-[var(--workspace-muted)]">
+              <Map className="h-3.5 w-3.5" />
+              {[game.game_mode, game.map_name].filter(Boolean).join(" · ")}
+            </span>
+          )}
         </div>
       </DataSurface>
+
+      {hasObjectives && (
+        <DataSurface>
+          <div className="flex items-center gap-2 border-b border-[var(--workspace-rule)] px-5 py-4">
+            <Target className="h-4 w-4 text-[var(--workspace-accent)]" />
+            <h3 className="font-semibold">Objective record</h3>
+          </div>
+          <div className="grid gap-px bg-[var(--workspace-rule)] sm:grid-cols-2 xl:grid-cols-4">
+            {objectiveRows.map(([label, rows]) => {
+              const ours = rows.filter((row) => row.team === "our").length;
+              const enemy = rows.filter((row) => row.team === "enemy").length;
+              return (
+                <div key={label} className="bg-[var(--workspace-surface)] p-4">
+                  <p className="workspace-eyebrow text-[var(--workspace-subtle)]">{label}</p>
+                  <p className="ss-mono mt-2 text-lg">{ours}–{enemy}</p>
+                  <p className="mt-1 text-xs text-[var(--workspace-muted)]">Our team · Opponent</p>
+                </div>
+              );
+            })}
+          </div>
+        </DataSurface>
+      )}
 
       <DataSurface className="grid gap-5 p-5 lg:grid-cols-[0.7fr_1.3fr]">
         <div>

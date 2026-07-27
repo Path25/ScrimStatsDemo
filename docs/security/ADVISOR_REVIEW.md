@@ -27,7 +27,7 @@ Security Advisor now reports 46 notices:
 - 20 authenticated `SECURITY DEFINER` notices are retained transactional workflows or RLS membership helpers. Each validates the authenticated user and tenant/role before privileged work. Five compatibility RPCs and two Discord RPCs with no active caller had browser execution revoked in this release.
 - Three project-level warnings remain operator actions: reduce OTP lifetime, enable leaked-password protection, and upgrade the vulnerable Postgres release. These cannot be truthfully closed by an application migration.
 
-Performance Advisor improved from 234 to 151 notices:
+Performance Advisor improved from 234 to 150 notices:
 
 - Active foreign-key coverage was added across coaching actions, notifications, collector web state, roster, scouting, invitations, Riot integration, and pilot operations. The four remaining foreign-key notices belong to quarantined Discord, old monitoring, or retired subscriber storage.
 - Active tenant, membership, profile, roster, calendar, invitation, notification-preference, and coaching-action RLS policies were consolidated. Remaining auth-init and multiple-policy warnings belong to legacy `live_game_data`, `game_drafts`, `external_draft_tools`, `subscribers`, and `contact_submissions` paths outside the active release boundary.

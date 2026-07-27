@@ -5,12 +5,12 @@ import type { CaptureSource } from "@/types/captureSource";
 
 const sourceConfig = {
   collector: {
-    label: "Collector-captured",
+    label: "Game Capture",
     icon: CloudDownload,
     className: "workspace-source-collector",
   },
   desktop: {
-    label: "Desktop Collector",
+    label: "Game Capture",
     icon: MonitorCheck,
     className: "workspace-source-collector",
   },

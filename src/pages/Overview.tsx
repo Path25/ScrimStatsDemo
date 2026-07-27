@@ -9,6 +9,7 @@ import {
 import { Link } from "@/lib/router";
 
 import { ScheduleScrimDialog } from "@/components/scrims/ScheduleScrimDialog";
+import { ActionCycleRail } from "@/components/actions/ActionCycleRail";
 import { Button } from "@/components/ui/button";
 import { DataSurface } from "@/components/workspace/DataSurface";
 import { MetricStrip } from "@/components/workspace/MetricStrip";
@@ -227,6 +228,8 @@ export default function Overview() {
               },
             ]}
           />
+
+          <ActionCycleRail compact />
 
           <DataSurface>
             <div className="flex items-end justify-between gap-4 border-b border-[var(--workspace-rule)] px-5 py-4">

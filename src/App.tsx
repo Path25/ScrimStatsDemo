@@ -22,7 +22,8 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import NotFound from "@/pages/NotFound";
 
 const Landing = lazy(() => import("@/pages/Landing"));
-const RequestAccess = lazy(() => import("@/pages/RequestAccess"));
+const SignUp = lazy(() => import("@/pages/SignUp"));
+const CreateWorkspace = lazy(() => import("@/pages/CreateWorkspace"));
 const SignIn = lazy(() => import("@/pages/SignIn"));
 const Workspaces = lazy(() => import("@/pages/Workspaces"));
 const AcceptInvite = lazy(() => import("@/pages/AcceptInvite"));
@@ -102,14 +103,14 @@ function AppWorkspace() {
             <Route path="/scrims/:scrimId" element={<ScrimBlockPage />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/actions" element={<CoachingActions />} />
-            <Route path="/collector" element={<PlanGate minimum="elite" feature="collector capture"><CollectorWorkspace /></PlanGate>} />
+            <Route path="/collector" element={<PlanGate minimum="pro" feature="collector capture"><CollectorWorkspace /></PlanGate>} />
             <Route path="/analytics" element={<PlanGate minimum="pro" feature="team analytics"><Analytics /></PlanGate>} />
             <Route path="/soloq" element={<PlanGate minimum="pro" feature="Solo Queue tracking"><SoloQTracker /></PlanGate>} />
             <Route path="/scouting" element={<PlanGate minimum="pro" feature="opponent scouting"><Scouting /></PlanGate>} />
             <Route path="/scouting/:opponentId" element={<PlanGate minimum="pro" feature="opponent scouting"><ScoutingTeamReport /></PlanGate>} />
             <Route path="/draft" element={<PlanGate minimum="pro" feature="the Draft workspace"><Draft /></PlanGate>} />
             <Route path="/preparation" element={<LegacyPreparationRedirect />} />
-            <Route path="/integrations" element={<PlanGate minimum="elite" feature="capture and integrations"><Integrations /></PlanGate>} />
+            <Route path="/integrations" element={<Integrations />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound authenticated />} />
           </Routes>
@@ -132,12 +133,15 @@ export default function App() {
                 <Suspense fallback={<div className="public-page grid min-h-screen place-items-center text-sm">Loading ScrimStats…</div>}>
                 <Routes>
                   <Route path="/" element={<Landing />} />
+                  <Route path="/sign-up" element={<SignUp />} />
+                  <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
                   <Route path="/sign-in" element={<SignIn />} />
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/workspaces" element={<Workspaces />} />
-                  <Route path="/request-access" element={<RequestAccess />} />
+                  <Route path="/create-workspace" element={<CreateWorkspace />} />
+                  <Route path="/request-access" element={<Navigate to="/sign-up" replace />} />
                   <Route path="/privacy" element={<TrustPage />} />
                   <Route path="/terms" element={<TrustPage />} />
                   <Route path="/support" element={<TrustPage />} />

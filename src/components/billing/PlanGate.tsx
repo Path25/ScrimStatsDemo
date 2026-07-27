@@ -15,7 +15,7 @@ export function PlanGate({ minimum, feature, children }: { minimum: Subscription
   return (
     <DataSurface className="mx-auto mt-12 max-w-2xl p-8 text-center">
       <LockKeyhole className="mx-auto h-8 w-8 text-[var(--workspace-accent)]" />
-      <p className="workspace-eyebrow mt-5 text-[var(--workspace-subtle)]">{planNames[minimum]} capability</p>
+      <p className="workspace-eyebrow mt-5 text-[var(--workspace-subtle)]">{planNames[minimum]} feature</p>
       <h1 className="mt-2 text-2xl font-semibold">Unlock {feature}</h1>
       <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--workspace-muted)]">
         Your {planNames[current]} workspace keeps the core team workflow active. Upgrade when the team is ready to use {feature.toLowerCase()}.

@@ -8,7 +8,7 @@ serve(async (req) => {
   const body = await req.json().catch(() => null);
   if (!body?.tenant_id) return json({ error: 'tenant_id is required.' }, 400);
   const role = await managerMembership(user.id, body.tenant_id);
-  if (!role) return json({ error: 'Only coaches, managers, and owners can manage collectors.' }, 403);
+  if (!role) return json({ error: 'A team manager must connect this computer.' }, 403);
   const db = serviceClient();
 
   if (body.action === 'create') {
@@ -18,7 +18,7 @@ serve(async (req) => {
       .eq('tenant_id', body.tenant_id)
       .maybeSingle();
     if ((captureSetting?.profile ?? 'desktop_manual') !== 'desktop_manual') {
-      return json({ error: 'Desktop capture is inactive for this workspace.' }, 409);
+      return json({ error: 'Game Capture is not enabled for this workspace.' }, 409);
     }
     const code = randomSecret();
     const { data, error } = await db.from('collector_pairing_codes').insert({

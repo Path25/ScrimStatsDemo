@@ -105,8 +105,8 @@ verify_jwt = true
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+site_url = "http://localhost:8080"
+additional_redirect_urls = ["http://127.0.0.1:8080/**", "http://localhost:8080/**", "https://scrimstats.gg/**", "https://www.scrimstats.gg/**"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
@@ -115,7 +115,27 @@ enable_manual_linking = false
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
+enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Confirm your email to open ScrimStats"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your ScrimStats password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.invite]
+subject = "You have been invited to ScrimStats"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "Your secure ScrimStats sign-in link"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new ScrimStats email"
+content_path = "./supabase/templates/email-change.html"
 
 [auth.sms]
 enable_signup = false

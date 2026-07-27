@@ -34,7 +34,7 @@ export function useCaptureProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["capture-profile", tenant?.id] });
-      queryClient.invalidateQueries({ queryKey: ["team-analytics-v2", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["team-analytics-v3", tenant?.id] });
       toast.success("Capture profile updated for future games");
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Capture profile could not be updated"),

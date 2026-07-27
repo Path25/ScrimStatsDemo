@@ -73,16 +73,16 @@ serve(async (req) => {
         console.log(`🔍 Pre-loading existing series assignments for tenant ${tenant.name} (${tenant.id})`)
         const { data: existingAssignments } = await supabaseClient
           .from('scrim_games')
-          .select('external_game_data')
-          .eq('tenant_id', tenant.id) 
+          .select('scrim_id, external_game_data, scrims!inner(tenant_id)')
+          .eq('scrims.tenant_id', tenant.id)
           .not('external_game_data->grid_metadata->seriesId', 'is', null)
 
-        const tenantSeriesAssignments = new Set<string>()
+        const tenantSeriesAssignments = new Map<string, string>()
         if (existingAssignments) {
           existingAssignments.forEach(game => {
             const seriesId = game.external_game_data?.grid_metadata?.seriesId
             if (seriesId) {
-              tenantSeriesAssignments.add(seriesId)
+              tenantSeriesAssignments.set(seriesId, game.scrim_id)
             }
           })
         }
@@ -132,7 +132,16 @@ serve(async (req) => {
           const graphqlQuery = {
             query: `
               query AllSeries {
-                allSeries(filter: { teamId: "${tenant.grid_team_id}" }, last: 10) {
+                allSeries(
+                  filter: {
+                    teamId: ${JSON.stringify(String(tenant.grid_team_id))}
+                    startTimeScheduled: {
+                      gte: ${JSON.stringify(sevenDaysAgo.toISOString())}
+                      lte: ${JSON.stringify(thirtyMinutesFromNow.toISOString())}
+                    }
+                  }
+                  last: 50
+                ) {
                   edges {
                     node {
                       id
@@ -237,84 +246,58 @@ serve(async (req) => {
             const inTimeWindow = seriesTime >= timeWindowStart && seriesTime <= timeWindowEnd
             
             // Check if already assigned to THIS TENANT
-            const alreadyAssignedToTenant = tenantSeriesAssignments.has(series.id)
+            const assignedScrimId = tenantSeriesAssignments.get(series.id)
+            const assignedToAnotherScrim = Boolean(assignedScrimId && assignedScrimId !== scrim.id)
             
             console.log(`   🔍 Series ${series.id} final validation:`)
             console.log(`      Time window (${timeWindowStart.toISOString()} - ${timeWindowEnd.toISOString()}): ${inTimeWindow}`)
-            console.log(`      Already assigned to tenant: ${alreadyAssignedToTenant}`)
+            console.log(`      Assigned to another scrim: ${assignedToAnotherScrim}`)
             
-            const isValid = inTimeWindow && !alreadyAssignedToTenant
+            const isValid = inTimeWindow && !assignedToAnotherScrim
             
             if (isValid) {
               console.log(`   ✅ Series ${series.id} is VALID for this scrim`)
             } else {
               if (!inTimeWindow) {
                 console.log(`   ❌ Series ${series.id} REJECTED - outside time window`)
-              } else if (alreadyAssignedToTenant) {
-                console.log(`   ❌ Series ${series.id} REJECTED - already assigned to this tenant`)
+              } else if (assignedToAnotherScrim) {
+                console.log(`   ❌ Series ${series.id} REJECTED - already assigned to scrim ${assignedScrimId}`)
               }
             }
             
             return isValid
-          })
+          }).sort((a, b) => {
+            const aAssignedHere = tenantSeriesAssignments.get(a.id) === scrim.id ? 1 : 0
+            const bAssignedHere = tenantSeriesAssignments.get(b.id) === scrim.id ? 1 : 0
+            if (aAssignedHere !== bAssignedHere) return bAssignedHere - aAssignedHere
+            return Math.abs(new Date(a.startTimeScheduled).getTime() - scrimTime.getTime())
+              - Math.abs(new Date(b.startTimeScheduled).getTime() - scrimTime.getTime())
+          }).slice(0, 1)
 
           console.log(`   ✅ Final candidate series count: ${candidateSeries.length}`)
 
           // STEP 8: Process each valid candidate series with triple validation
           for (const series of candidateSeries) {
             try {
-              // STEP 9: FINAL DATABASE VALIDATION - Triple check no existing assignment for this tenant
+              // STEP 9: FINAL DATABASE VALIDATION - prevent cross-scrim assignment within the tenant
               console.log(`   🔒 Final database validation for series ${series.id}`)
               const { data: existingGameCheck } = await supabaseClient
                 .from('scrim_games')
-                .select('id, scrim_id, external_game_data')
+                .select('id, scrim_id, external_game_data, scrims!inner(tenant_id)')
                 .eq('external_game_data->grid_metadata->>seriesId', series.id)
-                .eq('tenant_id', tenant.id)
+                .eq('scrims.tenant_id', tenant.id)
                 .limit(1)
                 .maybeSingle()
 
-              if (existingGameCheck) {
-                console.log(`   ⚠️ FINAL CHECK: Series ${series.id} already exists in database for tenant ${tenant.id}, scrim ${existingGameCheck.scrim_id}, skipping`)
+              if (existingGameCheck && existingGameCheck.scrim_id !== scrim.id) {
+                console.log(`   ⚠️ FINAL CHECK: Series ${series.id} belongs to scrim ${existingGameCheck.scrim_id}, skipping`)
                 continue
               }
 
-              // Check if we already have this series tracked in current scrim
-              const existingGame = scrim.scrim_games?.find(g => 
-                g.external_game_data?.grid_metadata?.seriesId === series.id
-              )
-
-              if (existingGame) {
-                // Check if game needs completion data
-                const gridMetadata = existingGame.external_game_data?.grid_metadata
-                const needsCompletion = existingGame.status !== 'completed' || 
-                                      !existingGame.external_game_data?.post_game_data?.participants?.length ||
-                                      gridMetadata?.didWeWin === undefined
-
-                if (needsCompletion) {
-                  console.log(`   🔄 Updating existing game for series ${series.id}`)
-                  const success = await fetchAndUpdateGameData(supabaseClient, existingGame.id, series.id, tenant)
-                  if (success) {
-                    gamesProcessed++
-                    // IMPORTANT: Only mark as processed AFTER successful database operation
-                    tenantSeriesAssignments.add(series.id)
-                    console.log(`   ✅ Successfully updated existing game for series ${series.id}`)
-                  } else {
-                    console.log(`   ❌ Failed to update existing game for series ${series.id}`)
-                  }
-                }
-              } else {
-                // Create new placeholder game for this series
-                console.log(`   ➕ Creating new game for series ${series.id}`)
-                const newGame = await createPlaceholderGameForSeries(supabaseClient, scrim.id, series, tenant)
-                if (newGame) {
-                  gamesProcessed++
-                  // IMPORTANT: Only mark as processed AFTER successful database operation
-                  tenantSeriesAssignments.add(series.id)
-                  console.log(`   ✅ Successfully created new game for series ${series.id}`)
-                } else {
-                  console.log(`   ❌ Failed to create new game for series ${series.id}`)
-                }
-              }
+              const synchronizedGames = await synchronizeSeriesGames(supabaseClient, scrim.id, series, tenant)
+              gamesProcessed += synchronizedGames
+              tenantSeriesAssignments.set(series.id, scrim.id)
+              console.log(`   ✅ Synchronized ${synchronizedGames} completed games for series ${series.id}`)
             } catch (error) {
               console.error(`   ❌ Error processing series ${series.id} for scrim ${scrim.id}:`, error)
               // Do NOT add to tenantSeriesAssignments on error - allow retry
@@ -369,62 +352,159 @@ function getExpectedGamesFromFormat(format: string): number {
   return match ? parseInt(match[1]) : 3
 }
 
-async function createPlaceholderGameForSeries(supabaseClient: any, scrimId: string, series: any, tenant: any) {
-  try {
-    // Get current max game number
-    const { data: existingGames } = await supabaseClient
-      .from('scrim_games')
-      .select('game_number')
-      .eq('scrim_id', scrimId)
-      .order('game_number', { ascending: false })
-      .limit(1)
-
-    const nextGameNumber = existingGames?.[0]?.game_number ? existingGames[0].game_number + 1 : 1
-
-    const { data, error } = await supabaseClient
-      .from('scrim_games')
-      .insert([{
-        scrim_id: scrimId,
-        game_number: nextGameNumber,
-        status: 'draft',
-        external_game_data: {
-          grid_metadata: {
-            seriesId: series.id,
-            gameNumber: 1,
-            status: 'placeholder',
-            created_as_placeholder: true,
-            startTimeScheduled: series.startTimeScheduled
-          }
-        },
-        notes: `Placeholder game created for GRID Series ${series.id} - waiting for game data`,
-        auto_created: true
-      }])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('❌ Error creating placeholder game:', error)
-      throw error
-    }
-    
-    // Try to fetch completion data immediately
-    await fetchAndUpdateGameData(supabaseClient, data.id, series.id, tenant)
-    
-    return data
-  } catch (error) {
-    console.error(`❌ Error creating placeholder for series ${series.id}:`, error)
-    return null
-  }
+type GridSeriesGame = {
+  id?: string
+  sequenceNumber: number
+  teams?: Array<{ id?: string; won?: boolean; side?: string }>
 }
 
-async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, seriesId: string, tenant: any) {
+function normalizeGridSide(side: unknown): 'blue' | 'red' | undefined {
+  const value = String(side || '').toLowerCase()
+  if (value === 'blue' || value === '100') return 'blue'
+  if (value === 'red' || value === '200') return 'red'
+  return undefined
+}
+
+async function fetchSeriesStateGames(seriesId: string, apiKey: string): Promise<GridSeriesGame[]> {
+  const response = await fetch('https://api.grid.gg/live-data-feed/series-state/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({
+      query: `query SeriesGames {
+        seriesState(id: ${JSON.stringify(seriesId)}) {
+          valid
+          started
+          finished
+          games {
+            id
+            sequenceNumber
+            teams { id won side }
+          }
+        }
+      }`,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`GRID Series State request failed (${response.status})`)
+  }
+
+  const payload = await response.json()
+  if (payload.errors?.length) {
+    throw new Error(`GRID Series State returned GraphQL errors: ${payload.errors.map((error: any) => error.message).join('; ')}`)
+  }
+
+  const games = payload.data?.seriesState?.games
+  if (!Array.isArray(games)) return []
+
+  const bySequence = new Map<number, GridSeriesGame>()
+  for (const game of games) {
+    const sequenceNumber = Number(game?.sequenceNumber)
+    if (Number.isInteger(sequenceNumber) && sequenceNumber > 0 && !bySequence.has(sequenceNumber)) {
+      bySequence.set(sequenceNumber, { ...game, sequenceNumber })
+    }
+  }
+  return [...bySequence.values()].sort((a, b) => a.sequenceNumber - b.sequenceNumber)
+}
+
+async function ensureGridGame(
+  supabaseClient: any,
+  scrimId: string,
+  series: any,
+  gameNumber: number,
+  gridGameId?: string,
+) {
+  const externalGameId = `grid:${series.id}:${gameNumber}`
+  const { data: existingGames, error: lookupError } = await supabaseClient
+    .from('scrim_games')
+    .select('id, game_number, external_game_id, external_game_data')
+    .eq('scrim_id', scrimId)
+
+  if (lookupError) throw lookupError
+
+  const existing = (existingGames || []).find((game: any) =>
+    game.external_game_id === externalGameId || (
+      game.external_game_data?.grid_metadata?.seriesId === series.id &&
+      Number(game.external_game_data?.grid_metadata?.gameNumber || game.game_number) === gameNumber
+    ),
+  )
+
+  const gridMetadata = {
+    ...(existing?.external_game_data?.grid_metadata || {}),
+    seriesId: series.id,
+    gameNumber,
+    gridGameId: gridGameId || existing?.external_game_data?.grid_metadata?.gridGameId || null,
+    status: existing?.external_game_data?.grid_metadata?.status || 'placeholder',
+    created_as_placeholder: existing?.external_game_data?.grid_metadata?.created_as_placeholder ?? true,
+    startTimeScheduled: series.startTimeScheduled,
+  }
+
+  if (existing) {
+    const { data, error } = await supabaseClient
+      .from('scrim_games')
+      .update({
+        game_number: gameNumber,
+        external_game_id: externalGameId,
+        external_game_data: { ...(existing.external_game_data || {}), grid_metadata: gridMetadata },
+      })
+      .eq('id', existing.id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+
+  const { data, error } = await supabaseClient
+    .from('scrim_games')
+    .insert({
+      scrim_id: scrimId,
+      game_number: gameNumber,
+      external_game_id: externalGameId,
+      status: 'draft',
+      external_game_data: { grid_metadata: gridMetadata },
+      notes: `GRID Series ${series.id}, Game ${gameNumber} - waiting for end-state data`,
+      auto_created: true,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+async function synchronizeSeriesGames(supabaseClient: any, scrimId: string, series: any, tenant: any): Promise<number> {
+  const games = await fetchSeriesStateGames(series.id, tenant.grid_api_key)
+  if (!games.length) {
+    await ensureGridGame(supabaseClient, scrimId, series, 1)
+    console.log(`   GRID series ${series.id} has no announced games yet; Game 1 remains queued`)
+    return 0
+  }
+
+  let completed = 0
+  for (const game of games) {
+    const storedGame = await ensureGridGame(supabaseClient, scrimId, series, game.sequenceNumber, game.id)
+    if (await fetchAndUpdateGameData(supabaseClient, storedGame.id, series.id, game.sequenceNumber, tenant, game)) {
+      completed++
+    }
+  }
+  return completed
+}
+
+async function fetchAndUpdateGameData(
+  supabaseClient: any,
+  gameId: string,
+  seriesId: string,
+  gameNumber: number,
+  tenant: any,
+  seriesGame?: GridSeriesGame,
+) {
   try {
     // Fetch merged data from GRID API
     const [summaryResponse, detailsResponse] = await Promise.all([
-      fetch(`https://api.grid.gg/file-download/end-state/riot/series/${seriesId}/games/1/summary`, {
+      fetch(`https://api.grid.gg/file-download/end-state/riot/series/${seriesId}/games/${gameNumber}/summary`, {
         headers: { 'X-API-Key': tenant.grid_api_key }
       }),
-      fetch(`https://api.grid.gg/file-download/end-state/riot/series/${seriesId}/games/1/details`, {
+      fetch(`https://api.grid.gg/file-download/end-state/riot/series/${seriesId}/games/${gameNumber}/details`, {
         headers: { 'X-API-Key': tenant.grid_api_key }
       })
     ])
@@ -443,11 +523,16 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
 
-    const ourTeamSide = detectOurTeamSide(summaryData.participants || [], teamRoster || [])
+    const gridTeamState = seriesGame?.teams?.find((team) => String(team.id) === String(tenant.grid_team_id))
+    const ourTeamSide = normalizeGridSide(gridTeamState?.side) || detectOurTeamSide(summaryData.participants || [], teamRoster || [])
+    if (!ourTeamSide) {
+      console.error(`Unable to identify the team side for GRID series ${seriesId}, game ${gameNumber}; leaving the game queued for retry`)
+      return false
+    }
     const ourTeamId = ourTeamSide === 'blue' ? 100 : 200
     
-    let didWeWin = false
-    if (summaryData.teams && Array.isArray(summaryData.teams)) {
+    let didWeWin = typeof gridTeamState?.won === 'boolean' ? gridTeamState.won : false
+    if (typeof gridTeamState?.won !== 'boolean' && summaryData.teams && Array.isArray(summaryData.teams)) {
       const ourTeam = summaryData.teams.find((team: any) => team.teamId === ourTeamId)
       if (ourTeam) {
         didWeWin = ourTeam.win || false
@@ -463,7 +548,8 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
         didWeWin: didWeWin,
         seriesId: seriesId,
         gameState: "completed",
-        gameNumber: 1,
+        gameNumber,
+        gridGameId: seriesGame?.id || null,
         hasDetails: !!detailsData,
         hasSummary: !!summaryData,
         isCompleted: true,
@@ -471,14 +557,10 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
         seriesTitle: `Series ${seriesId}`,
         last_updated: new Date().toISOString()
       },
-      post_game_data: {
-        teams: (summaryData.teams || []).map((team: any) => ({
-          win: team.win || false,
-          teamId: team.teamId,
-          participants: []
-        })),
-        gameLength: summaryData.gameDuration || 0,
-        participants: summaryData.participants || []
+      capture_features: {
+        summary: true,
+        details: !!detailsData,
+        position_samples: false
       }
     }
 
@@ -507,8 +589,20 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
         status: 'completed',
         external_game_data: mergedData,
         result: didWeWin ? 'win' : 'loss',
-        duration_seconds: mergedData.post_game_data.gameLength,
+        external_game_id: `grid:${seriesId}:${gameNumber}`,
+        duration_seconds: summaryData.gameDuration || 0,
         side: ourTeamSide,
+        game_classification: summaryData.participants?.length === 10 && !summaryData.participants.some((participant: any) => participant.botPlayer)
+          ? 'standard_5v5' : 'nonstandard_custom',
+        quality_flags: [
+          summaryData.participants?.length !== 10 ? 'non_5v5' : null,
+          summaryData.participants?.some((participant: any) => participant.botPlayer) ? 'bots_present' : null,
+          !detailsData ? 'missing_grid_details' : null,
+        ].filter(Boolean),
+        roster_coverage: teamRoster?.filter((player: any) => summaryData.participants?.some((participant: any) =>
+          [participant.riotIdGameName, participant.summonerName].filter(Boolean).some((name: string) =>
+            [player.riot_id, player.summoner_name].filter(Boolean).some((rosterName: string) => rosterName.toLowerCase().split('#')[0] === name.toLowerCase().split('#')[0])
+          ))).length || 0,
         updated_at: new Date().toISOString()
       })
       .eq('id', gameId)
@@ -520,7 +614,8 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
 
     // Create participants if we have participant data
     if (summaryData.participants && summaryData.participants.length > 0) {
-      await createParticipantsForGame(supabaseClient, gameId, summaryData.participants, ourTeamSide)
+      await createParticipantsForGame(supabaseClient, gameId, tenant.id, summaryData.participants, ourTeamSide)
+      await createDraftForGame(supabaseClient, gameId, `${seriesId}:${gameNumber}`, mergedData.draft_data, ourTeamSide)
     }
 
     const { error: evidenceError } = await supabaseClient
@@ -529,11 +624,11 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
         tenant_id: tenant.id,
         scrim_game_id: gameId,
         provider: 'grid',
-        provider_record_id: `${seriesId}:1`,
-        payload_version: 'grid-v1',
+        provider_record_id: `${seriesId}:${gameNumber}`,
+        payload_version: 'grid-normalized-v2',
         captured_at: new Date().toISOString(),
         capabilities: ['result', 'draft', 'participant_stats'],
-        metadata: { has_summary: !!summaryData, has_details: !!detailsData }
+        metadata: { series_id: seriesId, game_number: gameNumber, grid_game_id: seriesGame?.id || null, has_summary: !!summaryData, has_details: !!detailsData }
       })
 
     if (evidenceError && evidenceError.code !== '23505') {
@@ -544,14 +639,14 @@ async function fetchAndUpdateGameData(supabaseClient: any, gameId: string, serie
     return true
 
   } catch (error) {
-    console.error(`❌ Error fetching/updating game data for ${gameId}:`, error)
+    console.error(`❌ Error fetching/updating GRID series ${seriesId}, game ${gameNumber}:`, error)
     return false
   }
 }
 
-function detectOurTeamSide(participants: any[], teamRoster: any[]): 'blue' | 'red' {
+function detectOurTeamSide(participants: any[], teamRoster: any[]): 'blue' | 'red' | undefined {
   if (!teamRoster || teamRoster.length === 0) {
-    return 'blue'
+    return undefined
   }
 
   const rosterNames = new Set<string>()
@@ -581,10 +676,74 @@ function detectOurTeamSide(participants: any[], teamRoster: any[]): 'blue' | 're
     }
   })
   
+  if (teamMatches[100] === 0 && teamMatches[200] === 0) {
+    return undefined
+  }
+
+  if (teamMatches[100] === teamMatches[200]) {
+    return undefined
+  }
+
   return teamMatches[200] > teamMatches[100] ? 'red' : 'blue'
 }
 
-async function createParticipantsForGame(supabaseClient: any, gameId: string, participants: any[], ourTeamSide: 'blue' | 'red') {
+async function createDraftForGame(
+  supabaseClient: any,
+  gameId: string,
+  seriesId: string,
+  draftData: { picks?: Record<'blue' | 'red', any[]>; bans?: Record<'blue' | 'red', any[]> },
+  ourTeamSide: 'blue' | 'red',
+) {
+  const normalizeActions = (kind: 'picks' | 'bans') =>
+    (['blue', 'red'] as const).flatMap(team =>
+      (draftData?.[kind]?.[team] || []).map((action: any, index: number) => ({
+        champion: action.championName || action.champion || 'Unknown champion',
+        order: Number(action.order) || index + 1,
+        team,
+      })),
+    )
+
+  const picks = normalizeActions('picks')
+  const bans = normalizeActions('bans')
+  const completed = picks.length === 10 && bans.length === 10
+  const normalizedDraft = {
+    picks,
+    bans,
+    phase: completed ? 'completed' : picks.length > 0 ? 'partial' : 'unavailable',
+    completed,
+    source: 'grid',
+  }
+
+  const { data: existingDraft, error: lookupError } = await supabaseClient
+    .from('game_drafts')
+    .select('id')
+    .eq('scrim_game_id', gameId)
+    .eq('draft_mode', 'grid')
+    .limit(1)
+    .maybeSingle()
+
+  if (lookupError) throw lookupError
+
+  const draftRecord = {
+    our_team_side: ourTeamSide,
+    draft_data: normalizedDraft,
+    session_id: seriesId,
+    completed_at: completed ? new Date().toISOString() : null,
+  }
+
+  const operation = existingDraft
+    ? supabaseClient.from('game_drafts').update(draftRecord).eq('id', existingDraft.id)
+    : supabaseClient.from('game_drafts').insert({
+        scrim_game_id: gameId,
+        draft_mode: 'grid',
+        ...draftRecord,
+      })
+
+  const { error } = await operation
+  if (error) throw error
+}
+
+async function createParticipantsForGame(supabaseClient: any, gameId: string, tenantId: string, participants: any[], ourTeamSide: 'blue' | 'red') {
   // Clear existing participants
   await supabaseClient
     .from('scrim_participants')
@@ -593,6 +752,7 @@ async function createParticipantsForGame(supabaseClient: any, gameId: string, pa
 
   const participantsToCreate = participants.map((participant: any) => ({
     scrim_game_id: gameId,
+    tenant_id: tenantId,
     summoner_name: participant.riotIdGameName || participant.summonerName || 'Unknown',
     champion_name: participant.championName,
     role: getPlayerRole(participant.teamPosition || participant.individualPosition),
@@ -609,7 +769,7 @@ async function createParticipantsForGame(supabaseClient: any, gameId: string, pa
     items: participant.item0 ? [
       participant.item0, participant.item1, participant.item2,
       participant.item3, participant.item4, participant.item5, participant.item6
-    ].filter(item => item && item !== 0) : [],
+    ].flatMap((id, slot) => id && id !== 0 ? [{ id, name: `Item ${id}`, slot }] : []) : [],
     runes: {
       primary_tree: participant.perks?.styles?.[0]?.style || '',
       secondary_tree: participant.perks?.styles?.[1]?.style || '',
@@ -625,7 +785,26 @@ async function createParticipantsForGame(supabaseClient: any, gameId: string, pa
     summoner_spells: [
       { id: participant.summoner1Id, name: '', slot: 1 },
       { id: participant.summoner2Id, name: '', slot: 2 }
-    ].filter(spell => spell.id && spell.id !== 0)
+    ].filter(spell => spell.id && spell.id !== 0),
+    is_bot: participant.botPlayer === true,
+    advanced_stats: {
+      wards_placed: participant.wardsPlaced,
+      wards_killed: participant.wardsKilled,
+      control_wards_purchased: participant.visionWardsBoughtInGame,
+      damage_to_objectives: participant.damageDealtToObjectives,
+      damage_to_turrets: participant.damageDealtToTurrets,
+      healing: participant.totalHeal,
+      healing_to_teammates: participant.totalHealsOnTeammates,
+      shielding_to_teammates: participant.totalDamageShieldedOnTeammates,
+      damage_mitigated: participant.damageSelfMitigated,
+      crowd_control_seconds: participant.timeCCingOthers,
+      time_dead_seconds: participant.totalTimeSpentDead,
+      neutral_cs: participant.neutralMinionsKilled,
+      ally_jungle_cs: participant.neutralMinionsKilledYourJungle,
+      enemy_jungle_cs: participant.neutralMinionsKilledEnemyJungle,
+      largest_multi_kill: participant.largestMultiKill,
+      largest_killing_spree: participant.largestKillingSpree,
+    }
   }))
 
   if (participantsToCreate.length > 0) {
@@ -635,6 +814,7 @@ async function createParticipantsForGame(supabaseClient: any, gameId: string, pa
 
     if (error) {
       console.error('❌ Error creating participants:', error)
+      throw error
     }
   }
 }

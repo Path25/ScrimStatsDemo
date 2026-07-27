@@ -8,9 +8,9 @@ const navigation = [
 ];
 
 export function PublicHeader({
-  action = "request-access",
+  action = "sign-up",
 }: {
-  action?: "request-access" | "sign-in";
+  action?: "sign-up" | "sign-in";
 }) {
   return (
     <header className="border-b border-[var(--public-rule)] bg-[var(--public-bg)]">
@@ -36,19 +36,19 @@ export function PublicHeader({
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {action === "request-access" ? (
+          {action === "sign-up" ? (
             <>
               <Link
                 to="/sign-in"
                 className="hidden px-3 py-2 text-[15px] font-medium text-[var(--public-muted)] transition-colors hover:text-[var(--public-foreground)] sm:inline-flex"
               >
-                Member sign in
+                Sign in
               </Link>
               <Link
-                to="/request-access"
+                to="/sign-up"
                 className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--public-foreground)] px-4 text-[15px] font-semibold text-[var(--public-bg)] transition-colors hover:bg-[var(--public-action)]"
               >
-                Request access
+                Start free
                 <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </>
@@ -57,7 +57,7 @@ export function PublicHeader({
               to="/sign-in"
               className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--public-foreground)] px-4 text-[15px] font-semibold text-[var(--public-bg)] transition-colors hover:bg-[var(--public-action)]"
             >
-              Member sign in
+              Sign in
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           )}

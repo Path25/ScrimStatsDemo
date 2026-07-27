@@ -1,8 +1,8 @@
 {
   "name": "scrimstats-collector",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "Windows companion for post-game ScrimStats captures",
+  "description": "Windows companion for champion-select, live-game, and post-game ScrimStats captures",
   "author": "ScrimStats",
   "license": "UNLICENSED",
   "main": "dist/main.js",
@@ -13,12 +13,23 @@
     "dist:win": "npm run build && electron-builder --win nsis"
   },
   "build": {
-    "directories": { "output": "release" },
+    "directories": { "output": "release", "buildResources": "build" },
     "appId": "gg.scrimstats.collector",
-    "productName": "ScrimStats Collector",
-    "files": ["dist/**", "src/renderer.html", "package.json"],
-    "win": { "target": ["nsis"] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "productName": "ScrimStats Game Capture",
+    "files": ["dist/**", "package.json"],
+    "extraResources": [{ "from": "build/icon.png", "to": "icon.png" }],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico",
+      "artifactName": "ScrimStats-Game-Capture-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
     "asar": true
   },
   "devDependencies": {

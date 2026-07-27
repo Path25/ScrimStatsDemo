@@ -4,12 +4,14 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
 import type {
     ScrimGame,
+    ScrimGameDB,
     CreateScrimGameData,
     UpdateScrimGameData,
     GameResult,
     GameSide,
     GameStatus,
 } from '@/types/scrimGame';
+import { transformScrimGameFromDB } from '@/types/scrimGame';
 
 export interface SaveGameReviewInput {
     id?: string;
@@ -61,7 +63,7 @@ export function useScrimGames(scrimId?: string) {
 
             if (error) throw error;
 
-            return (data || []) as unknown as ScrimGame[];
+            return (data || []).map((game) => transformScrimGameFromDB(game as ScrimGameDB));
         },
         enabled: Boolean(tenant?.id && scrimId),
     });

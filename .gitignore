@@ -13,6 +13,11 @@ dist-ssr
 playwright-report
 test-results
 *.local
+supabase/.temp/
+
+# Local League client probes. These are runtime diagnostics, not source fixtures.
+/aram-allgamedata.json
+/aram-eventdata.json
 
 # Editor directories and files
 .vscode/*

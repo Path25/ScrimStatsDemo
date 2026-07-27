@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
+import { workspaceInvitationEmail } from "../_shared/email.ts";
 
 const allowedOrigin = Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg";
 const developmentOrigins = new Set(["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5173", "http://127.0.0.1:5173"]);
@@ -8,7 +9,6 @@ const corsFor = (request: Request) => {
   const origin = requestOrigin && (requestOrigin === allowedOrigin || developmentOrigins.has(requestOrigin)) ? requestOrigin : allowedOrigin;
   return { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "Access-Control-Allow-Methods": "POST, OPTIONS", Vary: "Origin" };
 };
-const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character] || character));
 
 Deno.serve(async (request) => {
   const cors = corsFor(request);
@@ -79,7 +79,14 @@ Deno.serve(async (request) => {
     await service.from("team_invitations").update({ delivery_status: "failed", delivery_error: "Email delivery is not configured" }).eq("id", invitation.id);
     return json({ invitation_id: invitation.id, token: invitation.token, setup_url: link.data.properties.action_link, expires_at: invitation.expires_at, delivery_status: "failed", warning: "Invitation created, but email delivery is not configured. Copy the secure link instead." });
   }
-  const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${resendKey}`, "content-type": "application/json" }, body: JSON.stringify({ from: "ScrimStats <noreply@email.scrimstats.gg>", to: [invitation.email], subject: `Join ${tenant?.name || "your team"} on ScrimStats`, html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="font-size:24px">Your private team workspace is ready</h1><p>${escapeHtml(authData.user.email || "A team manager")} invited you to join <strong>${escapeHtml(tenant?.name || "a ScrimStats team")}</strong> as ${escapeHtml(invitation.role)}.</p><p><a href="${link.data.properties.action_link}" style="display:inline-block;background:#11e2d0;color:#06100f;padding:12px 18px;text-decoration:none;font-weight:700">Set up secure access</a></p><p style="color:#667085;font-size:13px">This link expires on ${new Date(invitation.expires_at).toUTCString()}.</p></div>` }) });
+  const message = workspaceInvitationEmail({
+    teamName: tenant?.name || "your team",
+    inviter: authData.user.user_metadata?.display_name || authData.user.email || "A team manager",
+    role: invitation.role,
+    actionUrl: link.data.properties.action_link,
+    expiresAt: new Date(invitation.expires_at).toLocaleString("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "UTC" }) + " UTC",
+  });
+  const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${resendKey}`, "content-type": "application/json" }, body: JSON.stringify({ from: "ScrimStats <noreply@email.scrimstats.gg>", to: [invitation.email], ...message }) });
   if (!response.ok) {
     const detail = await response.text();
     await service.from("team_invitations").update({ delivery_status: "failed", delivery_error: detail.slice(0, 500), last_sent_at: new Date().toISOString() }).eq("id", invitation.id);

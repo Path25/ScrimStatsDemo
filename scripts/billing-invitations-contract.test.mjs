@@ -35,8 +35,25 @@ test("paid product routes have explicit plan gates", () => {
   const source = read("src/App.tsx");
   assert.match(source, /minimum="pro" feature="Solo Queue tracking"/);
   assert.match(source, /minimum="pro" feature="team analytics"/);
-  assert.match(source, /minimum="elite" feature="collector capture"/);
+  assert.match(source, /minimum="pro" feature="collector capture"/);
+  assert.match(source, /path="\/integrations" element={<Integrations/);
+  assert.doesNotMatch(source, /path="\/integrations" element={<PlanGate/);
   assert.match(read("src/pages/Settings.tsx"), /<BillingPanel \/>/);
+});
+
+test("Integrations keeps credentials visible while presenting unavailable automation clearly", () => {
+  const source = read("src/pages/Integrations.tsx");
+  const settings = read("src/pages/Settings.tsx");
+  assert.match(source, /<RiotApiIntegration canManage={canManageIntegrations}/);
+  assert.match(source, /hasDesktopAccess/);
+  assert.match(source, /hasEliteAccess/);
+  assert.match(source, /Discord automation is an Elite capability/);
+  assert.match(source, /Game Capture is included with Pro/);
+  assert.match(source, /label="Pro feature"/);
+  assert.match(source, /label="Elite feature"/);
+  assert.match(source, /backdrop-blur/);
+  assert.match(settings, /Connection, block selection, and capture status/);
+  assert.match(settings, /Game Capture is included with Pro/);
 });
 
 test("billing presents the exact configured monthly prices", () => {

@@ -63,7 +63,7 @@ export function LeaguepediaDraftHistory({
             <h2 className="mt-2 text-lg font-semibold">Leaguepedia draft history</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--workspace-muted)]">
               Import bounded pick/ban records from Leaguepedia’s structured Cargo API. Source page,
-              provider game ID, fetch time, patch, and revision are retained with every game.
+              source game ID, import time, patch, and revision are retained with every game.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(14rem,1fr)_auto]">
@@ -101,7 +101,7 @@ export function LeaguepediaDraftHistory({
       {history.isLoading ? (
         <WorkspaceState icon={ScrollText} title="Loading draft history…" description="Reading attributed opponent draft records." className="m-5" />
       ) : history.error ? (
-        <WorkspaceState icon={ScrollText} title="Draft history unavailable" description="The import contract could not be read for this workspace." className="m-5" />
+        <WorkspaceState icon={ScrollText} title="Draft history unavailable" description="Imported draft history could not be loaded for this workspace." className="m-5" />
       ) : !history.data?.games.length ? (
         <WorkspaceState icon={ScrollText} title="No imported draft games yet." description="Use the exact team name used by Leaguepedia, then import. No placeholder drafts are shown." className="m-5" />
       ) : (

@@ -26,9 +26,9 @@ const profiles: Array<{
 }> = [
   {
     id: "desktop_manual",
-    title: "Desktop Collector + Manual",
-    description: "Capture practice from the paired League client, with manual review as fallback.",
-    detail: "Best for private practice and Riot timeline evidence.",
+    title: "Game Capture + Manual",
+    description: "Save custom games from the connected Windows computer, with manual entry as a fallback.",
+    detail: "Best for everyday team practice and scrim blocks.",
     icon: MonitorCheck,
   },
   {
@@ -51,9 +51,9 @@ export function CaptureProfileControl({ canManage }: { canManage: boolean }) {
         <div className="flex gap-3 border-b border-[var(--workspace-rule)] p-5">
           <ShieldCheck className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
           <div>
-            <h2 className="font-semibold">Primary capture profile</h2>
+            <h2 className="font-semibold">Game data source</h2>
             <p className="mt-1 text-sm leading-6 text-[var(--workspace-muted)]">
-              One automatic provider owns future capture. Manual game entry remains available in both profiles.
+              Choose how future games are added. Manual game entry remains available with either option.
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function CaptureProfileControl({ canManage }: { canManage: boolean }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Change future capture to {pendingProfile?.title}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Historical games and provenance will remain unchanged. The other automatic provider will be blocked from creating new captures for this workspace.
+              Existing games will remain unchanged. Future games will use the selected source.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

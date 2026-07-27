@@ -1,19 +1,61 @@
-export type CollectorState = 'unpaired' | 'ready' | 'capturing' | 'retrying' | 'error';
+export type CollectorState = 'unpaired' | 'ready' | 'capturing' | 'finalizing' | 'retrying' | 'error';
 
 export interface Credential { deviceId: string; credential: string; tenantId: string; label: string; }
 export interface ScheduledScrim { id: string; opponent_name: string; scheduled_time: string; format?: string | null; status: string; }
 export interface RosterIdentity { playerId: string; riotId: string; tagLine: string; region?: string | null; }
-export interface CollectorCapabilities { bridgeVersion: 1; capture: true; secureStorage: boolean; platform: string; }
-export interface CollectorStatus { state: CollectorState; message: string; selectedScrim?: ScheduledScrim; lastCaptureAt?: string; queueDepth: number; }
+export interface CollectorCapabilities { bridgeVersion: 3; capture: true; secureStorage: boolean; platform: string; }
+export interface CollectorStatus { state: CollectorState; message: string; selectedScrim?: ScheduledScrim; recordingArmed: boolean; lastCaptureAt?: string; queueDepth: number; }
 export interface LocalEvent { event_id: string; sequence: number; occurred_at?: string; event_type?: string; [key: string]: unknown; }
-export interface FinalSnapshot { local_game_id: string; schema_version: number; started_at?: string; ended_at?: string; duration_seconds?: number; result?: 'win' | 'loss' | 'draw'; side?: 'blue' | 'red'; identity_resolution_status: 'matched' | 'ambiguous' | 'unmatched'; our_team_kills?: number; enemy_team_kills?: number; our_team_gold?: number; enemy_team_gold?: number; objectives?: unknown; draft?: unknown; participants: Array<Record<string, unknown>>; timeline: LocalEvent[]; }
+export interface FinalSnapshot {
+  local_game_id: string;
+  schema_version: number;
+  started_at?: string;
+  ended_at?: string;
+  duration_seconds?: number;
+  result?: 'win' | 'loss' | 'draw';
+  side?: 'blue' | 'red';
+  identity_resolution_status: 'matched' | 'ambiguous' | 'unmatched';
+  our_team_kills?: number;
+  enemy_team_kills?: number;
+  our_team_gold?: number;
+  enemy_team_gold?: number;
+  objectives?: unknown;
+  draft?: unknown;
+  capture_features?: {
+    champion_select: boolean;
+    post_game: boolean;
+  };
+  capture_quality: {
+    classification: 'standard_5v5' | 'nonstandard_custom' | 'incomplete_capture';
+    flags: string[];
+    roster_coverage: number;
+    our_participants: number;
+    enemy_participants: number;
+    bots_present: boolean;
+  };
+  game_context?: {
+    mode?: string;
+    map_name?: string;
+    map_number?: number;
+    map_terrain?: string;
+    patch?: string;
+  };
+  participants: Array<Record<string, unknown>>;
+  timeline: LocalEvent[];
+}
 
 export interface PersistedCaptureState {
   captureSessionId?: string;
   capturedEvents: LocalEvent[];
+  championSelect?: Record<string, unknown>;
+  championCatalog?: Record<string, string>;
+  itemCatalog?: Record<string, string>;
   clientSessionId?: string;
   lastSnapshot?: Record<string, unknown>;
+  postGame?: Record<string, unknown>;
+  postGameWaitStartedAt?: number;
   queuedEvents: LocalEvent[];
+  recordingArmed: boolean;
   selectedScrim?: ScheduledScrim;
   seenEventIds: string[];
 }
@@ -28,7 +70,9 @@ export interface ScrimStatsCollectorBridge {
   getCapabilities(): Promise<CollectorCapabilities>;
   getStatus(): Promise<CollectorStatus & { scrims: ScheduledScrim[] }>;
   pair(code: string, label: string): Promise<{ scrims: ScheduledScrim[] }>;
+  refreshConfiguration(): Promise<{ scrims: ScheduledScrim[] }>;
   selectScrim(scrimId: string): Promise<void>;
+  setRecordingEnabled(enabled: boolean): Promise<void>;
   exportDiagnostics(): Promise<void>;
   onStatus(callback: (status: CollectorStatus) => void): () => void;
 }

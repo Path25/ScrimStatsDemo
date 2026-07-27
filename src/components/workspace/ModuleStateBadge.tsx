@@ -9,6 +9,8 @@ export function ModuleStateBadge({
   state: WorkspaceReleaseState;
   className?: string;
 }) {
+  const label = state === "planned" ? "Coming soon" : "Available";
+
   return (
     <Badge
       variant="outline"
@@ -20,7 +22,7 @@ export function ModuleStateBadge({
         className,
       )}
     >
-      {state}
+      {label}
     </Badge>
   );
 }

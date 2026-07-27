@@ -21,6 +21,11 @@ import {
 } from "recharts";
 
 import { AnalyticsGameDrilldown } from "@/components/analytics/AnalyticsGameDrilldown";
+import { DraftPatternPanel } from "@/components/analytics/DraftPatternPanel";
+import { GameQualityBanner } from "@/components/analytics/GameQualityBanner";
+import { PerformanceIndexPanel } from "@/components/analytics/PerformanceIndexPanel";
+import { PlayerContributionPanel } from "@/components/analytics/PlayerContributionPanel";
+import { TeamPatternsPanel } from "@/components/analytics/TeamPatternsPanel";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -52,7 +57,7 @@ import { cn } from "@/lib/utils";
 type View = "overview" | "team" | "draft" | "players";
 
 const providerLabels: Record<EvidenceProvider, string> = {
-  desktop_collector: "Desktop Collector",
+  desktop_collector: "Game Capture",
   grid: "GRID",
   manual: "Manual",
 };
@@ -107,7 +112,7 @@ function AnalyticsFilters({
   const active = Object.values(filters).some(Boolean);
   return (
     <DataSurface className="p-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5 2xl:grid-cols-10">
         <FilterSelect label="Opponent" value={filters.opponentKey || "all"} onChange={(value) => onChange({ ...filters, opponentKey: value === "all" ? undefined : value })}>
           <SelectItem value="all">All opponents</SelectItem>
           {dataset.filter_options.opponents.map((option) => <SelectItem key={option.key} value={option.key}>{option.name}</SelectItem>)}
@@ -126,11 +131,18 @@ function AnalyticsFilters({
           <SelectItem value="all">All patches</SelectItem>
           {dataset.filter_options.patches.map((patch) => <SelectItem key={patch} value={patch}>{patch}</SelectItem>)}
         </FilterSelect>
+        <FilterSelect label="Mode" value={filters.gameMode || "all"} onChange={(value) => onChange({ ...filters, gameMode: value === "all" ? undefined : value })}>
+          <SelectItem value="all">All game modes</SelectItem>
+          {(dataset.filter_options.game_modes ?? []).map((mode) => <SelectItem key={mode} value={mode}>{mode}</SelectItem>)}
+        </FilterSelect>
         <FilterSelect label="Capture" value={filters.provider || "all"} onChange={(value) => onChange({ ...filters, provider: value === "all" ? undefined : value as EvidenceProvider })}>
-          <SelectItem value="all">All compatible evidence</SelectItem><SelectItem value="desktop_collector">Desktop Collector</SelectItem><SelectItem value="grid">GRID</SelectItem><SelectItem value="manual">Manual</SelectItem>
+          <SelectItem value="all">All compatible evidence</SelectItem><SelectItem value="desktop_collector">Game Capture</SelectItem><SelectItem value="grid">GRID</SelectItem><SelectItem value="manual">Manual</SelectItem>
         </FilterSelect>
         <FilterSelect label="Evidence" value={filters.completeness || "all"} onChange={(value) => onChange({ ...filters, completeness: value === "all" ? undefined : value as "core" | "advanced" })}>
           <SelectItem value="all">Any completeness</SelectItem><SelectItem value="core">Core complete</SelectItem><SelectItem value="advanced">Advanced evidence</SelectItem>
+        </FilterSelect>
+        <FilterSelect label="Game type" value={filters.classification || "all"} onChange={(value) => onChange({ ...filters, classification: value === "all" ? undefined : value as TeamAnalyticsFilters["classification"] })}>
+          <SelectItem value="all">All game types</SelectItem><SelectItem value="standard_5v5">Standard 5v5</SelectItem><SelectItem value="nonstandard_custom">Non-standard custom</SelectItem><SelectItem value="incomplete_capture">Incomplete capture</SelectItem>
         </FilterSelect>
         <FilterSelect label="Lineup" value={filters.playerId || "all"} onChange={(value) => onChange({ ...filters, playerId: value === "all" ? undefined : value })}>
           <SelectItem value="all">Any lineup</SelectItem>
@@ -138,7 +150,7 @@ function AnalyticsFilters({
         </FilterSelect>
       </div>
       <div className="mt-3 flex items-center justify-between gap-4 border-t border-[var(--workspace-rule)] pt-3">
-        <p className="text-xs leading-5 text-[var(--workspace-subtle)]">Every metric declares its own qualifying sample. Provider filters are diagnostic, not separate dashboards.</p>
+        <p className="text-xs leading-5 text-[var(--workspace-subtle)]">Every metric shows the number of qualifying games. Capture filters help explain why some games support different analysis.</p>
         <Button size="sm" variant="ghost" disabled={!active} onClick={() => onChange({})}>Clear filters</Button>
       </div>
     </DataSurface>
@@ -235,10 +247,11 @@ function OverviewView({ dataset }: { dataset: TeamAnalyticsDataset }) {
         </DataSurface>
       </div>
       <ImprovementPanel dataset={dataset} />
+      <PerformanceIndexPanel dataset={dataset} />
       <div className="grid gap-6 lg:grid-cols-2">
         <CoveragePanel dataset={dataset} />
         <DataSurface className="p-5">
-          <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" /><div><h2 className="font-semibold">Evidence boundary</h2><p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">Shared metrics combine only equivalent factual fields. GRID movement and Desktop timeline analysis activate independently when their required evidence exists.</p><p className="mt-3 text-xs text-[var(--workspace-subtle)]">Active profile: {dataset.capture_profile === "grid_manual" ? "GRID + Manual" : "Desktop Collector + Manual"}. Historical evidence from either profile remains usable.</p></div></div>
+          <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" /><div><h2 className="font-semibold">Evidence boundary</h2><p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">Shared metrics combine only equivalent factual fields. GRID movement and Game Capture timeline analysis activate independently when their required evidence exists.</p><p className="mt-3 text-xs text-[var(--workspace-subtle)]">Active profile: {dataset.capture_profile === "grid_manual" ? "GRID + Manual" : "Game Capture + Manual"}. Historical evidence from either profile remains usable.</p></div></div>
         </DataSurface>
       </div>
     </div>
@@ -246,7 +259,7 @@ function OverviewView({ dataset }: { dataset: TeamAnalyticsDataset }) {
 }
 
 const capabilityLabels: Record<EvidenceCapability, string> = {
-  result: "Results", draft: "Draft", participant_stats: "Participants", timeline: "Timeline", objectives: "Objectives", position_samples: "Positions", movement_detail: "Movement", coach_review: "Coach review",
+  result: "Results", draft: "Draft", participant_stats: "Participants", timeline: "Timeline", objectives: "Objectives", position_samples: "Positions", movement_detail: "Movement", champion_select: "Champion select", post_game_stats: "Post-game stats", coach_review: "Coach review",
 };
 
 function CoveragePanel({ dataset }: { dataset: TeamAnalyticsDataset }) {
@@ -260,12 +273,13 @@ function MetricCard({ title, metric, dataset, suffix = "" }: { title: string; me
 
 function CapabilityModule({ title, capability, dataset, description }: { title: string; capability: EvidenceCapability; dataset: TeamAnalyticsDataset; description: string }) {
   const games = dataset.games.filter((game) => game.capabilities.includes(capability));
+  if ((capability === "position_samples" || capability === "movement_detail") && dataset.capture_profile !== "grid_manual") return null;
   return <DataSurface className="p-5"><div className="flex items-start justify-between gap-4"><div><h3 className="font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">{games.length ? description : "Not available for this capture profile or filtered evidence."}</p></div>{games.length ? <CheckCircle2 className="h-5 w-5 text-emerald-300" /> : <DatabaseZap className="h-5 w-5 text-[var(--workspace-subtle)]" />}</div><div className="mt-4 flex items-center justify-between border-t border-[var(--workspace-rule)] pt-3"><span className="ss-mono text-xs text-[var(--workspace-subtle)]">{games.length} qualifying games</span><AnalyticsGameDrilldown games={games} title={title} label="Evidence" /></div></DataSurface>;
 }
 
 function TeamView({ dataset }: { dataset: TeamAnalyticsDataset }) {
   const summary = summarizeTeamAnalytics(dataset);
-  return <div className="space-y-6"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><MetricCard title="Kill differential" metric={summary.averageKillDifferential} dataset={dataset} /><MetricCard title="Final gold differential" metric={summary.averageGoldDifferential} dataset={dataset} /><MetricCard title="Coach rating" metric={summary.performance} dataset={dataset} suffix="/5" /><MetricCard title="Game duration" metric={summary.averageDuration} dataset={dataset} suffix=" min" /></div><div className="grid gap-6 xl:grid-cols-2"><DataSurface><div className="border-b border-[var(--workspace-rule)] p-5"><h2 className="font-semibold">Side performance</h2><p className="mt-1 text-sm text-[var(--workspace-muted)]">Only games with explicit side and result.</p></div>{[["Blue", summary.blue], ["Red", summary.red]].map(([label, rows]) => { const games = rows as TeamAnalyticsGame[]; const wins = games.filter((game) => game.result === "win").length; return <div key={label as string} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 last:border-0"><span className="text-sm font-medium">{label as string} side</span><span className="ss-mono text-sm">{percent(wins, games.length)}</span><AnalyticsGameDrilldown games={games} title={`${label} side performance`} /></div>; })}</DataSurface><DataSurface><div className="border-b border-[var(--workspace-rule)] p-5"><h2 className="font-semibold">Coach phase ratings</h2><p className="mt-1 text-sm text-[var(--workspace-muted)]">Qualitative review evidence, kept separate from captured facts.</p></div>{[["Early game", summary.earlyGame], ["Mid game", summary.midGame], ["Late game", summary.lateGame]].map(([label, value]) => { const item = value as MetricValue; return <div key={label as string} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 last:border-0"><span className="text-sm font-medium">{label as string}</span><span className="ss-mono text-sm">{decimal(item.value, 1, "/5")}</span><AnalyticsGameDrilldown games={gamesForIds(dataset, item.gameIds)} title={`${label} ratings`} /></div>; })}</DataSurface></div><section><div className="mb-4"><p className="workspace-eyebrow">Advanced evidence</p><h2 className="mt-2 text-xl font-semibold">Source-capability modules</h2></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><CapabilityModule title="Objectives" capability="objectives" dataset={dataset} description="Objective records are available for factual sequencing and totals." /><CapabilityModule title="Riot timeline" capability="timeline" dataset={dataset} description="State and event timelines are available for future economy-state analysis." /><CapabilityModule title="GRID positions" capability="position_samples" dataset={dataset} description="Position observations are available for spatial analysis." /><CapabilityModule title="GRID movement" capability="movement_detail" dataset={dataset} description="Movement detail is available for advanced pathing analysis." /></div></section></div>;
+  return <div className="space-y-6"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><MetricCard title="Kill differential" metric={summary.averageKillDifferential} dataset={dataset} /><MetricCard title="Final gold differential" metric={summary.averageGoldDifferential} dataset={dataset} /><MetricCard title="Coach rating" metric={summary.performance} dataset={dataset} suffix="/5" /><MetricCard title="Game duration" metric={summary.averageDuration} dataset={dataset} suffix=" min" /></div><div className="grid gap-6 xl:grid-cols-2"><DataSurface><div className="border-b border-[var(--workspace-rule)] p-5"><h2 className="font-semibold">Side performance</h2><p className="mt-1 text-sm text-[var(--workspace-muted)]">Only games with explicit side and result.</p></div>{[["Blue", summary.blue], ["Red", summary.red]].map(([label, rows]) => { const games = rows as TeamAnalyticsGame[]; const wins = games.filter((game) => game.result === "win").length; return <div key={label as string} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 last:border-0"><span className="text-sm font-medium">{label as string} side</span><span className="ss-mono text-sm">{percent(wins, games.length)}</span><AnalyticsGameDrilldown games={games} title={`${label} side performance`} /></div>; })}</DataSurface><DataSurface><div className="border-b border-[var(--workspace-rule)] p-5"><h2 className="font-semibold">Coach phase ratings</h2><p className="mt-1 text-sm text-[var(--workspace-muted)]">Qualitative review evidence, kept separate from captured facts.</p></div>{[["Early game", summary.earlyGame], ["Mid game", summary.midGame], ["Late game", summary.lateGame]].map(([label, value]) => { const item = value as MetricValue; return <div key={label as string} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 last:border-0"><span className="text-sm font-medium">{label as string}</span><span className="ss-mono text-sm">{decimal(item.value, 1, "/5")}</span><AnalyticsGameDrilldown games={gamesForIds(dataset, item.gameIds)} title={`${label} ratings`} /></div>; })}</DataSurface></div><section><div className="mb-4"><p className="workspace-eyebrow">Advanced analysis</p><h2 className="mt-2 text-xl font-semibold">Analysis available from captured games</h2></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><CapabilityModule title="Objectives" capability="objectives" dataset={dataset} description="Objective records support factual sequencing and totals." /><CapabilityModule title="Riot timeline" capability="timeline" dataset={dataset} description="Timeline events support economy and game-state analysis." /><CapabilityModule title="GRID positions" capability="position_samples" dataset={dataset} description="Position observations support spatial analysis." /><CapabilityModule title="GRID movement" capability="movement_detail" dataset={dataset} description="Movement detail supports advanced pathing analysis." /></div></section></div>;
 }
 
 function DraftRows({ rows, dataset, empty }: { rows: DraftAnalyticsRow[]; dataset: TeamAnalyticsDataset; empty: string }) {
@@ -276,7 +290,7 @@ function DraftRows({ rows, dataset, empty }: { rows: DraftAnalyticsRow[]; datase
 function DraftView({ dataset }: { dataset: TeamAnalyticsDataset }) {
   const data = draftAnalytics(dataset);
   const [view, setView] = useState<"champions" | "matchups" | "duos" | "compositions">("champions");
-  return <div className="space-y-5"><div className="flex gap-1 overflow-x-auto border border-[var(--workspace-rule)] p-1"><Button size="sm" variant={view === "champions" ? "secondary" : "ghost"} onClick={() => setView("champions")}>Champions</Button><Button size="sm" variant={view === "matchups" ? "secondary" : "ghost"} onClick={() => setView("matchups")}>Matchups</Button><Button size="sm" variant={view === "duos" ? "secondary" : "ghost"} onClick={() => setView("duos")}>Duos</Button><Button size="sm" variant={view === "compositions" ? "secondary" : "ghost"} onClick={() => setView("compositions")}>Compositions</Button></div>{view === "champions" && <DraftRows rows={data.champions} dataset={dataset} empty="No champion performance evidence" />}{view === "matchups" && <DraftRows rows={data.matchups} dataset={dataset} empty="No same-role matchup evidence" />}{view === "duos" && <DraftRows rows={data.duos} dataset={dataset} empty="No champion pairing evidence" />}{view === "compositions" && <WorkspaceState icon={Network} title="Composition identities await the versioned taxonomy" description="Complete five-player drafts will activate here only after the forthcoming JSON and champion taxonomy are mapped consistently." />}</div>;
+  return <div className="space-y-5"><div className="flex gap-1 overflow-x-auto border border-[var(--workspace-rule)] p-1"><Button size="sm" variant={view === "champions" ? "secondary" : "ghost"} onClick={() => setView("champions")}>Champions</Button><Button size="sm" variant={view === "matchups" ? "secondary" : "ghost"} onClick={() => setView("matchups")}>Matchups</Button><Button size="sm" variant={view === "duos" ? "secondary" : "ghost"} onClick={() => setView("duos")}>Duos</Button><Button size="sm" variant={view === "compositions" ? "secondary" : "ghost"} onClick={() => setView("compositions")}>Compositions</Button></div>{view === "champions" && <DraftRows rows={data.champions} dataset={dataset} empty="No champion performance evidence" />}{view === "matchups" && <DraftRows rows={data.matchups} dataset={dataset} empty="No same-role matchup evidence" />}{view === "duos" && <DraftRows rows={data.duos} dataset={dataset} empty="No champion pairing evidence" />}{view === "compositions" && <WorkspaceState icon={Network} title="No complete composition data yet" description="Composition analysis becomes available after complete five-player drafts are recorded." />}</div>;
 }
 
 function PlayersView({ dataset }: { dataset: TeamAnalyticsDataset }) {
@@ -293,8 +307,9 @@ export function TeamAnalyticsWorkspace({ dataset }: { dataset: TeamAnalyticsData
   const hasHistory = dataset.games.length > 0;
   return (
     <div className="space-y-6">
-      {!hasHistory && <DataSurface className="border-[var(--workspace-accent)]/30 p-5"><div className="flex items-start gap-3"><BarChart3 className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" /><div><h2 className="font-semibold">Your analytics workspace is ready</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--workspace-muted)]">The sections below preview the team, draft, player, improvement, and evidence views that populate as completed games are recorded. Empty metrics remain visible and are never replaced with sample data.</p></div></div></DataSurface>}
+      {!hasHistory && <DataSurface className="border-[var(--workspace-accent)]/30 p-5"><div className="flex items-start gap-3"><BarChart3 className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" /><div><h2 className="font-semibold">Analytics will appear after completed games</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--workspace-muted)]">Team, Draft, player, improvement, and data-coverage views populate as completed games are recorded. Empty metrics remain visible and are never replaced with sample data.</p></div></div></DataSurface>}
       <AnalyticsFilters dataset={dataset} filters={filters} onChange={setFilters} />
+      <GameQualityBanner dataset={filtered} />
       <div className="flex flex-col gap-3 border-b border-[var(--workspace-rule)] pb-4 lg:flex-row lg:items-center lg:justify-between">
         <Tabs value={view} onValueChange={(value) => setView(value as View)}>
           <TabsList className="grid h-auto w-full grid-cols-4 border border-[var(--workspace-rule)] bg-[var(--workspace-surface)] p-1 lg:w-auto">
@@ -304,7 +319,10 @@ export function TeamAnalyticsWorkspace({ dataset }: { dataset: TeamAnalyticsData
         <p className="ss-mono text-xs uppercase tracking-[0.12em] text-[var(--workspace-subtle)]">{filtered.games.length} qualifying games</p>
       </div>
       {hasHistory && hasActiveFilters && !filtered.games.length && <WorkspaceState icon={BarChart3} title="No games match these filters" description="The analytical surfaces remain available below. Clear one or more filters to restore the recorded sample." action={<Button onClick={() => setFilters({})}>Clear filters</Button>} />}
-      <div className={view === "overview" ? "block" : "hidden"}><OverviewView dataset={filtered} /></div><div className={view === "team" ? "block" : "hidden"}><TeamView dataset={filtered} /></div><div className={view === "draft" ? "block" : "hidden"}><DraftView dataset={filtered} /></div><div className={view === "players" ? "block" : "hidden"}><PlayersView dataset={filtered} /></div>
+      <div className={view === "overview" ? "block" : "hidden"}><OverviewView dataset={filtered} /></div>
+      <div className={view === "team" ? "space-y-6" : "hidden"}><TeamView dataset={filtered} /><TeamPatternsPanel dataset={filtered} /></div>
+      <div className={view === "draft" ? "space-y-6" : "hidden"}><DraftView dataset={filtered} /><DraftPatternPanel dataset={filtered} /></div>
+      <div className={view === "players" ? "block" : "hidden"}><PlayerContributionPanel dataset={filtered} /></div>
     </div>
   );
 }

@@ -176,6 +176,12 @@
       #080d12;
   }
 
+  .public-proof-placeholder--capture {
+    aspect-ratio: 1753 / 897;
+    min-height: 0;
+    display: block;
+  }
+
   .public-proof-rail {
     display: flex;
     flex-direction: column;
@@ -410,7 +416,7 @@
       position: absolute;
       left: 0;
       right: 0;
-      top: 6.8rem;
+      top: 5.15rem;
       z-index: 2;
       display: block;
       height: 1px;

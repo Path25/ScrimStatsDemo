@@ -21,7 +21,7 @@ export function RiotApiIntegration({ canManage }: { canManage: boolean }) {
       <WorkspaceState
         icon={KeyRound}
         title="Loading Riot connection…"
-        description="Reading workspace-safe credential metadata."
+        description="Checking the workspace Riot connection."
       />
     );
   }
@@ -30,7 +30,7 @@ export function RiotApiIntegration({ canManage }: { canManage: boolean }) {
       <WorkspaceState
         icon={ShieldAlert}
         title="Riot integration unavailable"
-        description="The credential contract could not be loaded. Try again after checking the workspace migration."
+        description="The Riot connection could not be loaded. Try again, or contact support if the problem continues."
       />
     );
   }
@@ -42,7 +42,7 @@ export function RiotApiIntegration({ canManage }: { canManage: boolean }) {
         <div className="flex items-start gap-3">
           <KeyRound className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
           <div className="min-w-0">
-            <h3 className="font-semibold">Tenant-managed Riot API</h3>
+            <h3 className="font-semibold">Workspace Riot connection</h3>
             <p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">
               Used for roster and opponent Solo Queue refreshes. The saved key is encrypted in
               Supabase Vault and is never returned to this browser.
@@ -142,7 +142,7 @@ export function RiotApiIntegration({ canManage }: { canManage: boolean }) {
         />
       ) : (
         <p className="p-5 text-sm leading-6 text-[var(--workspace-muted)]">
-          No tenant Riot connection is configured. An owner or admin can connect one.
+          No Riot connection is configured. An owner or admin can connect one.
         </p>
       )}
     </DataSurface>
@@ -202,11 +202,11 @@ function CredentialForm({
             </div>
           </div>
           <div className="border-l-2 border-[var(--workspace-awaiting)] pl-4">
-            <p className="text-sm font-medium">Private testing only unless Riot approves the product.</p>
+            <p className="text-sm font-medium">Use a key that matches your approved Riot access.</p>
             <p className="mt-1 text-sm leading-6 text-[var(--workspace-muted)]">
-              Development keys expire every 24 hours. Personal keys cannot operate a public
-              alpha or beta. Each organisation remains responsible for its Riot Developer Portal
-              account and policy compliance.
+              Development keys expire every 24 hours. Public or commercial use requires the
+              appropriate Riot production access. Each organisation remains responsible for its
+              Riot Developer Portal account and policy compliance.
             </p>
           </div>
           <div>

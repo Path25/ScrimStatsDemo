@@ -24,11 +24,11 @@ export default function AcceptInvite() {
     if (!existing) {
       if (password.length < 8 || password !== confirmation) { setError("Use at least eight characters and make sure both passwords match."); setPending(false); return; }
       const updated = await supabase.auth.updateUser({ password });
-      if (updated.error) { setError(updated.error.message); setPending(false); return; }
+      if (updated.error) { setError("Your password could not be saved. Please try again."); setPending(false); return; }
     }
     const result = await supabase.rpc("accept_team_invitation", { invitation_token: token });
     const payload = result.data && typeof result.data === "object" ? result.data as { success?: boolean; error?: string } : null;
-    if (result.error || payload?.success === false) { setError(result.error?.message || payload?.error || "This invitation could not be accepted."); setPending(false); return; }
+    if (result.error || payload?.success === false) { setError("This invitation could not be accepted. It may be expired, revoked, or linked to another email address."); setPending(false); return; }
     setComplete(true); setPending(false); setTimeout(() => window.location.assign("/overview"), 700);
   }
 

@@ -28,10 +28,10 @@ const capabilities = [
   {
     index: "02",
     eyebrow: "Scrim control",
-    title: "Give every block a clear plan and a reliable source.",
+    title: "Give every block a clear plan and a trusted game record.",
     description:
-      "Schedule the opponent and format, confirm who is playing, then connect completed games through the desktop collector or clearly identified manual entry.",
-    signals: ["Blocks", "Opponents", "Formats", "Collector"],
+      "Schedule the opponent and format, confirm who is playing, then save completed games through Game Capture or clearly identified manual entry.",
+    signals: ["Blocks", "Opponents", "Formats", "Game Capture"],
     icon: MonitorDown,
     reverse: true,
   },
@@ -41,7 +41,7 @@ const capabilities = [
     title: "Carry the evidence into the next decision.",
     description:
       "Results, participants, capture source, and review context stay attached to the team history, so the next conversation starts from what actually happened.",
-    signals: ["Results", "Source state", "Review context", "Team history"],
+    signals: ["Results", "Game records", "Review context", "Team history"],
     icon: SearchCheck,
   },
 ] as const;
@@ -67,8 +67,8 @@ export default function Landing() {
           <div className="max-w-[1120px]">
             <SectionLabel>ScrimStats by ProComps / Performance workspace for League teams</SectionLabel>
             <h1 className="mt-6 max-w-[1080px] text-[clamp(3.5rem,7.3vw,7rem)] font-semibold leading-[0.93] tracking-[-0.055em] text-[var(--public-foreground)]">
-              Every scrim should make the team
-              <span className="public-gradient-text block">harder to beat.</span>
+              Everything your team needs
+              <span className="public-gradient-text block">to compete at its best.</span>
             </h1>
             <PublicBodyCopy className="mt-7 max-w-[830px] text-lg sm:text-xl sm:leading-8">
               ScrimStats connects team management, scheduling, game capture, results, and review—so
@@ -76,9 +76,9 @@ export default function Landing() {
               Discord, screenshots, and disconnected tools.
             </PublicBodyCopy>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <PublicCta to="/request-access">Request access</PublicCta>
+              <PublicCta to="/sign-up">Start free</PublicCta>
               <PublicCta to="/sign-in" secondary>
-                Member sign in
+                Sign in
               </PublicCta>
             </div>
             <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-[var(--public-muted)]">
@@ -95,7 +95,7 @@ export default function Landing() {
           </div>
 
           <div id="product" className="mt-12 scroll-mt-24 lg:mt-16">
-            <ProductProofFrame />
+            <ProductProofFrame desktopSrc="/workspace-preview-blurred.webp" />
           </div>
         </div>
       </section>
@@ -173,8 +173,8 @@ export default function Landing() {
             <h2 className="public-section-heading mt-5">Every block sharpens what happens next.</h2>
           </div>
           <PublicBodyCopy className="max-w-2xl lg:justify-self-end">
-            ScrimStats keeps the plan, source, result, and review connected. Collector-captured and
-            manual information remain visibly distinct, while missing data is shown honestly.
+            ScrimStats keeps the plan, game record, result, and review connected. Captured and
+            manually entered information remain clearly identified, while missing data is shown honestly.
           </PublicBodyCopy>
         </div>
 
@@ -192,7 +192,7 @@ export default function Landing() {
             </h2>
           </div>
           <div className="mt-8 lg:mt-0">
-            <PublicCta to="/request-access">Request access</PublicCta>
+            <PublicCta to="/sign-up">Create your workspace</PublicCta>
           </div>
         </div>
       </PublicSection>

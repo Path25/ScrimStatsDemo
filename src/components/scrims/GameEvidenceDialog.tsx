@@ -22,6 +22,8 @@ const capabilityLabels: Record<EvidenceCapability, string> = {
   objectives: "Objectives",
   position_samples: "Position samples",
   movement_detail: "Movement detail",
+  champion_select: "Champion select payload",
+  post_game_stats: "Post-game statistics",
   coach_review: "Coach review",
 };
 
@@ -48,7 +50,7 @@ export function GameEvidenceDialog({ gameId, compact = false }: { gameId: string
         <DialogHeader>
           <DialogTitle>Game evidence coverage</DialogTitle>
           <DialogDescription>
-            Provenance explains which analytics this game can support. Raw provider payloads are never exposed here.
+            Data coverage shows which statistics and analysis are available for this game. Source details remain attached to the record.
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -58,9 +60,9 @@ export function GameEvidenceDialog({ gameId, compact = false }: { gameId: string
             <div className="flex items-start gap-3 border border-[var(--workspace-rule)] p-4">
               <ProviderIcon className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
               <div>
-                <p className="font-medium">{provider === "grid" ? "GRID" : provider === "desktop_collector" ? "Desktop Collector" : "Manual"}</p>
+                <p className="font-medium">{provider === "grid" ? "GRID" : provider === "desktop_collector" ? "Game Capture" : "Manual"}</p>
                 <p className="mt-1 text-xs text-[var(--workspace-subtle)]">
-                  Contract {evidence?.payload_version || "manual-v1"}
+                  Data version {evidence?.payload_version || "manual-v1"}
                   {evidence?.captured_at ? ` · Captured ${new Date(evidence.captured_at).toLocaleString()}` : ""}
                 </p>
               </div>

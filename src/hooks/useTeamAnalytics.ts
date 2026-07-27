@@ -8,7 +8,7 @@ export function useTeamAnalytics(dateFrom: string, dateTo: string, enabled = tru
   const { tenant } = useTenant();
 
   return useQuery({
-    queryKey: ["team-analytics-v2", tenant?.id, dateFrom, dateTo],
+    queryKey: ["team-analytics-v3", tenant?.id, dateFrom, dateTo],
     queryFn: async () => {
       if (!tenant?.id) throw new Error("A workspace is required.");
       const { data, error } = await supabase.rpc("get_team_analytics_dataset", {
@@ -17,7 +17,18 @@ export function useTeamAnalytics(dateFrom: string, dateTo: string, enabled = tru
         p_date_to: dateTo,
       });
       if (error) throw error;
-      return data as unknown as TeamAnalyticsDataset;
+      const dataset = data as unknown as TeamAnalyticsDataset;
+      return {
+        ...dataset,
+        events: Array.isArray(dataset.events) ? dataset.events : [],
+        drafts: Array.isArray(dataset.drafts) ? dataset.drafts : [],
+        games: (dataset.games ?? []).map((game) => ({
+          ...game,
+          quality_flags: Array.isArray(game.quality_flags) ? game.quality_flags : [],
+          roster_coverage: Number.isFinite(game.roster_coverage) ? game.roster_coverage : 0,
+          score_eligible: game.score_eligible === true,
+        })),
+      };
     },
     enabled: Boolean(tenant?.id) && enabled,
   });

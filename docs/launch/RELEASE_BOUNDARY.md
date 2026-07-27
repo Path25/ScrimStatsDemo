@@ -8,12 +8,13 @@
 - Solo Queue, Team Analytics, Scouting, and Draft web workflows.
 - In-app and email notification delivery state.
 - Collector pairing, configuration, web health, and captured evidence presentation.
-- Public privacy, terms, support, status, request-access, and honest not-found pages.
+- Public signup, email confirmation, Free workspace creation, privacy, terms, support, status, and honest not-found pages.
+- Workspace-scoped Free, Pro, and Elite checkout, subscription status, and Stripe billing-portal access.
 
 ## Excluded
 
 - Native collector resilience, signing, packaging, and update delivery.
-- Self-serve workspace creation, checkout, and subscription entitlements.
+- Self-serve workspace creation; tenant creation remains a managed operation.
 - Interactive Discord delivery until its complete support path is verified.
 - Unsupported analytics inferred from missing evidence.
 

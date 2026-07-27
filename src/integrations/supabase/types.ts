@@ -288,6 +288,9 @@ export type Database = {
           completed_at: string | null
           completed_by: string | null
           completion_evidence: string | null
+          category: string
+          carried_from_action_id: string | null
+          checkpoint_scrim_ids: string[]
           created_at: string
           created_by: string
           description: string | null
@@ -296,13 +299,29 @@ export type Database = {
           follow_up_scrim_id: string | null
           id: string
           owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
           priority: string
           ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
           scrim_game_id: string | null
           scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
           status: string
           tenant_id: string
           title: string
+          unit_label: string | null
           updated_at: string
         }
         Insert: {
@@ -313,6 +332,9 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           completion_evidence?: string | null
+          category?: string
+          carried_from_action_id?: string | null
+          checkpoint_scrim_ids?: string[]
           created_at?: string
           created_by: string
           description?: string | null
@@ -321,13 +343,29 @@ export type Database = {
           follow_up_scrim_id?: string | null
           id?: string
           owner_user_id: string
+          participant_player_ids?: string[]
+          pattern_label?: string | null
+          player_check_in?: string | null
+          player_check_in_note?: string | null
+          player_checked_in_at?: string | null
           priority?: string
           ready_for_review_at?: string | null
+          review_evidence?: string | null
+          review_next_action?: string | null
+          review_observation?: string | null
+          review_outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope_type?: string
           scrim_game_id?: string | null
           scrim_id?: string | null
+          source_note?: string | null
+          source_timestamp_seconds?: number | null
+          source_type?: string
           status?: string
           tenant_id: string
           title: string
+          unit_label?: string | null
           updated_at?: string
         }
         Update: {
@@ -338,6 +376,9 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           completion_evidence?: string | null
+          category?: string
+          carried_from_action_id?: string | null
+          checkpoint_scrim_ids?: string[]
           created_at?: string
           created_by?: string
           description?: string | null
@@ -346,13 +387,29 @@ export type Database = {
           follow_up_scrim_id?: string | null
           id?: string
           owner_user_id?: string
+          participant_player_ids?: string[]
+          pattern_label?: string | null
+          player_check_in?: string | null
+          player_check_in_note?: string | null
+          player_checked_in_at?: string | null
           priority?: string
           ready_for_review_at?: string | null
+          review_evidence?: string | null
+          review_next_action?: string | null
+          review_observation?: string | null
+          review_outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope_type?: string
           scrim_game_id?: string | null
           scrim_id?: string | null
+          source_note?: string | null
+          source_timestamp_seconds?: number | null
+          source_type?: string
           status?: string
           tenant_id?: string
           title?: string
+          unit_label?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -393,6 +450,62 @@ export type Database = {
           },
           {
             foreignKeyName: "coaching_actions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_action_templates: {
+        Row: {
+          archived_at: string | null
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          review_prompt: string | null
+          scope_type: string
+          suggested_duration_days: number | null
+          success_evidence: string | null
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category: string
+          created_at?: string
+          created_by: string
+          id?: string
+          review_prompt?: string | null
+          scope_type?: string
+          suggested_duration_days?: number | null
+          success_evidence?: string | null
+          tenant_id: string
+          title: string
+          unit_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          review_prompt?: string | null
+          scope_type?: string
+          suggested_duration_days?: number | null
+          success_evidence?: string | null
+          tenant_id?: string
+          title?: string
+          unit_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_action_templates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -3236,6 +3349,69 @@ export type Database = {
           },
         ]
       }
+      scrim_game_events: {
+        Row: {
+          actor_name: string | null
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          map_object: string | null
+          objective_type: string | null
+          occurred_seconds: number | null
+          scrim_game_id: string
+          sequence: number
+          team: string
+          tenant_id: string
+          victim_name: string | null
+        }
+        Insert: {
+          actor_name?: string | null
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: string
+          map_object?: string | null
+          objective_type?: string | null
+          occurred_seconds?: number | null
+          scrim_game_id: string
+          sequence?: number
+          team?: string
+          tenant_id: string
+          victim_name?: string | null
+        }
+        Update: {
+          actor_name?: string | null
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          map_object?: string | null
+          objective_type?: string | null
+          occurred_seconds?: number | null
+          scrim_game_id?: string
+          sequence?: number
+          team?: string
+          tenant_id?: string
+          victim_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrim_game_events_scrim_game_id_fkey"
+            columns: ["scrim_game_id"]
+            isOneToOne: false
+            referencedRelation: "scrim_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scrim_game_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scrim_game_evidence: {
         Row: {
           capabilities: string[]
@@ -3377,6 +3553,7 @@ export type Database = {
           external_game_data: Json | null
           external_game_id: string | null
           game_end_time: string | null
+          game_classification: string | null
           game_number: number
           game_start_time: string | null
           grid_series_number: number | null
@@ -3391,7 +3568,9 @@ export type Database = {
           performance_rating: number | null
           performance_summary: string | null
           replay_url: string | null
+          quality_flags: string[]
           result: string | null
+          roster_coverage: number
           scrim_id: string
           side: string | null
           status: string
@@ -3412,6 +3591,7 @@ export type Database = {
           external_game_data?: Json | null
           external_game_id?: string | null
           game_end_time?: string | null
+          game_classification?: string | null
           game_number: number
           game_start_time?: string | null
           grid_series_number?: number | null
@@ -3426,7 +3606,9 @@ export type Database = {
           performance_rating?: number | null
           performance_summary?: string | null
           replay_url?: string | null
+          quality_flags?: string[]
           result?: string | null
+          roster_coverage?: number
           scrim_id: string
           side?: string | null
           status?: string
@@ -3447,6 +3629,7 @@ export type Database = {
           external_game_data?: Json | null
           external_game_id?: string | null
           game_end_time?: string | null
+          game_classification?: string | null
           game_number?: number
           game_start_time?: string | null
           grid_series_number?: number | null
@@ -3461,7 +3644,9 @@ export type Database = {
           performance_rating?: number | null
           performance_summary?: string | null
           replay_url?: string | null
+          quality_flags?: string[]
           result?: string | null
+          roster_coverage?: number
           scrim_id?: string
           side?: string | null
           status?: string
@@ -3529,6 +3714,7 @@ export type Database = {
       }
       scrim_participants: {
         Row: {
+          advanced_stats: Json
           assists: number | null
           champion_name: string | null
           created_at: string
@@ -3540,6 +3726,7 @@ export type Database = {
           id: string
           identity_source: string | null
           identity_status: string
+          is_bot: boolean
           is_our_team: boolean
           items: Json | null
           kills: number | null
@@ -3558,6 +3745,7 @@ export type Database = {
           vision_score: number | null
         }
         Insert: {
+          advanced_stats?: Json
           assists?: number | null
           champion_name?: string | null
           created_at?: string
@@ -3569,6 +3757,7 @@ export type Database = {
           id?: string
           identity_source?: string | null
           identity_status?: string
+          is_bot?: boolean
           is_our_team?: boolean
           items?: Json | null
           kills?: number | null
@@ -3587,6 +3776,7 @@ export type Database = {
           vision_score?: number | null
         }
         Update: {
+          advanced_stats?: Json
           assists?: number | null
           champion_name?: string | null
           created_at?: string
@@ -3598,6 +3788,7 @@ export type Database = {
           id?: string
           identity_source?: string | null
           identity_status?: string
+          is_bot?: boolean
           is_our_team?: boolean
           items?: Json | null
           kills?: number | null
@@ -4867,6 +5058,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_coaching_action_cycle: {
+        Args: { p_payload: Json }
+        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+      }
+      check_in_coaching_action: {
+        Args: { p_action_id: string; p_check_in: string; p_note?: string }
+        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+      }
       create_draft_match_plan: {
         Args: {
           p_opponent_team_id: string
@@ -5010,6 +5209,10 @@ export type Database = {
           expires_at: string
           token: string
         }[]
+      }
+      create_self_service_workspace: {
+        Args: { p_name: string; p_timezone?: string }
+        Returns: Json
       }
       create_tenant_with_owner: {
         Args: {
@@ -5649,6 +5852,20 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      review_coaching_action: {
+        Args: {
+          p_action_id: string
+          p_outcome: string
+          p_observation: string
+          p_evidence?: string
+          p_next_action?: string
+        }
+        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+      }
+      save_coaching_action_template: {
+        Args: { p_payload: Json }
+        Returns: Database["public"]["Tables"]["coaching_action_templates"]["Row"]
       }
       update_draft_item_details: {
         Args: { p_id: string; p_kind: string; p_payload: Json }

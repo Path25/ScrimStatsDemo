@@ -30,6 +30,10 @@ const opponentDialog = readFileSync(
   new URL("../src/components/scouting/OpponentSoloQDialog.tsx", import.meta.url),
   "utf8",
 );
+const collectorIngest = readFileSync(
+  new URL("../supabase/functions/collector-ingest/index.ts", import.meta.url),
+  "utf8",
+);
 
 test("tenant Riot keys are encrypted and browser roles cannot mutate or decrypt them", () => {
   assert.match(migration, /vault\.create_secret/);
@@ -73,4 +77,12 @@ test("opponent scouting exposes truthful rank and recent game context", () => {
   assert.match(opponentDialog, /Awaiting sync/);
   assert.match(opponentDialog, /No ranked matches cached/);
   assert.doesNotMatch(opponentDialog, /estimated|prediction|win probability/i);
+});
+
+test("paired desktop collectors can securely refresh their scheduled blocks and roster", () => {
+  assert.match(collectorIngest, /deviceFromRequest\(req\)/);
+  assert.match(collectorIngest, /body\.action === 'configuration'/);
+  assert.match(collectorIngest, /\.eq\('tenant_id', device\.tenant_id\)/);
+  assert.match(collectorIngest, /\.in\('status', \['scheduled', 'in_progress'\]\)/);
+  assert.doesNotMatch(collectorIngest, /body\.tenant_id/);
 });

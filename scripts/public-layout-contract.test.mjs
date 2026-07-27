@@ -4,7 +4,8 @@ import test from "node:test";
 
 const publicSources = [
   "src/pages/Landing.tsx",
-  "src/pages/RequestAccess.tsx",
+  "src/pages/SignUp.tsx",
+  "src/pages/CreateWorkspace.tsx",
   "src/pages/SignIn.tsx",
   "src/components/public/CapabilityRail.tsx",
   "src/components/public/PerformanceWorkflow.tsx",
@@ -57,9 +58,10 @@ test("semantic public content is not positioned behind decorative assets", () =>
 
 test("landing leads with team performance and keeps consolidation as supporting proof", () => {
   const landing = sources.find(([path]) => path.endsWith("Landing.tsx"))?.[1] ?? "";
-  assert.match(landing, /Every scrim should make the team/);
-  assert.match(landing, /harder to beat\./);
+  assert.match(landing, /Everything your team needs/);
+  assert.match(landing, /to compete at its best\./);
   assert.match(landing, /ProductProofFrame/);
+  assert.match(landing, /workspace-preview-blurred\.webp/);
   assert.match(landing, /sheets,\s*Discord,\s*screenshots/);
   assert.doesNotMatch(landing, /CommandCentreStage|CapabilityModule|LiveWorkspaceStage/);
   assert.doesNotMatch(landing, /competitive operation|operational layers|Data integrity/i);
@@ -71,7 +73,9 @@ test("product proof supports a truthful placeholder and later responsive capture
   assert.match(proof, /desktopSrc/);
   assert.match(proof, /mobileSrc/);
   assert.match(proof, /Private by design/);
-  assert.match(proof, /intentionally conceals team data/);
+  assert.match(proof, /team data is never displayed publicly/);
+  assert.match(proof, /public-proof-veil/);
+  assert.match(proof, /public-proof-scan/);
   assert.doesNotMatch(proof, /win rate|active players|games played|live workspace capture slot/i);
 });
 
@@ -80,7 +84,7 @@ test("workflow combines practice lifecycle and source provenance", () => {
   assert.match(workflow, /Prepare/);
   assert.match(workflow, /Capture/);
   assert.match(workflow, /Review/);
-  assert.match(workflow, /Collector-captured/);
+  assert.match(workflow, /Automatically captured/);
   assert.match(workflow, /Manual/);
   assert.match(workflow, /Awaiting/);
   assert.match(workflow, /Unavailable/);

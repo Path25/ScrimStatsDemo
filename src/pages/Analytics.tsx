@@ -45,7 +45,7 @@ export default function Analytics() {
       ) : analytics.isLoading ? (
         <WorkspaceState icon={CalendarRange} title="Building the performance workspace…" description="Normalizing factual game, participant, review, and evidence-capability records." />
       ) : analytics.error || !analytics.data ? (
-        <WorkspaceState icon={Database} title="Team analytics could not be loaded" description={analytics.error instanceof Error ? analytics.error.message : "The tenant-authorized analytics contract is unavailable. No replacement values are estimated."} />
+        <WorkspaceState icon={Database} title="Team analytics could not be loaded" description="Analytics data is temporarily unavailable. Try again, or contact support if the problem continues." />
       ) : <TeamAnalyticsWorkspace dataset={analytics.data} />}
     </div>
   );

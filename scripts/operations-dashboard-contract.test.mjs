@@ -76,7 +76,8 @@ test("captured participant links cannot cross tenant boundaries", () => {
   assert.match(participantHook, /tenant_id: tenant\.id/);
   assert.match(reconciliationHook, /reconcile_scrim_participant/);
   assert.doesNotMatch(rosterPage, /Unmatched captured identities/);
-  assert.match(collectorPage, /Resolve captured participants/);
+  assert.match(collectorPage, /Roster check needed/);
+  assert.match(collectorPage, /Unmatched teammates/);
 });
 
 test("roster creation does not fabricate rank, LP or server values", () => {

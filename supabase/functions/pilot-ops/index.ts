@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { pilotWorkspaceEmail } from "../_shared/email.ts";
 
 const headers = { "content-type": "application/json", "cache-control": "no-store" };
 const respond = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers });
@@ -50,7 +51,8 @@ Deno.serve(async (request) => {
         const redirectTo = `${Deno.env.get("APP_ORIGIN") || "https://scrimstats.gg"}/accept-invite?token=${encodeURIComponent(provisioned.token)}`;
         const link = await admin.auth.admin.generateLink({ type: "invite", email: ownerEmail, options: { redirectTo } });
         if (link.error) throw link.error;
-        const sent = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "content-type": "application/json" }, body: JSON.stringify({ from: "ScrimStats <team@scrimstats.gg>", to: [ownerEmail], subject: `Your ${name} ScrimStats workspace is ready`, html: `<p>Your managed-pilot workspace is ready.</p><p><a href="${link.data.properties.action_link}">Set up your account</a></p><p>This secure link expires in seven days.</p>` }) });
+        const message = pilotWorkspaceEmail({ teamName: name, actionUrl: link.data.properties.action_link });
+        const sent = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "content-type": "application/json" }, body: JSON.stringify({ from: "ScrimStats <team@scrimstats.gg>", to: [ownerEmail], ...message }) });
         await admin.from("team_invitations").update({ delivery_status: sent.ok ? "sent" : "failed", delivery_error: sent.ok ? null : `email_provider_${sent.status}`, last_sent_at: new Date().toISOString() }).eq("id", provisioned.invitation_id);
       }
       await admin.from("operator_audit_events").insert({ operator_id: user.id, tenant_id: provisioned.tenant_id, action: "workspace_provisioned", target_type: "tenant", target_id: provisioned.tenant_id, detail: { owner_email: ownerEmail, request_id: body.request_id || null } });

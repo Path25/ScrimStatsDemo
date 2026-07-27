@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 
 export interface CollectorDevice { id: string; label: string; status: 'active' | 'revoked'; app_version: string | null; last_seen_at: string | null; }
 export interface CaptureSession { id: string; status: 'capturing' | 'completed' | 'failed'; last_seen_at: string; game_id: string | null; }
-export interface DesktopConnectionInfo { isConnected: boolean; sessionId: string | null; lastHeartbeat: Date | null; version: string | null; gameId: string | null; status: 'idle' | 'monitoring' | 'error'; device?: CollectorDevice; source: 'Desktop collector' | 'Manual' | 'Unavailable'; }
+export interface DesktopConnectionInfo { isConnected: boolean; sessionId: string | null; lastHeartbeat: Date | null; version: string | null; gameId: string | null; status: 'idle' | 'monitoring' | 'error'; device?: CollectorDevice; source: 'Game Capture' | 'Manual' | 'Unavailable'; }
 
 export function useDesktopConnection(scrimId?: string) {
   const { user } = useAuth();
@@ -24,5 +24,5 @@ export function useDesktopConnection(scrimId?: string) {
   const session = query.data?.sessions?.find((item) => item.status === 'capturing');
   const lastHeartbeat = device?.last_seen_at ? new Date(device.last_seen_at) : null;
   const isConnected = Boolean(lastHeartbeat && Date.now() - lastHeartbeat.getTime() < 60_000);
-  return { connectionInfo: { isConnected, sessionId: session?.id ?? null, lastHeartbeat, version: device?.app_version ?? null, gameId: session?.game_id ?? null, status: session && isConnected ? 'monitoring' : 'idle', device, source: device ? 'Desktop collector' : 'Unavailable' } satisfies DesktopConnectionInfo, isLoading: query.isLoading, error: query.error };
+  return { connectionInfo: { isConnected, sessionId: session?.id ?? null, lastHeartbeat, version: device?.app_version ?? null, gameId: session?.game_id ?? null, status: session && isConnected ? 'monitoring' : 'idle', device, source: device ? 'Game Capture' : 'Unavailable' } satisfies DesktopConnectionInfo, isLoading: query.isLoading, error: query.error };
 }

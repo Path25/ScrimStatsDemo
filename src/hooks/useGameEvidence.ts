@@ -49,7 +49,7 @@ export function useGameEvidence(gameId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["game-reconciliations", tenant?.id, gameId] });
-      queryClient.invalidateQueries({ queryKey: ["team-analytics-v2", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["team-analytics-v3", tenant?.id] });
       toast.success("Evidence conflict resolved");
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Conflict could not be resolved"),

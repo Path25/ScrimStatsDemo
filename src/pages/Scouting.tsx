@@ -95,7 +95,7 @@ export default function Scouting() {
       <WorkspacePageHeader
         eyebrow="Intelligence"
         title="Private scouting"
-        description="Build a tenant-private opponent history from your own staff observations, scrims, and collector evidence."
+        description="Build a private opponent history from staff observations, completed scrims, and captured game evidence."
         actions={
           <>
             <ModuleStateBadge state={modules.scouting.state} />
@@ -111,8 +111,8 @@ export default function Scouting() {
       {!moduleEnabled ? (
         <WorkspaceState
           icon={Target}
-          title="Private scouting is in controlled beta"
-          description="This module connects staff-authored opponent evidence to immutable Draft match plans."
+          title="Scouting is not enabled for this workspace"
+          description="When enabled, staff can connect opponent evidence to Draft match plans."
         />
       ) : !canEditIntelligence ? (
         <WorkspaceState
@@ -160,7 +160,7 @@ export default function Scouting() {
             <WorkspaceState
               icon={Target}
               title="Scouting unavailable"
-              description="The private scouting contract is not available yet. No sample opponents are substituted."
+              description="Opponent records could not be loaded. Try again, or contact support if the problem continues."
             />
           ) : visibleTeams.length ? (
             <DataSurface>

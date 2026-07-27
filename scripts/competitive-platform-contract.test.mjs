@@ -47,7 +47,8 @@ test("the complete product map is routed and honestly labelled", () => {
   assert.match(shell, /Team analytics/);
   assert.match(shell, /Scouting/);
   assert.match(shell, /title: "Draft", href: "\/draft"/);
-  assert.match(shell, /ModuleStateBadge/);
+  assert.match(shell, /label: "Pre-game prep"/);
+  assert.doesNotMatch(shell, /ModuleStateBadge/);
   assert.match(moduleModel, /analytics: \{ key: "analytics", state: "beta", enabled: true \}/);
   assert.match(moduleModel, /scouting: \{ key: "scouting", state: "beta", enabled: true \}/);
   assert.match(
@@ -128,10 +129,10 @@ test("Discord delivery is private, deduplicated, and only queues subscribed even
   assert.match(supabaseConfig, /\[functions\.stripe-webhook\]\s+verify_jwt = false/);
 });
 
-test("planned integrations remain an honest roadmap preview", () => {
+test("planned integrations remain clearly unavailable", () => {
   assert.match(integrations, /modules\.discord\.state === "live"/);
-  assert.match(integrations, /Roadmap preview/);
-  assert.match(integrations, /controlled delivery testing/);
+  assert.match(integrations, /Coming soon/);
+  assert.match(integrations, /Discord installation/);
 });
 
 test("competitive publication and evidence mutations are transactional staff workflows", () => {

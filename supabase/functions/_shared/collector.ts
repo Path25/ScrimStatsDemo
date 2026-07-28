@@ -65,6 +65,16 @@ export async function managerMembership(userId: string, tenantId: string) {
   return data?.role && ['owner', 'admin'].includes(data.role) ? data.role : null;
 }
 
+// Collector access is a paid workspace entitlement. Keep this server-side so a
+// Free manager cannot bypass the browser gate by invoking a function directly.
+export async function collectorEntitled(tenantId: string, db = serviceClient()) {
+  const { data, error } = await db.from('tenants')
+    .select('subscription_tier')
+    .eq('id', tenantId)
+    .maybeSingle();
+  return !error && (data?.subscription_tier === 'pro' || data?.subscription_tier === 'elite');
+}
+
 export async function deviceFromRequest(req: Request) {
   const deviceId = req.headers.get('x-collector-device-id');
   const credential = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');

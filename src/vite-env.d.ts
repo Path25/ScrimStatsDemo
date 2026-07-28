@@ -7,3 +7,5 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare const __SCRIMSTATS_RELEASE__: string;

@@ -2,15 +2,14 @@ export function createSupportReference() {
   return `WEB-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
-export function reportClientError(error: Error, context: Record<string, unknown> = {}) {
+export function reportClientError(error: Error) {
   const reference = createSupportReference();
   const payload = {
     reference,
     name: error.name,
     message: error.message.slice(0, 500),
     path: window.location.pathname,
-    release: import.meta.env.VITE_APP_REVISION || "local",
-    context,
+    release: __SCRIMSTATS_RELEASE__,
   };
   if (import.meta.env.PROD) {
     void fetch("/api/client-error", {

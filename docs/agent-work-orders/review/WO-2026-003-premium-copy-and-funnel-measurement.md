@@ -54,6 +54,8 @@ Remove customer-visible encoding defects, expand copy-integrity checks, define p
 
 - 2026-07-28 - Proposed from founder review.
 - 2026-07-28 - Theo approved implementation: "I approve WO-003, it is safe to implement." Hosted migration application, deployment, production-data changes, billing changes, and customer communications remain unapproved.
+- 2026-07-28 - Theo approved the canonical activation definition: first scheduled practice block plus first completed recorded game.
+- 2026-07-28 - Theo approved application of the reviewed additive funnel migration to production. No production test-data creation, billing changes, or customer communications are approved by this decision.
 
 ## Implementation decision
 

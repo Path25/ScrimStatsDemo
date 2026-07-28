@@ -3,14 +3,14 @@
 **Purpose:** the single reporting contract for ScrimStats growth, team activity, revenue, reliability, and data quality.
 
 **Last audited:** 2026-07-28  
-**Current reporting state:** no production read-only connections are attached. No metric below is reported as a measured value until its named source is connected and queried. No estimates are used.
+**Current reporting state:** Supabase and Stripe production are connected for read-only reporting as of 2026-07-28. Metrics backed by the queried sources are measured for their stated report period; website acquisition, Vercel web-performance/runtime, and installer-download metrics remain unavailable until their authoritative sources are queried. No estimates are used.
 
 ## Reporting rules
 
 - Report calendar-week and calendar-month values separately. Compare a period only with the immediately preceding equivalent period.
 - A **team** is a `tenants` record. Count distinct tenant IDs, never user rows, for team-level metrics.
 - A team is **active** when it performs at least one listed qualifying activity in the period. Report the qualifying activity breakdown alongside the union; do not treat a login alone as evidence of operational adoption.
-- An **activated team** has completed a roster and either imported its first scrim game or completed its first scrim review within 14 days of workspace creation.
+- An **activated team** has both its first scheduled practice block and its first completed recorded game. This operational funnel milestone is not a roster-completeness or review-quality measure.
 - MRR is the sum of normalized monthly recurring subscription amounts for active paid Stripe subscriptions. Do not infer MRR from plan labels or tenant records alone.
 - Report rates only when their numerator and denominator are both measured over the same population and period. Otherwise mark the rate unavailable.
 - Never include Riot credentials, collector credentials, raw event payloads, user emails, or player/game content in reporting.
@@ -19,13 +19,13 @@
 
 | Source | What it can prove | Owner / integration | Refresh | Current access | Limits |
 |---|---|---|---|---|---|
-| Supabase Postgres | Workspace, membership, roster, invitations, scrims, reviews, coaching actions, Collector sessions, webhook ledger and operational records | ScrimStats / Supabase | Query on report run; proposed daily snapshot | **Connection pending** | Does not record anonymous acquisition, page views, sessions, attribution, download clicks, or generic product events. |
-| Supabase Auth and logs | Confirmed users, auth outcomes, API and Edge Function execution/error evidence | ScrimStats / Supabase | Query on report run; alerts need separate configuration | **Connection pending** | Auth access must be aggregated; database records do not show every failed authentication attempt. |
-| Stripe | Subscriptions, invoices, plan changes, payments, MRR and churn | ScrimStats / Stripe | Daily for MRR; near-real-time event audit | **Connection pending** | Internal webhook ledger proves processing attempts, not Stripe’s authoritative revenue state. |
-| Vercel | Deployments, runtime logs, web traffic, real-user performance and availability | ScrimStats / Vercel | Deployment/event logs near-real-time; performance daily | **Connection pending** | Web Analytics and Speed Insights must be enabled to measure acquisition and performance. |
+| Supabase Postgres | Workspace, membership, roster, invitations, scrims, reviews, coaching actions, Collector sessions, webhook ledger and operational records | ScrimStats / Supabase | Query on report run; proposed daily snapshot | **Connected for aggregate reporting** | Does not record anonymous acquisition, page views, sessions, attribution, download clicks, or generic product events. |
+| Supabase Auth and logs | Confirmed users, auth outcomes, API and Edge Function execution/error evidence | ScrimStats / Supabase | Query on report run; alerts need separate configuration | **Connected for read-only inspection** | Auth access must be aggregated; database records do not show every failed authentication attempt. |
+| Stripe | Subscriptions, invoices, plan changes, payments, MRR and churn | ScrimStats / Stripe | Daily for MRR; near-real-time event audit | **Connected for read-only reporting** | Internal webhook ledger proves processing attempts, not Stripe’s authoritative revenue state. |
+| Vercel | Deployments, runtime logs, web traffic, real-user performance and availability | ScrimStats / Vercel | Deployment/event logs near-real-time; performance daily | **Project resolved; metric read pending** | Web Analytics and Speed Insights must be enabled to measure acquisition and performance. |
 | GitHub Releases | Collector release download counts and release version | ScrimStats / GitHub Releases | Daily | **Connection pending** | Downloads are not installs, launches, pairings, or successful captures. |
-| Collector service records | Paired devices, version, last seen, capture lifecycle, completion and quality | ScrimStats Collector / Supabase Edge Functions | Written during Collector use; report daily/weekly | **Connection pending** | No installer launch, crash, update, uninstall, or download-click event. Capture events are documented as a short-lived diagnostic buffer. |
-| Browser client-error intake | Client error payload with path, release and correlation reference | Web app / `/api/client-error` | Event-driven, if endpoint exists | **Unverified** | The frontend sends to this path in production, but no receiver is present in this repository; deployment routing/logs must verify delivery. |
+| Collector service records | Paired devices, version, last seen, capture lifecycle, completion and quality | ScrimStats Collector / Supabase Edge Functions | Written during Collector use; report daily/weekly | **Connected through Supabase** | No installer launch, crash, update, uninstall, or download-click event. Capture events are documented as a short-lived diagnostic buffer. |
+| Browser client-error intake | Client error payload with path, release and correlation reference | Web app / `/api/client-error` | Event-driven | **Hosted receiver confirmed** | Vercel received a Scouting error, but its release was labelled `local`; release attribution needs remediation. |
 | Product analytics event stream | Visits, attribution, signup starts, feature use, sessions and navigation conversion | **Not connected** | Event-driven | **Unavailable** | Requires approved analytics tool and instrumentation. |
 
 ## Metrics dictionary
@@ -68,7 +68,7 @@
 | Checkout starts | Distinct tenant IDs for which a Stripe Checkout session is successfully created in the period. | Stripe Checkout + `create-checkout` logs | Billing / Stripe + Supabase | Daily | The current local code does not persist a Checkout-start record in Postgres. | **Unavailable** — connect Stripe; add durable checkout-attempt event if Stripe Events cannot supply it. |
 | Paid plan conversion | Distinct tenants that move from Free to an active paid subscription in the period, divided by eligible active Free tenants in the same period. | Stripe subscriptions + tenant plan history | Billing / Stripe + Supabase | Daily; monthly | Eligibility and plan-history source must be verified; never infer conversion solely from current plan. | **Unavailable** — connect Stripe and Supabase. |
 | Plan upgrades and downgrades | Count of active subscription changes to a higher or lower paid plan in the period, classified from Stripe price/plan transition. | Stripe subscription events | Billing / Stripe | Daily | Requires authoritative price-to-plan mapping. | **Unavailable** — connect Stripe and confirm price map. |
-| Gross MRR | Sum of normalized monthly recurring amounts for active paid subscriptions at period end, before churn and expansion adjustments. | Stripe subscriptions/prices | Billing / Stripe | Daily | Exclude one-time charges, trials without payment, tax, and non-recurring invoices; annual plans require monthly normalization. | **Unavailable** — connect Stripe. |
+| Gross MRR | Sum of normalized monthly recurring amounts for active paid subscriptions at period end, before churn and expansion adjustments. | Stripe subscriptions/prices | Billing / Stripe | Daily | Exclude one-time charges, trials without payment, tax, and non-recurring invoices; annual plans require monthly normalization. | **Measured** — direct Stripe read is connected; reconcile against tenant entitlement state before reporting paid-team counts. |
 | Net MRR movement | Current period-end MRR minus prior period-end MRR, reconciled into new, expansion, contraction, reactivation, and churn components. | Stripe subscriptions/invoices | Billing / Stripe | Monthly | Requires complete historical subscription state and price mapping. | **Unavailable** — connect Stripe. |
 | Paid subscription retention | Active paid subscriptions retained at current period end divided by active paid subscriptions at prior period end. | Stripe subscriptions | Billing / Stripe | Monthly | Separate logo retention from MRR retention; tenant-to-customer mapping must be reconciled. | **Unavailable** — connect Stripe and Supabase. |
 | Webhook processing failure rate | Failed webhook ledger rows divided by all completed or failed webhook ledger rows processed in the period. | `stripe_webhook_events` | Billing / Supabase Edge Function | Daily | Shows application processing failures, not deliveries Stripe may still retry or failures before the function is invoked. | **Unavailable** — connect Supabase; reconcile with Stripe Events. |
@@ -77,7 +77,7 @@
 
 | Metric | Exact definition | Data source | Owner / integration | Refresh | Known limitations | Status |
 |---|---|---|---|---|---|
-| Browser client error rate | Client error events divided by page views for the same release and period. | Client-error receiver + web analytics | Engineering / Vercel + error monitoring | Daily | Receiver is unverified and page views are not instrumented. | **Unavailable** — verify `/api/client-error`, connect logs, add page-view source. |
+| Browser client error rate | Client error events divided by page views for the same release and period. | Client-error receiver + web analytics | Engineering / Vercel + error monitoring | Daily | Receiver is hosted and receiving events, but page views are not instrumented and the observed release label was `local`. | **Unavailable** — add a page-view source and repair release attribution. |
 | Authentication failure rate | Failed authentication attempts divided by all authentication attempts in the period. | Supabase Auth logs | Engineering / Supabase | Daily | User-facing failures must be separated from bot/rate-limit traffic. | **Unavailable** — connect Supabase Auth logs. |
 | Edge Function error rate | Non-2xx function invocations divided by all invocations, grouped by function and release. | Supabase Edge Function logs/metrics | Engineering / Supabase | Near-real-time; daily report | A function may return 2xx while a downstream operation fails; pair with structured logs and business outcomes. | **Unavailable** — connect Supabase logs/metrics. |
 | Edge Function latency | p50, p95 and p99 invocation duration by function in the period. | Supabase Edge Function metrics | Engineering / Supabase | Near-real-time; daily report | Requires platform duration metrics; do not derive latency from client clocks. | **Unavailable** — connect Supabase metrics. |
@@ -126,15 +126,15 @@ Use this structure for every confirmed issue or instrumentation risk. Mark a fin
 - **Status:** [Open / Monitoring / Resolved]
 ```
 
-### Open handoff: client-error intake is unverified
+### Resolved discovery: client-error intake is hosted; route and release quality need follow-up
 
-- **Evidence:** `src/lib/error-reporting.ts` sends production client errors to `POST /api/client-error`; no corresponding receiver is present in this repository.
-- **Severity:** Medium (verification required).
-- **User/business impact:** Browser failures may be invisible, delaying detection of broken signup, activation, billing, or Collector-download journeys.
+- **Evidence:** Vercel Runtime Errors confirms one `/scouting` client error was received through `/api/client-error` on 2026-07-27. Its release field was `local`.
+- **Severity:** Medium.
+- **User/business impact:** Error intake is no longer invisible, but failure-to-deployment correlation is impaired and the Scouting route may fail for a customer state.
 - **Likely owner:** Web / Backend.
-- **Recommended next action:** Read-only verify the deployed route and its Vercel logs using a controlled production error reference. If absent, prepare an implementation proposal; do not deploy it without Theo's approval.
-- **Required verification:** Confirm a production request reaches a durable, access-controlled receiver; confirm the correlation reference is searchable; confirm no sensitive payload is retained.
-- **Status:** Open.
+- **Recommended next action:** Follow proposed `WO-2026-007-fix-scouting-client-error-and-release-attribution.md`.
+- **Required verification:** Reproduce or explain the fault state; ship a safe deployment release identifier; confirm hosted events retain no sensitive fields.
+- **Status:** Open follow-up.
 
 ## Maintenance procedure
 

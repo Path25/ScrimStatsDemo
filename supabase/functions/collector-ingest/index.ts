@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { collectorCorsHeaders, deviceFromRequest, eligibleCollectorScrims, json, serviceClient } from '../_shared/collector.ts';
+import { collectorCorsHeaders, collectorEntitled, deviceFromRequest, eligibleCollectorScrims, json, serviceClient } from '../_shared/collector.ts';
 
 type Participant = { riot_id?: string; riot_tag_line?: string; region?: string; summoner_name?: string; champion_name?: string; role?: string; is_our_team?: boolean; player_id?: string; identity_status?: string; kills?: number; deaths?: number; assists?: number; cs?: number; gold?: number; level?: number; damage_dealt?: number; damage_taken?: number; vision_score?: number; items?: unknown; runes?: unknown; summoner_spells?: unknown; is_bot?: boolean; advanced_stats?: unknown };
 type CaptureQuality = { classification?: 'standard_5v5' | 'nonstandard_custom' | 'incomplete_capture'; flags?: string[]; roster_coverage?: number; our_participants?: number; enemy_participants?: number; bots_present?: boolean };
@@ -106,6 +106,9 @@ serve(async (req) => {
   const body = await req.json().catch(() => null);
   if (!body?.action) return json({ error: 'action is required.' }, 400);
   const db = serviceClient();
+  if (!await collectorEntitled(device.tenant_id, db)) {
+    return json({ error: 'Game Capture is available with Pro or Elite.', code: 'collector_plan_required' }, 403);
+  }
   const touch = () => db.from('collector_devices').update({ last_seen_at: new Date().toISOString(), app_version: body.app_version ?? null }).eq('id', device.id);
 
   if (body.action === 'heartbeat') { await touch(); return json({ ok: true, server_time: new Date().toISOString() }); }

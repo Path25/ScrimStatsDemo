@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { collectorCorsHeaders, eligibleCollectorScrims, json, randomSecret, serviceClient, sha256 } from '../_shared/collector.ts';
+import { collectorCorsHeaders, collectorEntitled, eligibleCollectorScrims, json, randomSecret, serviceClient, sha256 } from '../_shared/collector.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: collectorCorsHeaders });
@@ -10,6 +10,9 @@ serve(async (req) => {
   const { data: pairing } = await db.from('collector_pairing_codes').select('*')
     .eq('code_hash', await sha256(body.pairing_code)).is('redeemed_at', null).is('revoked_at', null).maybeSingle();
   if (!pairing || new Date(pairing.expires_at).getTime() < Date.now()) return json({ error: 'This pairing code is invalid or has expired.' }, 401);
+  if (!await collectorEntitled(pairing.tenant_id, db)) {
+    return json({ error: 'Game Capture is available with Pro or Elite.', code: 'collector_plan_required' }, 403);
+  }
   const credential = randomSecret();
   const { data: device, error } = await db.from('collector_devices').insert({
     tenant_id: pairing.tenant_id, label: String(body.device_label).slice(0, 100), credential_hash: await sha256(credential),

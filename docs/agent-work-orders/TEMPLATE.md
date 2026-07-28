@@ -1,5 +1,6 @@
 # WO-YYYY-NNN - [Short outcome]
 
+- **ID reservation:** [Link to the matching `WORK_ORDER_INDEX.md` row]
 - **Status:** Proposed
 - **Owner:** Unassigned
 - **Priority:** Low | Medium | High

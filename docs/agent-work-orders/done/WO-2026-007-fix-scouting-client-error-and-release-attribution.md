@@ -1,6 +1,6 @@
 # WO-2026-007 - Fix the Scouting client error and restore release attribution
 
-- **Status:** In review
+- **Status:** Done (conditional; production review pending)
 - **Owner:** ScrimStats Feature Development agent
 - **Priority:** Medium
 - **Autonomy class:** Needs Theo's approval before implementation
@@ -88,3 +88,36 @@ Scouting is a paid workflow and customer-facing errors undermine product trust. 
 2. After the approved deployment, use an isolated authenticated Pro workspace to load `/scouting` and confirm its network/error event includes the deployed commit or deployment ID, never `local` or `unattributed-production`.
 3. Inspect the receiver/runtime log record and confirm it contains only the allowlisted reference, release, route, error name/message, and timestamp fields. Confirm no component stack, user identity, gameplay data, or credential material is present.
 4. Check Vercel Runtime Errors for the agreed observation period and record whether the historical `undefined.default` Scouting signature recurs. If it does, preserve the event/deployment reference and capture the exact safe state needed to reproduce it.
+
+## Release audit
+
+### Acceptance-criteria traceability
+
+| Acceptance criterion | Evidence | Evidence level | Result |
+|---|---|---|---|
+| `/scouting` TypeError reproduced or triggering state precisely explained | Authenticated staging owner loaded `/scouting` successfully on 2026-07-28; historic trigger remains unknown. | Hosted staging | Waived by Theo: risk accepted, not reproduced or explained. |
+| Regression test covers the fault path | `scripts/scouting-error-attribution-contract.test.mjs` asserts the lazy default-export route shape; full suite passed 168/168. | Local | Conditional: route shape covered, historic fault path not proven. |
+| Production events carry an identifiable release value | Build-time precedence is implemented and local production build passed. No production event has been inspected. | Local | Outstanding: no production evidence. |
+| Hosted receiver logs safe, searchable correlation data and no recurrence occurs in the checked period | Staging `/scouting` loaded with no browser-console errors. No controlled event, receiver record, or observation period evidence exists. | Hosted staging | Outstanding: waived for staging completion; required before production release. |
+
+### Final verdict
+
+- **Verdict:** CONDITIONAL
+- **Rationale:** Staging Scouting loaded successfully for the audited authenticated workspace and local validation passed (targeted contract, 168-test suite, TypeScript, zero-warning ESLint, and production build). The original production trigger remains unknown, and telemetry/release attribution has not been verified in a hosted error event. Theo explicitly accepted those residual risks on 2026-07-28 and requested the implementation work order be closed pending final production review. This is not production-release approval.
+
+### Outstanding checks
+
+| Check | Owner | Required evidence to close | Status |
+|---|---|---|---|
+| Controlled staging error event and receiver record | Theo / QA Auditor | One staging `/api/client-error` log record with only allowlisted fields and an identifiable non-`local` release | Required before production review |
+| Free-denied and Pro-allowed Scouting boundaries | Theo / QA Auditor | Isolated staging Free and Pro workspace browser evidence | Required before production review |
+| Historic trigger or safe incident explanation | QA Auditor | Preserved production incident metadata and reproduction, or a precise hosted explanation | Risk accepted; still unresolved |
+| Production deployment and recurrence observation | Theo / QA Auditor | Theo production approval, production release correlation, and agreed observation-period result | Required before production release |
+
+### Theo approval record
+
+| Approval | Required? | Decision | Date | Notes |
+|---|---|---|---|---|
+| Implementation | Yes | Approved | 2026-07-28 | Recorded in the original decision record. |
+| Risk acceptance / staging completion | Yes | Approved | 2026-07-28 | Theo accepted the unknown historic trigger and outstanding hosted telemetry verification, and requested work-order closure pending final production review. |
+| Production release | Yes | Not approved | — | Final review remains required before any production promotion. |

@@ -1,6 +1,7 @@
 -- The browser and billing contract already present Collector as a Pro feature.
 -- Keep the stored module state in sync so database-backed capability checks do
 -- not contradict that product promise.
+-- Applied to the hosted project under this release-time migration version.
 
 create or replace function public.sync_tenant_plan_entitlements()
 returns trigger

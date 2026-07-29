@@ -3,6 +3,9 @@ import { pilotWorkspaceEmail } from "../_shared/email.ts";
 
 const headers = { "content-type": "application/json", "cache-control": "no-store" };
 const respond = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers });
+const funnelMilestones = ["account_registered", "workspace_created", "first_scheduled_block", "first_recorded_game", "workspace_activated", "first_paid_upgrade"] as const;
+const funnelPeriods = { last_30_days: 30, last_90_days: 90 } as const;
+const funnelInstrumentationStartedAt = "2026-07-28T15:46:02.000Z";
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") return respond(405, { error: "method_not_allowed" });
@@ -18,6 +21,20 @@ Deno.serve(async (request) => {
   const body = await request.json().catch(() => ({})); const action = String(body.action || "list");
 
   try {
+    if (action === "funnel_scorecard") {
+      const periodKey = String(body.period || "last_30_days") as keyof typeof funnelPeriods;
+      if (!(periodKey in funnelPeriods)) return respond(400, { error: "unsupported_funnel_period" });
+      const periodEnd = new Date();
+      const periodStart = new Date(periodEnd.getTime() - funnelPeriods[periodKey] * 24 * 60 * 60 * 1000);
+      const result = await admin.rpc("get_founder_funnel_scorecard", { p_since: periodStart.toISOString() });
+      if (result.error) throw result.error;
+      const counts = new Map((result.data || []).map((item: { event_key: string; milestone_count: number | string }) => [item.event_key, Math.max(0, Number(item.milestone_count) || 0)]));
+      return respond(200, {
+        instrumentation_started_at: funnelInstrumentationStartedAt,
+        period: { key: periodKey, starts_at: periodStart.toISOString(), ends_at: periodEnd.toISOString() },
+        milestones: funnelMilestones.map((key) => ({ key, count: counts.get(key) || 0 })),
+      });
+    }
     if (action === "list") {
       const [requests, tenants, invitations, deliveries, checklists, cases] = await Promise.all([
         admin.from("access_requests").select("id, contact_name, email, team_name, message, source, status, created_at, updated_at").order("created_at", { ascending: false }).limit(100),

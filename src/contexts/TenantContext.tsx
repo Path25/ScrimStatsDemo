@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
+import { collectorEntitled } from '@/lib/collector-entitlement';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
 
@@ -14,6 +15,9 @@ export interface TenantConfig {
   primaryColor: string;
   subscriptionTier: 'free' | 'pro' | 'elite';
   subscriptionStatus: string;
+  subscriptionPeriodEnd?: string | null;
+  subscriptionPastDueStartedAt?: string | null;
+  collectorEntitled: boolean;
   isActive: boolean;
   userRole: string;
   settings: Record<string, unknown>;
@@ -41,6 +45,7 @@ function toTenantConfig(row: { role: string; tenants: Tenant | Tenant[] | null }
   delete settings.riot_api_key;
   delete settings.grid_api_key;
 
+  const lifecycle = rawTenant as Tenant & { subscription_period_end?: string | null; subscription_past_due_started_at?: string | null };
   return {
     id: rawTenant.id,
     slug: rawTenant.slug,
@@ -49,6 +54,9 @@ function toTenantConfig(row: { role: string; tenants: Tenant | Tenant[] | null }
     primaryColor: typeof settings.primary_color === 'string' ? settings.primary_color : '#18b8a6',
     subscriptionTier: rawTenant.subscription_tier as TenantConfig['subscriptionTier'],
     subscriptionStatus: rawTenant.subscription_status || 'inactive',
+    subscriptionPeriodEnd: lifecycle.subscription_period_end,
+    subscriptionPastDueStartedAt: lifecycle.subscription_past_due_started_at,
+    collectorEntitled: collectorEntitled({ subscriptionTier: rawTenant.subscription_tier, subscriptionStatus: rawTenant.subscription_status || 'inactive', subscriptionPeriodEnd: lifecycle.subscription_period_end, subscriptionPastDueStartedAt: lifecycle.subscription_past_due_started_at }),
     isActive: ['active', 'trial'].includes(rawTenant.subscription_status || ''),
     userRole: row.role,
     settings,
@@ -74,7 +82,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     const { data, error: tenantError } = await supabase
       .from('tenant_users')
-      .select('tenant_id, role, tenants (id, slug, name, settings, subscription_tier, subscription_status, created_at, updated_at)')
+      .select('tenant_id, role, tenants (id, slug, name, settings, subscription_tier, subscription_status, subscription_period_end, subscription_past_due_started_at, created_at, updated_at)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: true });
 

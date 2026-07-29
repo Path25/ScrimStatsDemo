@@ -81,10 +81,27 @@ Client growth, active teams, and MRR are the stated commercial priorities. The e
 
 - 2026-07-28 - Proposed by Analytics and Technical Reporting. Theo approval is required before granting external access, enabling billable monitoring/analytics, applying migrations, or deploying telemetry.
 - 2026-07-28 - Theo assigned the Project Manager to review and advance this work order. Read-only source access and all implementation/release boundaries remain approval-gated.
+- 2026-07-28 - Theo confirmed that relevant agents now have application access. The access blocker is cleared; the Project Manager must still produce the dated, reconciled baseline required by this work order before it can be completed.
+
+## Prepared Phase 1 access and baseline packet
+
+The read-only Supabase and Stripe evidence recorded in `WO-2026-008` establishes a first commercial baseline, but it is not a persistent reporting connection or a complete operational baseline. Reuse its redacted classifications and Stripe-derived MRR; do not treat tenant plan labels as revenue.
+
+To complete Phase 1 without sharing secrets, the Project Manager needs one of the following for each remaining source:
+
+| Source | Least-privilege input | Required output |
+|---|---|---|
+| Supabase | Existing read-only access or an approved aggregate export | Dated workspace, activity, Collector, webhook-ledger, Auth/API/Edge-log, and advisor baseline |
+| Stripe | Existing view-only access or approved aggregate export | Subscription-state, MRR, cancellation, price-map, and webhook-delivery reconciliation |
+| Vercel | Viewer/log/analytics access or time-bounded redacted exports | Deployment revision, Runtime Error, Web Analytics, Speed Insights, and availability baseline |
+| GitHub Releases | Read access or release/download export | Collector version and download context, explicitly not installation or capture evidence |
+
+No service-role key, Stripe secret, provider credential, customer payment detail, or unredacted tenant/customer identifier is required in a work order. When access or exports are available, produce a dated baseline using the definitions in `docs/operations/DATA_SOURCE_MAP_AND_METRICS_DICTIONARY.md`, label every unavailable metric with its missing dependency, and hand material regressions to the Project Manager through that document's handoff format.
 
 ## Implementation and review evidence
 
 - Initial Project Manager review, 2026-07-28: the Metrics Dictionary records production Supabase, Stripe, Vercel, and GitHub reporting connections as pending. No production values can be reported as measured until a least-privilege source is connected and queried.
+- WO-2026-008 subsequently established a redacted, read-only Supabase/Stripe reconciliation: Stripe-derived current MRR is USD 19.98, while paid workspace entitlement records remain unreconciled. This is valid commercial evidence for the stated Stripe snapshot only; Vercel, GitHub, full operational health, and persistent reporting access remain outstanding.
 - Source review confirms `src/lib/error-reporting.ts` sends browser errors to `POST /api/client-error` and `api/client-error.ts` is the repository receiver. Vercel Runtime Errors confirms hosted receipt of one Scouting error on 2026-07-27. The receiver is operational for bounded error intake; its `VITE_APP_REVISION || "local"` fallback prevents reliable release attribution and is tracked in `WO-2026-007`.
 - The privacy-bounded funnel migration and contract tests exist under WO-2026-003, but its migration is not hosted-verified and must not be treated as a production source.
 - Completion blockers: Theo or the relevant account owner must grant the Phase 1 read-only access described in Scope, or provide approved aggregate exports. Do not provide or share service-role, Stripe secret, provider, or other production secrets. Phase 2 instrumentation, configuration, migration, and cost-bearing changes remain explicitly approval-gated.

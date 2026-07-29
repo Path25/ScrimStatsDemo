@@ -10,7 +10,7 @@ import { planIncludes, planNames, type SubscriptionPlan } from "@/lib/plan-entit
 export function PlanGate({ minimum, feature, children }: { minimum: SubscriptionPlan; feature: string; children: ReactNode }) {
   const { tenant } = useTenant();
   const current = tenant?.subscriptionTier || "free";
-  if (planIncludes(current, minimum)) return <>{children}</>;
+  if (planIncludes(current, minimum) && (feature !== 'collector capture' || tenant?.collectorEntitled)) return <>{children}</>;
 
   return (
     <DataSurface className="mx-auto mt-12 max-w-2xl p-8 text-center">

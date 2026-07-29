@@ -8,6 +8,7 @@ import { useRole } from "@/contexts/RoleContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { planNames, type SubscriptionPlan } from "@/lib/plan-entitlements";
+import { collectorGraceEndsAt } from "@/lib/collector-entitlement";
 
 const plans: Array<{ id: SubscriptionPlan; price: string; description: string; features: string[] }> = [
   { id: "free", price: "$0", description: "The essential weekly team workflow.", features: ["Overview and roster", "Calendar and availability", "Scrim blocks and coaching actions"] },
@@ -28,6 +29,7 @@ export function BillingPanel() {
   const { isManager } = useRole();
   const [busy, setBusy] = useState<SubscriptionPlan | "portal" | null>(null);
   if (!tenant) return null;
+  const graceEndsAt = tenant.subscriptionStatus === 'past_due' ? collectorGraceEndsAt(tenant.subscriptionPastDueStartedAt) : null;
 
   async function openCheckout(plan: "pro" | "elite") {
     setBusy(plan);
@@ -51,6 +53,7 @@ export function BillingPanel() {
         <div className="flex gap-3"><CreditCard className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" /><div><h2 className="font-semibold">Plans and billing</h2><p className="mt-1 text-sm text-[var(--workspace-muted)]">Billing belongs to this workspace, not an individual team member.</p></div></div>
         <div className="text-right"><p className="workspace-eyebrow text-[var(--workspace-subtle)]">Current plan</p><p className="mt-1 font-semibold">{planNames[tenant.subscriptionTier]} <span className="text-xs font-normal capitalize text-[var(--workspace-muted)]">· {tenant.subscriptionStatus.replaceAll("_", " ")}</span></p></div>
       </div>
+      {isManager && graceEndsAt && tenant.collectorEntitled && <div className="border-b border-amber-400/30 bg-amber-400/10 px-5 py-4 text-sm text-amber-100">Payment needed — Game Capture remains available until {graceEndsAt.toLocaleString()}. Update payment details in Billing to avoid losing capture access.</div>}
       <div className="grid gap-4 p-5 lg:grid-cols-3">
         {plans.map((plan) => {
           const current = tenant.subscriptionTier === plan.id;

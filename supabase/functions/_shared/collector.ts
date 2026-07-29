@@ -69,10 +69,18 @@ export async function managerMembership(userId: string, tenantId: string) {
 // Free manager cannot bypass the browser gate by invoking a function directly.
 export async function collectorEntitled(tenantId: string, db = serviceClient()) {
   const { data, error } = await db.from('tenants')
-    .select('subscription_tier')
+    .select('subscription_tier, subscription_status, subscription_period_end, subscription_past_due_started_at')
     .eq('id', tenantId)
     .maybeSingle();
-  return !error && (data?.subscription_tier === 'pro' || data?.subscription_tier === 'elite');
+  if (error || !data || !['pro', 'elite'].includes(data.subscription_tier)) return false;
+  if (['active', 'trialing'].includes(data.subscription_status ?? '')) return true;
+  const now = Date.now();
+  if (data.subscription_status === 'past_due') {
+    const started = Date.parse(data.subscription_past_due_started_at ?? '');
+    return Number.isFinite(started) && started + 7 * 24 * 60 * 60_000 > now;
+  }
+  const periodEnd = Date.parse(data.subscription_period_end ?? '');
+  return Number.isFinite(periodEnd) && periodEnd > now;
 }
 
 export async function deviceFromRequest(req: Request) {

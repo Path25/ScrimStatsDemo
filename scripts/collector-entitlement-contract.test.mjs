@@ -4,11 +4,13 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const collectorShared = read("supabase/functions/_shared/collector.ts");
-const migration = read("supabase/migrations/20260728110000_collector_pro_entitlement_enforcement.sql");
+const migration = read("supabase/migrations/20260728211332_collector_pro_entitlement_enforcement.sql");
 
 test("Collector is a server-enforced Pro or Elite entitlement", () => {
   assert.match(collectorShared, /export async function collectorEntitled/);
-  assert.match(collectorShared, /data\?\.subscription_tier === 'pro' \|\| data\?\.subscription_tier === 'elite'/);
+  assert.match(collectorShared, /\['pro', 'elite'\]\.includes\(data\.subscription_tier\)/);
+  assert.match(collectorShared, /subscription_past_due_started_at/);
+  assert.match(collectorShared, /7 \* 24 \* 60 \* 60_000/);
   for (const path of [
     "supabase/functions/collector-pairing/index.ts",
     "supabase/functions/collector-pair/index.ts",

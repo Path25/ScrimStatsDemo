@@ -12,6 +12,13 @@ export type OpsData = {
   supportCases: Array<{ id: string; tenant_id: string | null; subject: string; description: string; priority: string; status: string; created_at: string }>;
 };
 
+export type FunnelPeriod = "last_30_days" | "last_90_days";
+export type FunnelScorecard = {
+  instrumentation_started_at: string;
+  period: { key: FunnelPeriod; starts_at: string; ends_at: string };
+  milestones: Array<{ key: "account_registered" | "workspace_created" | "first_scheduled_block" | "first_recorded_game" | "workspace_activated" | "first_paid_upgrade"; count: number }>;
+};
+
 async function invoke(body: Record<string, unknown>) {
   const result = await supabase.functions.invoke("pilot-ops", { body });
   if (result.error) throw result.error;
@@ -27,4 +34,13 @@ export function usePilotOperations() {
     onError: () => toast.error("The operation failed. Check operator access and try again."),
   });
   return { ...query, perform: mutation.mutate, isSaving: mutation.isPending };
+}
+
+export function useFounderFunnelScorecard(period: FunnelPeriod) {
+  return useQuery<FunnelScorecard>({
+    queryKey: ["founder-funnel-scorecard", period],
+    queryFn: () => invoke({ action: "funnel_scorecard", period }),
+    retry: false,
+    staleTime: 15_000,
+  });
 }

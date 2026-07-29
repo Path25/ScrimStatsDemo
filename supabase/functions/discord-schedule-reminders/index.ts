@@ -33,10 +33,11 @@ Deno.serve(async (request) => {
   });
   const { data: subscriptions, error: subscriptionError } = await admin
     .from("discord_channel_subscriptions")
-    .select("tenant_id, event_type, discord_installations!inner(status)")
+    .select("tenant_id, event_type, discord_installations!inner(status), tenants!inner(subscription_tier)")
     .eq("event_type", "practice_reminder")
     .eq("enabled", true)
-    .eq("discord_installations.status", "active");
+    .eq("discord_installations.status", "active")
+    .eq("tenants.subscription_tier", "elite");
   if (subscriptionError) {
     return Response.json({ error: "Unable to read reminder subscriptions" }, { status: 500, headers: corsHeaders });
   }
@@ -75,6 +76,7 @@ Deno.serve(async (request) => {
       for (const eventType of eventTypes) {
         const { error } = await admin.from("integration_events").insert({
           tenant_id: tenantId,
+          provider: "discord",
           event_type: eventType,
           aggregate_type: "scrim",
           aggregate_id: scrim.id,

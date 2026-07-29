@@ -14,6 +14,8 @@ type IntegrationEvent = {
   attempt_count: number;
 };
 
+const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
+
 function eventMessage(event: IntegrationEvent, appUrl: string) {
   const opponent = typeof event.payload.opponent_name === "string" ? event.payload.opponent_name : "opponent";
   const date = typeof event.payload.match_date === "string" ? event.payload.match_date : "date pending";
@@ -24,13 +26,11 @@ function eventMessage(event: IntegrationEvent, appUrl: string) {
       ? "Practice block scheduled"
       : event.event_type === "schedule_cancelled"
         ? "Practice block cancelled"
+        : event.event_type === "schedule_changed"
+          ? "Practice block updated"
         : event.event_type === "practice_reminder"
           ? "Practice block coming up"
-          : event.event_type === "availability_reminder"
-            ? "Confirm roster availability"
-            : event.event_type === "collector_reminder"
-              ? "Collector readiness check"
-              : "Practice block updated";
+          : "Practice block updated";
   return {
     content: `**${title}**\nvs ${opponent} · ${date}${time}\n${link}`,
     allowed_mentions: { parse: [] },
@@ -58,13 +58,23 @@ Deno.serve(async (request) => {
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: events, error } = await admin.rpc("claim_integration_events", {
+  const { data: events, error } = await admin.rpc("claim_integration_events_for_provider", {
+    p_provider: "discord",
     p_limit: 25,
   });
   if (error) return Response.json({ error: "Unable to read the delivery outbox" }, { status: 500, headers: corsHeaders });
 
   let delivered = 0;
   for (const event of (events || []) as IntegrationEvent[]) {
+    if (!supportedEventTypes.has(event.event_type)) {
+      await admin.from("integration_events").update({ status: "cancelled", last_error: "Event is outside the approved Discord schedule scope" }).eq("id", event.id);
+      continue;
+    }
+    const { data: tenant } = await admin.from("tenants").select("subscription_tier").eq("id", event.tenant_id).maybeSingle();
+    if (tenant?.subscription_tier !== "elite") {
+      await admin.from("integration_events").update({ status: "cancelled", last_error: "Discord automation requires an Elite workspace" }).eq("id", event.id);
+      continue;
+    }
     const { data: subscriptions } = await admin
       .from("discord_channel_subscriptions")
       .select("channel_id, discord_installations!inner(status)")

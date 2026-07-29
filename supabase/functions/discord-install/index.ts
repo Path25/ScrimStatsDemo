@@ -116,6 +116,21 @@ async function finishInstall(request: Request) {
     .maybeSingle();
   if (!claimedState) return Response.redirect(appRedirect("expired"), 302);
 
+  const { data: tenant } = await db
+    .from("tenants")
+    .select("subscription_tier")
+    .eq("id", oauthState.tenant_id)
+    .maybeSingle();
+  // The browser is redirected away from Discord during OAuth. Re-check the
+  // initiating user's current workspace role after the one-time state is
+  // claimed so a removed manager cannot finish an earlier installation flow.
+  if (
+    tenant?.subscription_tier !== "elite"
+    || !(await managerMembership(oauthState.user_id, oauthState.tenant_id))
+  ) {
+    return Response.redirect(appRedirect("unavailable"), 302);
+  }
+
   let guildName = typeof tokenBody.guild?.name === "string" ? tokenBody.guild.name : null;
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   if (botToken && !guildName) {

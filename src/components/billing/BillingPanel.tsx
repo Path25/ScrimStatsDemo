@@ -13,7 +13,7 @@ import { collectorGraceEndsAt } from "@/lib/collector-entitlement";
 const plans: Array<{ id: SubscriptionPlan; price: string; description: string; features: string[] }> = [
   { id: "free", price: "$0", description: "The essential weekly team workflow.", features: ["Overview and roster", "Calendar and availability", "Scrim blocks and coaching actions"] },
   { id: "pro", price: "$9.99", description: "Preparation, capture, and improvement intelligence.", features: ["Everything in Free", "Solo Queue and team analytics", "Scouting and Draft workspace", "Game Capture workflow"] },
-  { id: "elite", price: "$19.99", description: "The complete ScrimStats workspace.", features: ["Everything in Pro", "Discord automation when released"] },
+  { id: "elite", price: "$19.99", description: "The complete ScrimStats workspace.", features: ["Everything in Pro", "Discord schedule prompts when available"] },
 ];
 
 async function functionMessage(error: unknown, fallback: string) {

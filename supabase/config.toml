@@ -56,7 +56,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.discord-dispatch]
-verify_jwt = true
+verify_jwt = false
 
 [functions.discord-install]
 verify_jwt = true
@@ -64,8 +64,11 @@ verify_jwt = true
 [functions.discord-channels]
 verify_jwt = true
 
-[functions.discord-schedule-reminders]
+[functions.discord-config]
 verify_jwt = true
+
+[functions.discord-schedule-reminders]
+verify_jwt = false
 
 [functions.soloq-sync-v2]
 verify_jwt = false

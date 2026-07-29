@@ -4,8 +4,8 @@ import { DataSurface } from "@/components/workspace/DataSurface";
 
 const previewItems = [
   { icon: MessageSquareText, label: "Schedule changes and cancellations" },
-  { icon: Clock3, label: "Practice and availability reminders" },
-  { icon: ShieldCheck, label: "Approved channels with delivery tracking" },
+  { icon: Clock3, label: "Practice reminders" },
+  { icon: ShieldCheck, label: "Selected channels with delivery tracking" },
 ];
 
 export function DiscordScheduleIntegration() {
@@ -18,11 +18,11 @@ export function DiscordScheduleIntegration() {
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold">Discord delivery</h3>
               <span className="ss-mono border border-[#8994ff]/35 bg-[#8994ff]/10 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#aeb5ff]">
-                Coming soon
+                Unavailable
               </span>
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--workspace-muted)]">
-              Discord reminders will bring schedule changes and practice prompts into your team server. Installation and channel controls will appear here when the integration is available.
+              Discord can carry selected schedule changes and practice reminders back to ScrimStats. Installation and channel controls remain unavailable until the complete delivery path is verified.
             </p>
           </div>
         </div>

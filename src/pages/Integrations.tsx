@@ -100,13 +100,13 @@ export default function Integrations() {
               </div>
             </div>
             <div className="divide-y divide-[var(--workspace-rule)]">
-              <IntegrationRow icon={CalendarClock} title="Practice reminders" description="Upcoming blocks, changes, and cancellations." />
-              <IntegrationRow icon={Link2} title="Availability prompts" description="A direct route back to the authenticated team calendar." />
-              <IntegrationRow icon={MonitorCheck} title="Collector readiness" description="A pre-block reminder when capture is not ready." />
+              <IntegrationRow icon={CalendarClock} title="Practice reminders" description="A reminder for an upcoming practice block." />
+              <IntegrationRow icon={Link2} title="Schedule changes" description="Created, changed, and cancelled blocks link back to ScrimStats." />
+              <IntegrationRow icon={ShieldCheck} title="Selected channels" description="Only a connected team's selected channels receive prompts." />
             </div>
             <div className="border-t border-[var(--workspace-rule)] px-5 py-4">
               <p className="ss-mono text-xs uppercase tracking-[0.12em] text-[var(--workspace-awaiting)]">
-                Coming soon · Discord installation
+                Unavailable until delivery is verified
               </p>
             </div>
           </DataSurface></IntegrationPlanPreview>}

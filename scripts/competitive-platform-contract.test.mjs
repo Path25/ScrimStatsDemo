@@ -131,8 +131,8 @@ test("Discord delivery is private, deduplicated, and only queues subscribed even
 
 test("planned integrations remain clearly unavailable", () => {
   assert.match(integrations, /modules\.discord\.state === "live"/);
-  assert.match(integrations, /Coming soon/);
-  assert.match(integrations, /Discord installation/);
+  assert.match(integrations, /Unavailable until delivery is verified/);
+  assert.doesNotMatch(integrations, /Availability prompts|Collector readiness/);
 });
 
 test("competitive publication and evidence mutations are transactional staff workflows", () => {

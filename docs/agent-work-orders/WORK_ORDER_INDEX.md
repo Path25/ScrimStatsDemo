@@ -14,7 +14,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 
 | ID | Title | State | Owner | Work order |
 |---|---|---|---|---|
-| WO-2026-001 | Define and deliver a credible Elite proposition | Ready | Feature Development agent | [WO-2026-001](ready/WO-2026-001-elite-proposition.md) |
+| WO-2026-001 | Define and deliver a credible Elite proposition | In progress | Feature Development agent | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) |
 | WO-2026-002 | Verify the Pro paid core end to end | In progress (review) | Feature Development agent | [WO-2026-002](review/WO-2026-002-pro-paid-core-hosted-verification.md) |
 | WO-2026-003 | Protect premium copy and establish funnel measurement | Review | QA and Release Auditor | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) |
 | WO-2026-004 | Strengthen work orders with release audit and role handoffs | Done | Project Manager | [WO-2026-004](done/WO-2026-004-work-order-release-audit-and-handoffs.md) |

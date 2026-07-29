@@ -8,7 +8,7 @@ This work order reserves `WO-2026-010` in the [work-order index](../WORK_ORDER_I
 
 | Field | Value |
 | --- | --- |
-| Status | Review |
+| Status | Review (conditional QA pass) |
 | Owner | QA and Release Auditor |
 | Priority | High |
 | Autonomy class | Needs Theo's approval before implementation |
@@ -99,12 +99,26 @@ The finding came from the production QA review of the newly introduced funnel re
 
 ### Final verdict
 
-**AWAITING QA REVIEW** — the narrow migration is applied to the configured Supabase project and live privilege inspection confirms the required grant boundary. QA still needs to independently verify the controlled trigger path and service-only scorecard execution.
+**SUPERSEDED BY THE 2026-07-29 INDEPENDENT QA AUDIT BELOW.** The narrow migration is applied and the primary live privilege, trigger-boundary, and scorecard checks passed. One isolated source-trigger exercise remains a follow-up.
 
 ### Exact outstanding checks
 
 - QA independently verifies the live grants, RLS/policy state, controlled trigger path, scorecard execution, and Advisor output.
 - Record any unrelated Advisor findings separately; do not change them as part of this work order.
+
+## Independent QA audit - 2026-07-29
+
+### Outcome: Pass with follow-up
+
+- **Live grant boundary verified:** Migration `20260729090523_funnel_service_role_append_only_grants` is recorded. `workspace_funnel_events` is owned by `postgres`, has RLS enabled and no policies, and grants `service_role` only `SELECT` and `INSERT`. `anon` and `authenticated` have no `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, or `TRIGGER` privilege.
+- **Scorecard verified:** `get_founder_funnel_scorecard(timestamptz)` is executable by `service_role` and not executable by `anon` or `authenticated`. An execution under `SET LOCAL ROLE service_role` completed successfully (zero rows in the current 30-day window; no customer records were inspected).
+- **Trigger boundary verified by inspection:** The five source triggers are enabled and invoke `postgres`-owned `SECURITY DEFINER` functions with `search_path = ''`; their functions, not broad `service_role` table rights, own funnel-event insertion. The applied migration contains only the targeted revoke/grant statements, and `scripts/funnel-instrumentation-contract.test.mjs` passed 2/2.
+- **Unverified follow-up:** No source-table insert was performed, including in a rolled-back transaction, because this QA audit did not have separate approval to exercise production source-data triggers. Before relying on fresh milestone generation operationally, validate one authorised non-customer source event in an isolated environment and confirm its expected funnel milestone.
+- **Advisor review:** Security Advisor still reports the pre-existing project-wide RLS-without-policy informational entries and multiple unrelated executable `SECURITY DEFINER` warnings, plus leaked-password protection disabled. The funnel table's no-policy entry is expected for a service-only table with no browser privileges; none of these findings were altered or hidden by WO-010.
+
+### QA release recommendation
+
+**CONDITIONAL** for WO-010: the append-only privilege remediation is live and its primary security acceptance criteria pass. The isolated authorised-trigger check remains a required operational follow-up, not a reason to restore broad service-role privileges.
 
 ### Theo approval record
 

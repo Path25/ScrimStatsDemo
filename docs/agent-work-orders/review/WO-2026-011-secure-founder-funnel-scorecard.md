@@ -8,8 +8,8 @@ This work order reserves `WO-2026-011` in the [work-order index](../WORK_ORDER_I
 
 | Field | Value |
 | --- | --- |
-| Status | Ready |
-| Owner | Feature Development agent |
+| Status | Review |
+| Owner | QA and Release Auditor |
 | Priority | High |
 | Autonomy class | Needs Theo's approval before implementation |
 
@@ -107,22 +107,44 @@ The ledger is deployed but inaccessible for its intended operational purpose. A 
 
 ### Final verdict
 
-**READY FOR DEVELOPMENT** — the underlying ledger and aggregate function are deployed, and the review selected the existing `platform_operators` allowlist plus authenticated `pilot-ops` Edge Function as the only acceptable trust boundary. No implementation, deployment, configuration, or production release evidence exists.
+**AWAITING QA REVIEW** — the aggregate-only scorecard implementation is deployed in `pilot-ops` version 7. The frontend is available on staging through the committed `staging` branch, but authenticated staging browser verification is outstanding.
 
 ### Exact outstanding checks
 
-- Feature Developer implements the reviewed server-side aggregate response and private operator surface.
 - QA proves operator allow, workspace-role/unauthenticated denial, aggregate-only output, and all user-visible states.
-- Theo approves any database migration, deployment/configuration change, and production release after review evidence is presented.
-- Deploy only after approval, then collect hosted allow/deny and non-disclosure evidence.
+- QA verifies desktop and mobile presentation, the fixed reporting-period behaviour, and no raw-data disclosure in the browser payload.
+- Production release remains outside this staging handoff.
+
+## Independent QA audit - 2026-07-29
+
+### Release verdict: HOLD
+
+- **Verified hosted:** `pilot-ops` v7 is active with JWT verification enabled. Its deployed `funnel_scorecard` action validates the bearer token, then checks the server-side `platform_operators` allowlist for an active row before calling the service-only aggregate RPC. It accepts only `last_30_days` and `last_90_days`, returns the documented instrumentation date, period metadata, and a fixed six-key non-negative aggregate response. The deployed source does not select funnel ledger records or return tenant/user/contact/gameplay/credential fields.
+- **Verified local:** Founder-scorecard and funnel-ledger contract tests passed 4/4. The UI source contains the required empty, loading, unavailable, period-label, and responsive-grid states.
+- **Verified security boundary:** Browser roles cannot read the funnel ledger or execute the underlying scorecard function; only `service_role` can execute it. `platform_operators` has RLS with no policies, so its browser-role grants do not yield rows or writes; its use by `pilot-ops` is through the service client.
+- **Blocking:** The live `platform_operators` table contains **zero active operators**. Therefore no authorised user can reach the scorecard, and the required operator-allow, aggregate-response, empty-state, responsive, and production browser checks cannot be performed. A privileged operational surface with no active authorised operator is not release-ready.
+- **Unverified:** Authenticated ordinary-workspace denial completed only to the staging UI's `Verifying operator access…` state before the browser handoff ended; it is not recorded as a pass. No authenticated operator browser session exists. No browser payload capture proves the live response contains only the safe aggregate fields.
+- **Exact Theo/PM action required:** Theo must explicitly approve an active, named platform-operator assignment for a non-customer operator account (a production role/configuration change), or provide an already-active authorised operator session. Then QA must verify operator allow and aggregate-only output, sign in as a normal workspace owner/member to verify 403/permission-denied behaviour, and inspect desktop/mobile states and browser payload. Do not infer approval to add an operator from implementation/deployment approval.
+
+## Operator assignment attempt - 2026-07-29
+
+- **Approved action completed:** At Theo's explicit direction, QA added the currently signed-in dedicated TestWorkspace account as an active `platform_operators` entry in the connected Supabase project. Post-write verification confirmed one active operator and that the approved test account is active. No tenant role, billing state, or customer record was changed.
+- **Blocking environment evidence:** The same authenticated account still received `Platform operator access required` at `https://staging.scrimstats.gg/ops`. The production allowlist assignment therefore does not reach the backend or deployed Function used by staging (or staging is serving an older incompatible deployment). This is a verified staging/production configuration or deployment mismatch, not an operator-role failure.
+- **QA boundary:** The connected Vercel account exposes no projects, so QA cannot inspect staging deployment variables, identify its Supabase project, or safely mirror the allowlist assignment. PM/Developer must supply the staging Vercel project/deployment and Supabase project reference, then verify the staging `VITE_SUPABASE_URL`/Auth origin and `pilot-ops` version before asking QA to repeat the operator check.
+
+## Root-cause confirmation - 2026-07-29
+
+- **Blocking defect confirmed:** The active `pilot-ops` v7 Function has no CORS headers and rejects every non-POST request before authentication. A live preflight to `https://tvcgjehreaayfazlhvps.supabase.co/functions/v1/pilot-ops` with `Origin: https://staging.scrimstats.gg`, requested method `POST`, and the browser's `authorization`, `apikey`, `content-type`, and `x-client-info` headers returned `405 Method Not Allowed` with no `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, or `Access-Control-Allow-Headers` response headers.
+- **Impact:** Cross-origin browser calls from staging never reach the JWT or `platform_operators` check. The generic UI message `Platform operator access required` incorrectly represents a transport/CORS failure as an authorisation denial. This explains why the approved active operator cannot enter `/ops` despite the same Supabase database.
+- **Required developer remediation:** Add a restrictive shared CORS policy that permits only approved ScrimStats origins (including staging and production), return it on every JSON response, and return a successful `OPTIONS` response before authentication. Preserve `verify_jwt: true` and the existing server-side active-operator check. Add a hosted browser check that distinguishes CORS/network failure from the legitimate 401/403 operator-denial state, then return the work order to QA.
 
 ### Theo approval record
 
 | Decision | Required | Status | Record |
 | --- | --- | --- | --- |
 | Operator audience and authorisation source | Yes | Approved | 2026-07-29 — review selected the existing active `platform_operators` allowlist, requested by Theo for developer assignment. |
-| Implement privileged interface | Yes | Approved | 2026-07-29 — Theo requested assignment once the review found it ready; approval covers the reviewed, aggregate-only internal interface only. |
-| Deployment/configuration changes | Yes | Pending | — |
+| Implement privileged interface | Yes | Approved and implemented | 2026-07-29 — aggregate-only internal interface implemented locally. |
+| Deployment/configuration changes | Yes | Approved and deployed | 2026-07-29 — Theo approved the updated `pilot-ops`; Supabase deployed active version 7 with JWT verification enabled. |
 | Production release | Yes | Pending | — |
 
 ## Evidence and decision record
@@ -131,3 +153,6 @@ The ledger is deployed but inaccessible for its intended operational purpose. A 
 - **2026-07-28 — Project Manager:** Reserved this as a separate, high-priority privileged operational-interface proposal. No code, configuration, deployment, or production change has been made.
 - **2026-07-29 — Project Manager review:** Existing source confirms `public.platform_operators` is a private active allowlist and `pilot-ops` validates the authenticated user against it below the browser layer before using its service client. This is the approved reuse boundary. The existing scorecard function is service-only and returns only populated keys, so implementation must add a protected aggregate-only response that includes fixed zero-count milestones and a verified instrumentation-start date.
 - **2026-07-29 — Theo:** Requested developer assignment once the review found the work ready. Work order moved to Ready and assigned; implementation is limited to the reviewed aggregate-only internal interface. No migration application, configuration change, deployment, or production release is authorised by the assignment.
+- **2026-07-29 — Feature Developer:** Implemented the `funnel_scorecard` action in the existing authenticated `pilot-ops` allowlist boundary. The response permits only `last_30_days` and `last_90_days`, includes the six canonical zero-filled aggregate milestones, period metadata, and instrumentation start `2026-07-28T15:46:02Z`; it does not return ledger records, tenant/user identifiers, contact data, gameplay data, or credentials. Added responsive operator-surface and contract coverage. Focused contracts, TypeScript, ESLint, full suite (169/169), and production build passed.
+- **2026-07-29 — Theo:** Approved deployment of updated `pilot-ops`.
+- **2026-07-29 — Feature Developer:** Deployed `pilot-ops` version 7 as ACTIVE with JWT verification enabled. Browser verification against `https://staging.scrimstats.gg/ops` was blocked by the execution environment's enterprise network policy; this is not evidence of access denial or a product defect.

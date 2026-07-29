@@ -10,6 +10,9 @@ test("founder funnel is operator-enforced and aggregate-only", () => {
   assert.match(pilotOps, /platform_operators[\s\S]*is_active/);
   assert.match(pilotOps, /action === "funnel_scorecard"/);
   assert.match(pilotOps, /unsupported_funnel_period/);
+  assert.match(pilotOps, /access-control-allow-origin/);
+  assert.match(pilotOps, /request\.method === "OPTIONS"/);
+  assert.match(pilotOps, /https:\/\/staging\.scrimstats\.gg/);
   assert.match(pilotOps, /get_founder_funnel_scorecard/);
   for (const key of ["account_registered", "workspace_created", "first_scheduled_block", "first_recorded_game", "workspace_activated", "first_paid_upgrade"]) assert.match(pilotOps, new RegExp(`"${key}"`));
   assert.match(pilotOps, /instrumentation_started_at/);

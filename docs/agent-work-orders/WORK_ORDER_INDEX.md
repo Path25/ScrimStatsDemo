@@ -23,5 +23,5 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-007 | Fix the Scouting client error and restore release attribution | Done (conditional) | Feature Development agent | [WO-2026-007](done/WO-2026-007-fix-scouting-client-error-and-release-attribution.md) |
 | WO-2026-008 | Reconcile paid workspace entitlements with Stripe subscriptions | Done | Analytics and Technical Reporting agent | [WO-2026-008](done/WO-2026-008-reconcile-paid-entitlements-with-stripe.md) |
 | WO-2026-009 | Enforce Collector entitlement below the browser | In progress | Feature Development agent | [WO-2026-009](in-progress/WO-2026-009-collector-server-entitlement-enforcement.md) |
-| WO-2026-010 | Enforce append-only service-role access for funnel events | Review | QA and Release Auditor | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) |
-| WO-2026-011 | Build a secure founder funnel scorecard | Ready | Feature Development agent | [WO-2026-011](ready/WO-2026-011-secure-founder-funnel-scorecard.md) |
+| WO-2026-010 | Enforce append-only service-role access for funnel events | Review (conditional QA pass) | QA and Release Auditor | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) |
+| WO-2026-011 | Build a secure founder funnel scorecard | Review | QA and Release Auditor | [WO-2026-011](review/WO-2026-011-secure-founder-funnel-scorecard.md) |

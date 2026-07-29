@@ -8,7 +8,7 @@ This work order reserves `WO-2026-011` in the [work-order index](../WORK_ORDER_I
 
 | Field | Value |
 | --- | --- |
-| Status | Review |
+| Status | Done (conditional; Theo risk acceptance) |
 | Owner | QA and Release Auditor |
 | Priority | High |
 | Autonomy class | Needs Theo's approval before implementation |
@@ -137,6 +137,21 @@ The ledger is deployed but inaccessible for its intended operational purpose. A 
 - **Blocking defect confirmed:** The active `pilot-ops` v7 Function has no CORS headers and rejects every non-POST request before authentication. A live preflight to `https://tvcgjehreaayfazlhvps.supabase.co/functions/v1/pilot-ops` with `Origin: https://staging.scrimstats.gg`, requested method `POST`, and the browser's `authorization`, `apikey`, `content-type`, and `x-client-info` headers returned `405 Method Not Allowed` with no `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, or `Access-Control-Allow-Headers` response headers.
 - **Impact:** Cross-origin browser calls from staging never reach the JWT or `platform_operators` check. The generic UI message `Platform operator access required` incorrectly represents a transport/CORS failure as an authorisation denial. This explains why the approved active operator cannot enter `/ops` despite the same Supabase database.
 - **Required developer remediation:** Add a restrictive shared CORS policy that permits only approved ScrimStats origins (including staging and production), return it on every JSON response, and return a successful `OPTIONS` response before authentication. Preserve `verify_jwt: true` and the existing server-side active-operator check. Add a hosted browser check that distinguishes CORS/network failure from the legitimate 401/403 operator-denial state, then return the work order to QA.
+
+## QA recheck after CORS remediation - 2026-07-29
+
+- **Pass:** Active `pilot-ops` v8 now returns `200` to an `OPTIONS` preflight from `https://staging.scrimstats.gg`, with that exact allowed origin, `POST, OPTIONS`, and the required browser headers. Its CORS allowlist is explicit rather than wildcarded.
+- **Pass:** The approved active TestWorkspace operator successfully opened staging `/ops`. The protected Pilot Operations surface and Founder funnel rendered; the scorecard progressed from its loading state to `No events recorded since instrumentation began`, with no browser warnings or errors. This proves the operator allow path, cross-origin transport, instrumentation date, and truthful empty state.
+- **Residual unverified checks:** ordinary workspace-owner/member and unauthenticated 401/403 browser checks; browser-network payload capture proving the live body is aggregate-only; period switch to `last_90_days`; error state; and mobile layout. These are follow-up QA checks, not evidence of a current failure.
+
+### Updated QA release recommendation
+
+**CONDITIONAL** — the prior CORS blocker is resolved and the operator path is hosted-verified. Do not mark the privileged scorecard fully release-ready until the listed negative-path, payload, period, error, and responsive checks are evidenced.
+
+## Completion decision - 2026-07-29
+
+- **Theo decision:** Accepted the documented residual QA risks and approved moving WO-2026-011 to Done.
+- **Completion status:** Done (conditional). The scorecard remains an internal, allowlisted operational surface. The outstanding ordinary-user denial, aggregate-payload capture, alternate-period, error-state, and mobile-layout checks remain retained follow-up evidence; they were not silently treated as passed.
 
 ### Theo approval record
 

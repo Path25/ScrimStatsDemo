@@ -7,7 +7,7 @@ const corsHeaders = {
 
 type Subscription = {
   tenant_id: string;
-  event_type: "practice_reminder" | "availability_reminder" | "collector_reminder";
+  event_type: "practice_reminder";
 };
 
 Deno.serve(async (request) => {
@@ -34,7 +34,7 @@ Deno.serve(async (request) => {
   const { data: subscriptions, error: subscriptionError } = await admin
     .from("discord_channel_subscriptions")
     .select("tenant_id, event_type, discord_installations!inner(status)")
-    .in("event_type", ["practice_reminder", "availability_reminder", "collector_reminder"])
+    .eq("event_type", "practice_reminder")
     .eq("enabled", true)
     .eq("discord_installations.status", "active");
   if (subscriptionError) {
@@ -73,21 +73,6 @@ Deno.serve(async (request) => {
       };
 
       for (const eventType of eventTypes) {
-        if (eventType === "collector_reminder") {
-          const { data: device } = await admin
-            .from("collector_devices")
-            .select("last_seen_at")
-            .eq("tenant_id", tenantId)
-            .eq("status", "active")
-            .order("last_seen_at", { ascending: false, nullsFirst: false })
-            .limit(1)
-            .maybeSingle();
-          const recentlySeen =
-            device?.last_seen_at
-            && new Date(device.last_seen_at).getTime() >= now.getTime() - 15 * 60_000;
-          if (recentlySeen) continue;
-        }
-
         const { error } = await admin.from("integration_events").insert({
           tenant_id: tenantId,
           event_type: eventType,

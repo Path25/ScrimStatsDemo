@@ -30,6 +30,8 @@ async function startInstall(request: Request) {
   if (!tenantId || !(await managerMembership(user.id, tenantId))) {
     return json({ error: "Owner or admin access is required." }, 403);
   }
+  const { data: tenant } = await serviceClient().from("tenants").select("subscription_tier").eq("id", tenantId).maybeSingle();
+  if (tenant?.subscription_tier !== "elite") return json({ error: "Discord automation is available to Elite workspaces." }, 403);
 
   const clientId = Deno.env.get("DISCORD_CLIENT_ID");
   if (!clientId) return json({ error: "Discord installation is not configured." }, 503);

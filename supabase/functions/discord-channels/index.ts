@@ -22,6 +22,8 @@ serve(async (request) => {
   if (!tenantId || !(await managerMembership(user.id, tenantId))) {
     return json({ error: "Owner or admin access is required." }, 403);
   }
+  const { data: tenant } = await serviceClient().from("tenants").select("subscription_tier").eq("id", tenantId).maybeSingle();
+  if (tenant?.subscription_tier !== "elite") return json({ error: "Discord automation is available to Elite workspaces." }, 403);
 
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   if (!botToken) return json({ error: "Discord channels are not configured." }, 503);

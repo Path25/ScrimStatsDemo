@@ -1,6 +1,6 @@
 # Work order index
 
-This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-011`; the next available 2026 ID is `WO-2026-012`.
+This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-018`; the next available 2026 ID is `WO-2026-019`.
 
 ## Reservation protocol
 
@@ -24,4 +24,11 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-008 | Reconcile paid workspace entitlements with Stripe subscriptions | Done | Analytics and Technical Reporting agent | [WO-2026-008](done/WO-2026-008-reconcile-paid-entitlements-with-stripe.md) |
 | WO-2026-009 | Enforce Collector entitlement below the browser | In progress | Feature Development agent | [WO-2026-009](in-progress/WO-2026-009-collector-server-entitlement-enforcement.md) |
 | WO-2026-010 | Enforce append-only service-role access for funnel events | Review (conditional QA pass) | QA and Release Auditor | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) |
-| WO-2026-011 | Build a secure founder funnel scorecard | Review | QA and Release Auditor | [WO-2026-011](review/WO-2026-011-secure-founder-funnel-scorecard.md) |
+| WO-2026-011 | Build a secure founder funnel scorecard | Done (conditional; Theo risk acceptance) | QA and Release Auditor | [WO-2026-011](done/WO-2026-011-secure-founder-funnel-scorecard.md) |
+| WO-2026-012 | Define the paid buyer standard and Free-to-Pro conversion thesis | Proposed | Project Manager | [WO-2026-012](proposed/WO-2026-012-paid-buyer-standard-and-conversion-thesis.md) |
+| WO-2026-013 | Select a safe desktop live-integration direction without Riot API access | Proposed | Feature Development agent | [WO-2026-013](proposed/WO-2026-013-desktop-live-integration-direction.md) |
+| WO-2026-014 | Validate paid buyer problems and conversion proposition with target teams | Proposed | Lead Marketer and Growth | [WO-2026-014](proposed/WO-2026-014-paid-buyer-validation-and-conversion-proposition.md) |
+| WO-2026-015 | Make Pro analytics legible and outcome-led | Proposed | Feature Development agent | [WO-2026-015](proposed/WO-2026-015-pro-analytics-legibility-and-value.md) |
+| WO-2026-016 | Restore reliable champion visual assets | Proposed | Feature Development agent | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) |
+| WO-2026-017 | Add tenant-safe workspace identity customization | Proposed | Feature Development agent | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
+| WO-2026-018 | Audit and improve workspace language and journey coherence | Proposed | Project Manager | [WO-2026-018](proposed/WO-2026-018-workspace-language-and-journey-coherence.md) |

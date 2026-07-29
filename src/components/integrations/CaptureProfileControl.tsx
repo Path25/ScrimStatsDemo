@@ -40,7 +40,7 @@ const profiles: Array<{
   },
 ];
 
-export function CaptureProfileControl({ canManage }: { canManage: boolean }) {
+export function CaptureProfileControl({ canManage, hasCollectorAccess }: { canManage: boolean; hasCollectorAccess: boolean }) {
   const { profile, isLoading, isUpdating, updateProfile } = useCaptureProfile();
   const [pending, setPending] = useState<CaptureProfile | null>(null);
   const pendingProfile = profiles.find((option) => option.id === pending);
@@ -60,17 +60,18 @@ export function CaptureProfileControl({ canManage }: { canManage: boolean }) {
         <div className="grid gap-px bg-[var(--workspace-rule)] lg:grid-cols-2">
           {profiles.map((option) => {
             const Icon = option.icon;
-            const active = option.id === profile;
+            const requiresCollector = option.id === "desktop_manual";
+            const active = option.id === profile && (!requiresCollector || hasCollectorAccess);
             return (
               <div key={option.id} className={cn("bg-[var(--workspace-surface)] p-5", active && "bg-[color:rgba(17,226,208,.04)]")}>
                 <div className="flex items-start justify-between gap-4">
                   <Icon className={cn("h-5 w-5", active ? "text-[var(--workspace-accent)]" : "text-[var(--workspace-subtle)]")} />
                   <span className={cn("ss-mono text-[11px] uppercase tracking-[0.12em]", active ? "text-[var(--workspace-accent)]" : "text-[var(--workspace-subtle)]")}>
-                    {active ? "Active" : "Inactive"}
+                    {requiresCollector && !hasCollectorAccess ? "Pro feature" : active ? "Active" : "Inactive"}
                   </span>
                 </div>
                 <h3 className="mt-4 font-semibold">{option.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">{option.description}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--workspace-muted)]">{requiresCollector && !hasCollectorAccess ? "Game Capture is included with Pro. Manual game entry remains available." : option.description}</p>
                 <p className="mt-3 text-xs leading-5 text-[var(--workspace-subtle)]">{option.detail}</p>
                 {canManage && !active && (
                   <Button className="mt-5" size="sm" variant="outline" disabled={isLoading || isUpdating} onClick={() => setPending(option.id)}>

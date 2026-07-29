@@ -27,7 +27,7 @@ export default function Integrations() {
         title="Integrations"
         description="Connect the services your team uses while keeping records and permissions in one workspace."
       />
-      <CaptureProfileControl canManage={canManageIntegrations && hasDesktopAccess} />
+      <CaptureProfileControl canManage={canManageIntegrations && hasDesktopAccess} hasCollectorAccess={hasDesktopAccess} />
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <KeyRound className="h-5 w-5 text-[var(--workspace-accent)]" />

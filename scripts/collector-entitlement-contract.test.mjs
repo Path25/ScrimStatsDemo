@@ -28,3 +28,11 @@ test("database module state agrees with the Pro Collector contract", () => {
   assert.match(migration, /access\.module_key = 'collector'/);
   assert.match(migration, /Collector is available to Pro and Elite workspaces; Discord remains Elite-only/);
 });
+
+test("Integrations does not present Collector as active for Free workspaces", () => {
+  const integrations = read("src/pages/Integrations.tsx");
+  const profileControl = read("src/components/integrations/CaptureProfileControl.tsx");
+  assert.match(integrations, /hasCollectorAccess=\{hasDesktopAccess\}/);
+  assert.match(profileControl, /requiresCollector && !hasCollectorAccess \? "Pro feature"/);
+  assert.match(profileControl, /Game Capture is included with Pro/);
+});

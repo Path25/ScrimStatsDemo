@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
+import { discordEntitled } from "../_shared/collector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,7 @@ Deno.serve(async (request) => {
 
   const byTenant = new Map<string, Set<Subscription["event_type"]>>();
   for (const subscription of (subscriptions || []) as unknown as Subscription[]) {
+    if (!(await discordEntitled(subscription.tenant_id))) continue;
     const events = byTenant.get(subscription.tenant_id) || new Set();
     events.add(subscription.event_type);
     byTenant.set(subscription.tenant_id, events);

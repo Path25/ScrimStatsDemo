@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
+import { discordEntitled } from "../_shared/collector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,9 +71,8 @@ Deno.serve(async (request) => {
       await admin.from("integration_events").update({ status: "cancelled", last_error: "Event is outside the approved Discord schedule scope" }).eq("id", event.id);
       continue;
     }
-    const { data: tenant } = await admin.from("tenants").select("subscription_tier").eq("id", event.tenant_id).maybeSingle();
-    if (tenant?.subscription_tier !== "elite") {
-      await admin.from("integration_events").update({ status: "cancelled", last_error: "Discord automation requires an Elite workspace" }).eq("id", event.id);
+    if (!(await discordEntitled(event.tenant_id))) {
+      await admin.from("integration_events").update({ status: "cancelled", last_error: "Discord automation is unavailable for this workspace" }).eq("id", event.id);
       continue;
     }
     const { data: subscriptions } = await admin

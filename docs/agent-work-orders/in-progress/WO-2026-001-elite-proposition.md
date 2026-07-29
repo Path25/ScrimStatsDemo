@@ -239,3 +239,28 @@ The hosted remediation is present, and the customer-facing preview remains hones
 1. Developer implements and tests server-side module release-state enforcement before provider configuration is considered.
 2. Theo approves dedicated Discord test credentials, callback URL, bot permissions, worker schedule, and the narrow production-backed test-workspace scope; no customer workspace or public Discord server should be used.
 3. QA runs the full authenticated/provider matrix, including a non-Discord outbox regression. Only then can Theo approve changing Discord from `planned` to `live`, enabling customer delivery, or making an Elite availability claim.
+
+## Developer release-state correction - 2026-07-29
+
+### Approved local implementation
+
+- Added shared server-side `discordEntitled(tenantId)` in `supabase/functions/_shared/collector.ts`. It returns true only when the tenant is Elite **and** its `tenant_feature_access` record is `module_key = 'discord'`, `release_state = 'live'`, and `is_enabled = true`.
+- Applied that single entitlement decision in `discord-install` (start and OAuth completion), `discord-channels`, `discord-config`, `discord-schedule-reminders`, and `discord-dispatch`.
+- Planned or disabled Discord is now denied below the browser. For workers, a previously queued Discord event is cancelled as unavailable rather than delivered when the module is no longer released/enabled.
+- Extended `scripts/discord-elite-contract.test.mjs` to require the shared guard in every path and assert its Elite/live/enabled predicates.
+
+### Validation evidence
+
+- Focused Discord contract suite: **4/4 passed**.
+- Full local suite: **176/176 passed**.
+- TypeScript and ESLint: **passed**.
+- Production build and bundle budget: **passed**. The only non-failing output was the existing stale Browserslist-data warning.
+- `git diff --check`: **passed**.
+
+### Deployment and QA handoff
+
+This correction is local only. No migration is needed; no Function was redeployed; no provider credential, callback, worker schedule, billing setting, customer message, or module data was changed.
+
+1. After Theo separately approves deployment, deploy the five matched Discord Functions together so all entry points use the same guard.
+2. In the production-backed staging project, directly invoke each Function as an Elite owner/admin while Discord is `planned`, then while it is `live` but disabled. Confirm the user paths deny and the workers do not queue/deliver.
+3. Only after those release-state tests pass should QA continue with the existing role, OAuth, outbox-isolation, and approved provider-credential matrix. Do not set Discord live/enabled for customer workspaces or change public copy without a separate release decision.

@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   authenticatedUser,
   collectorCorsHeaders,
+  discordEntitled,
   json,
   managerMembership,
   randomSecret,
@@ -30,8 +31,7 @@ async function startInstall(request: Request) {
   if (!tenantId || !(await managerMembership(user.id, tenantId))) {
     return json({ error: "Owner or admin access is required." }, 403);
   }
-  const { data: tenant } = await serviceClient().from("tenants").select("subscription_tier").eq("id", tenantId).maybeSingle();
-  if (tenant?.subscription_tier !== "elite") return json({ error: "Discord automation is available to Elite workspaces." }, 403);
+  if (!(await discordEntitled(tenantId))) return json({ error: "Discord automation is unavailable for this workspace." }, 403);
 
   const clientId = Deno.env.get("DISCORD_CLIENT_ID");
   if (!clientId) return json({ error: "Discord installation is not configured." }, 503);
@@ -116,16 +116,11 @@ async function finishInstall(request: Request) {
     .maybeSingle();
   if (!claimedState) return Response.redirect(appRedirect("expired"), 302);
 
-  const { data: tenant } = await db
-    .from("tenants")
-    .select("subscription_tier")
-    .eq("id", oauthState.tenant_id)
-    .maybeSingle();
   // The browser is redirected away from Discord during OAuth. Re-check the
   // initiating user's current workspace role after the one-time state is
   // claimed so a removed manager cannot finish an earlier installation flow.
   if (
-    tenant?.subscription_tier !== "elite"
+    !(await discordEntitled(oauthState.tenant_id))
     || !(await managerMembership(oauthState.user_id, oauthState.tenant_id))
   ) {
     return Response.redirect(appRedirect("unavailable"), 302);

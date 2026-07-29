@@ -83,6 +83,26 @@ export async function collectorEntitled(tenantId: string, db = serviceClient()) 
   return Number.isFinite(periodEnd) && periodEnd > now;
 }
 
+// Discord must be enabled as a released workspace module as well as being an
+// Elite entitlement. This is kept below the browser so a direct Function call
+// cannot activate an integration that the product still presents as planned.
+export async function discordEntitled(tenantId: string) {
+  const db = serviceClient();
+  const [{ data: tenant, error: tenantError }, { data: feature, error: featureError }] = await Promise.all([
+    db.from('tenants').select('subscription_tier').eq('id', tenantId).maybeSingle(),
+    db.from('tenant_feature_access')
+      .select('release_state, is_enabled')
+      .eq('tenant_id', tenantId)
+      .eq('module_key', 'discord')
+      .maybeSingle(),
+  ]);
+  return !tenantError
+    && !featureError
+    && tenant?.subscription_tier === 'elite'
+    && feature?.release_state === 'live'
+    && feature.is_enabled === true;
+}
+
 export async function deviceFromRequest(req: Request) {
   const deviceId = req.headers.get('x-collector-device-id');
   const credential = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');

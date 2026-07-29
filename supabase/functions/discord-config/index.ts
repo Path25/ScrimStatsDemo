@@ -1,13 +1,12 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { authenticatedUser, collectorCorsHeaders, json, managerMembership, serviceClient } from "../_shared/collector.ts";
+import { authenticatedUser, collectorCorsHeaders, discordEntitled, json, managerMembership, serviceClient } from "../_shared/collector.ts";
 
 const allowedEvents = ["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"] as const;
 const isAllowedEvent = (value: string): value is typeof allowedEvents[number] => allowedEvents.includes(value as typeof allowedEvents[number]);
 
-async function eliteManager(userId: string, tenantId: string) {
+async function discordManager(userId: string, tenantId: string) {
   if (!(await managerMembership(userId, tenantId))) return false;
-  const { data } = await serviceClient().from("tenants").select("subscription_tier").eq("id", tenantId).maybeSingle();
-  return data?.subscription_tier === "elite";
+  return discordEntitled(tenantId);
 }
 
 serve(async (request) => {
@@ -17,7 +16,7 @@ serve(async (request) => {
   if (!user) return json({ error: "Authentication required." }, 401);
   const body = await request.json().catch(() => ({}));
   const tenantId = typeof body.tenant_id === "string" ? body.tenant_id : "";
-  if (!tenantId || !(await eliteManager(user.id, tenantId))) return json({ error: "Discord automation is available to Elite workspace owners and admins." }, 403);
+  if (!tenantId || !(await discordManager(user.id, tenantId))) return json({ error: "Discord automation is unavailable for this workspace." }, 403);
   const db = serviceClient(); const action = String(body.action || "status");
   const { data: installation } = await db.from("discord_installations").select("id, guild_id, guild_name, status, installed_at").eq("tenant_id", tenantId).maybeSingle();
   if (action === "status") {

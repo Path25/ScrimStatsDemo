@@ -2,13 +2,23 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-test("Discord browser paths enforce Elite below the browser", () => {
-  for (const path of ["supabase/functions/discord-install/index.ts", "supabase/functions/discord-channels/index.ts", "supabase/functions/discord-config/index.ts"]) {
+test("Discord paths enforce released Elite access below the browser", () => {
+  for (const path of [
+    "supabase/functions/discord-install/index.ts",
+    "supabase/functions/discord-channels/index.ts",
+    "supabase/functions/discord-config/index.ts",
+    "supabase/functions/discord-schedule-reminders/index.ts",
+    "supabase/functions/discord-dispatch/index.ts",
+  ]) {
     const source = read(path);
-    assert.match(source, /subscription_tier/);
-    assert.match(source, /"elite"/);
-    assert.match(source, /managerMembership/);
+    assert.match(source, /discordEntitled/);
   }
+  const shared = read("supabase/functions/_shared/collector.ts");
+  assert.match(shared, /export async function discordEntitled/);
+  assert.match(shared, /subscription_tier === 'elite'/);
+  assert.match(shared, /module_key', 'discord'/);
+  assert.match(shared, /release_state === 'live'/);
+  assert.match(shared, /is_enabled === true/);
   const config = read("supabase/functions/discord-config/index.ts");
   assert.match(config, /schedule_created.*schedule_changed.*schedule_cancelled.*practice_reminder/);
   assert.doesNotMatch(config, /availability_reminder|collector_reminder/);
@@ -33,7 +43,7 @@ test("Discord dispatch stays within the selected Elite schedule scope", () => {
   const config = read("supabase/config.toml");
   assert.match(dispatch, /schedule_created.*schedule_changed.*schedule_cancelled.*practice_reminder/);
   assert.doesNotMatch(dispatch, /availability_reminder|collector_reminder/);
-  assert.match(dispatch, /tenant\?\.subscription_tier !== "elite"/);
+  assert.match(dispatch, /discordEntitled\(event\.tenant_id\)/);
   assert.match(dispatch, /claim_integration_events_for_provider/);
   assert.match(config, /\[functions\.discord-install\]\s+verify_jwt = true/);
   assert.match(config, /\[functions\.discord-config\]\s+verify_jwt = true/);

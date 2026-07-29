@@ -17,7 +17,7 @@ export default function Integrations() {
   const { modules } = useWorkspaceModules();
   const { canManageIntegrations } = useRole();
   const { tenant } = useTenant();
-  const hasDesktopAccess = planIncludes(tenant?.subscriptionTier || "free", "pro");
+  const hasDesktopAccess = Boolean(tenant?.collectorEntitled);
   const hasEliteAccess = tenant?.subscriptionTier === "elite";
 
   return (
@@ -42,7 +42,7 @@ export default function Integrations() {
               <MonitorCheck className="h-5 w-5 text-[var(--workspace-accent)]" />
               <h2 className="font-semibold">Game Capture</h2>
             </div>
-            <ModuleStateBadge state={modules.collector.state} />
+            <ModuleStateBadge state={modules.collector.state} enabled={hasDesktopAccess && modules.collector.enabled} unavailableLabel="Pro feature" />
           </div>
           {hasDesktopAccess ? (
             <DataSurface className="p-5">

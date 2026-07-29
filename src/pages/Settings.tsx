@@ -18,7 +18,6 @@ import { useTenant } from "@/contexts/TenantContext";
 import { usePlayersData } from "@/hooks/usePlayersData";
 import { useWorkspaceAdministration } from "@/hooks/useWorkspaceAdministration";
 import type { Database as SupabaseDatabase } from "@/integrations/supabase/types";
-import { planIncludes } from "@/lib/plan-entitlements";
 import { Link } from "@/lib/router";
 
 type TenantRole = SupabaseDatabase["public"]["Enums"]["tenant_role"];
@@ -37,7 +36,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { tenant } = useTenant();
   const { activeRole, isManager } = useRole();
-  const hasDesktopAccess = planIncludes(tenant?.subscriptionTier || "free", "pro");
+  const hasDesktopAccess = Boolean(tenant?.collectorEntitled);
   const administration = useWorkspaceAdministration();
   const { players } = usePlayersData();
   const displayName =

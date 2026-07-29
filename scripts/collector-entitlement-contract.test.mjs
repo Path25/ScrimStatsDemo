@@ -32,7 +32,15 @@ test("database module state agrees with the Pro Collector contract", () => {
 test("Integrations does not present Collector as active for Free workspaces", () => {
   const integrations = read("src/pages/Integrations.tsx");
   const profileControl = read("src/components/integrations/CaptureProfileControl.tsx");
+  const settings = read("src/pages/Settings.tsx");
+  const moduleBadge = read("src/components/workspace/ModuleStateBadge.tsx");
   assert.match(integrations, /hasCollectorAccess=\{hasDesktopAccess\}/);
+  assert.match(integrations, /Boolean\(tenant\?\.collectorEntitled\)/);
+  assert.match(integrations, /enabled=\{hasDesktopAccess && modules\.collector\.enabled\}/);
+  assert.match(integrations, /unavailableLabel="Pro feature"/);
   assert.match(profileControl, /requiresCollector && !hasCollectorAccess \? "Pro feature"/);
   assert.match(profileControl, /Game Capture is included with Pro/);
+  assert.match(settings, /Boolean\(tenant\?\.collectorEntitled\)/);
+  assert.match(moduleBadge, /enabled = true/);
+  assert.match(moduleBadge, /!enabled \? unavailableLabel/);
 });

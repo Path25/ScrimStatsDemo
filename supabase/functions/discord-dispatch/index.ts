@@ -16,6 +16,7 @@ type IntegrationEvent = {
 };
 
 const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
+const DISCORD_SUPPRESS_EMBEDS = 1 << 2;
 
 function discordTime(payload: Record<string, unknown>) {
   const scheduledTime = typeof payload.scheduled_time === "string"
@@ -29,7 +30,7 @@ function discordTime(payload: Record<string, unknown>) {
 
 function eventMessage(event: IntegrationEvent, appUrl: string) {
   const opponent = typeof event.payload.opponent_name === "string" ? event.payload.opponent_name : "opponent";
-  const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}?source=discord` : `${appUrl}/scrims?source=discord`;
+  const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}` : `${appUrl}/scrims`;
   const title =
     event.event_type === "schedule_created"
       ? "Practice block scheduled"
@@ -43,6 +44,7 @@ function eventMessage(event: IntegrationEvent, appUrl: string) {
   return {
     content: `**${title}**\nvs ${opponent}\n${discordTime(event.payload)}\n${link}`,
     allowed_mentions: { parse: [] },
+    flags: DISCORD_SUPPRESS_EMBEDS,
   };
 }
 

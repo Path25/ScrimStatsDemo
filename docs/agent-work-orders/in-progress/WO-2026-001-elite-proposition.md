@@ -790,6 +790,37 @@ The isolated delivery transport works, but the actual customer-visible messages 
 2. **Repair the unfurl at the deployment boundary:** ensure the exact staging scrim URL fetched by Discord returns ScrimStats Open Graph title, image, and canonical metadata; the generic preview must reveal no tenant-owned data. Do not merely suppress the card or rely on an existing Discord cache.
 3. Add focused formatter and hosted preview contract coverage, deploy to staging, and record a fresh isolated message plus Discord preview screenshot. No customer tenant may be used.
 
+## Independent QA re-review - 2026-07-30 (formatter recovery and embed decision)
+
+### 1. Release verdict: HOLD
+
+The timestamp/encoding correction is now deployed and a new isolated event was delivered successfully. WO-001 remains on HOLD only for the incorrect Vercel unfurl and the already-outstanding negative-path matrix.
+
+### 2. What was verified
+
+- Deployed `discord-dispatch` is now version 10. It uses one parsed scheduled instant, emits a recipient-localised Discord timestamp token, removes the malformed separator, and uses `Time to be confirmed` for invalid input.
+- A fresh isolated `schedule_created` event was created at 20:17 UTC and delivered at 20:18 UTC with a persisted Discord provider receipt. This corroborates that the new deployed formatter, rather than only local source, was used for a real delivery.
+- The reported Vercel embed remains a valid defect. The added `?source=discord` parameter is not a reliable remedy; Discord continues to show the Vercel preview.
+
+### 3. Blocking issues
+
+- **Incorrect public preview remains:** the Discord card still presents Vercel branding for a ScrimStats workspace link.
+
+### 4. QA recommendation
+
+For this private operational message, suppress the Discord link embed rather than introducing a public, dynamic scrim preview. The message already identifies ScrimStats via the bot identity and link text; suppressing embeds is deterministic, avoids Vercel branding, and prevents a crawler-facing page from ever exposing tenant-owned context.
+
+### 5. Required developer handoff
+
+1. Add Discord's documented suppress-embeds message flag to outbound schedule messages while preserving the visible authenticated workspace link and `allowed_mentions: { parse: [] }`.
+2. Add a focused contract test that asserts the flag is present and one hosted isolated delivery screenshot proving no preview card is rendered.
+3. Do not replace the card with dynamic Open Graph content in this work order. Any future public preview/SEO work requires a separate privacy review and work order.
+
+### 6. Remaining release checks
+
+- After the suppressed-preview proof: controlled provider rejection/retry, disconnect, entitlement downgrade/module-disable, Free/Pro and non-manager denials, and cross-tenant/outbox isolation.
+- Theo retains final release approval before any customer workspace availability change or public Elite claim.
+
 ## Status-correction deployment and QA handoff - 2026-07-30
 
 - **Approved scope preserved:** Only the connected-versus-configured UI/status correction, matching support copy, and a focused regression test were released. No `/scrim` implementation, migration, Discord credential/configuration, subscription mutation, dispatch, customer communication, or module-state change was made.
@@ -823,3 +854,12 @@ The isolated delivery transport works, but the actual customer-visible messages 
 - **Local validation:** `node --test scripts/discord-message-presentation-contract.test.mjs scripts/discord-dispatch-env-contract.test.mjs scripts/discord-elite-contract.test.mjs scripts/public-layout-contract.test.mjs` passed **17/17**; ESLint passed with zero warnings; TypeScript passed; production Vite build and bundle budget passed; and `git diff --check` passed after the final newline correction.
 - **Intentionally not performed:** No new outbox event, schedule record, or Discord message was created. Those are an external/provider-facing staging mutation and require Theo's separate approval for one fresh disposable test event.
 - **QA handoff:** After Theo approves one fresh, isolated private-server schedule prompt, confirm the delivered Discord message contains exactly one localised schedule time (or `Time to be confirmed`), no mojibake or duplicate timestamp, and no mentions. Capture a screenshot showing the new `?source=discord` link preview as generic ScrimStats branding rather than Vercel. This approval/test still does not cover the existing retry, disconnect, entitlement, role, or tenant-isolation release gates.
+
+## Embed-suppression correction and QA handoff - 2026-07-30
+
+- **Approved scope:** Theo approved the QA-recommended private-message repair: suppress the outbound Discord embed rather than introduce dynamic public scrim metadata. The authenticated workspace link and no-mentions policy remain intact.
+- **Changed area:** `discord-dispatch` sets Discord's documented `SUPPRESS_EMBEDS` message flag (`1 << 2`) on every approved schedule prompt. The earlier cache-busting query parameter was removed because embed suppression is the deterministic privacy-preserving control.
+- **Contract coverage:** `scripts/discord-message-presentation-contract.test.mjs` now asserts the suppress-embeds flag, the empty allowed-mentions parse list, the single localised timestamp formatter, and the honest time fallback.
+- **Hosted deployment and delivery:** Supabase project `tvcgjehreaayfazlhvps` has active `discord-dispatch` version **11**. One Theo-approved dummy `schedule_changed` event for the isolated `clash` Elite test tenant was queued after deployment and delivered on the next scheduled worker run with attempt count zero, no error, and a persisted Discord provider receipt.
+- **Visual boundary:** No private Discord browser session is available in this workspace, so the receipt proves provider acceptance but does not itself prove the rendered absence of a card. Do not treat it as a screenshot substitute.
+- **QA handoff:** In the isolated private test channel, capture the new delivered message. It must retain the visible ScrimStats link, have no rich preview card, one localised schedule time, no mojibake, and no mentions. Keep the existing retry, disconnect, entitlement, role, and tenant-isolation matrix as separate release gates. `/scrim` remains with WO-2026-025.

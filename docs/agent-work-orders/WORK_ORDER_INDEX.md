@@ -30,7 +30,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-014 | Validate paid buyer problems and conversion proposition with target teams | Blocked | Marketing | [WO-2026-014](proposed/WO-2026-014-paid-buyer-validation-and-conversion-proposition.md) |
 | WO-2026-015 | Make Pro analytics legible and outcome-led | Done | Core Features Developer | [WO-2026-015](proposed/WO-2026-015-pro-analytics-legibility-and-value.md) |
 | WO-2026-016 | Restore reliable champion visual assets | Blocked | Core Features Developer | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) |
-| WO-2026-017 | Add tenant-safe workspace identity customization | Ready for QA | Core Features Developer | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
+| WO-2026-017 | Add tenant-safe workspace identity customization | In Progress | Core Features Developer | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
 | WO-2026-018 | Audit and improve workspace language and journey coherence | Backlog | PM | [WO-2026-018](proposed/WO-2026-018-workspace-language-and-journey-coherence.md) |
 | WO-2026-020 | Make Solo Queue tracker available on Free consistently | Backlog | Core Features Developer | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) |
 | WO-2026-021 | Restore existing-account workspace creation and confirmation recovery | Done | QA | [WO-2026-021](proposed/WO-2026-021-existing-account-workspace-recovery.md) |

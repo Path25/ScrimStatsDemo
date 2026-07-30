@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/20260730124701_workspace_logo_storage.sql");
+const recoveryMigration = read("supabase/migrations/20260730150313_workspace_logo_recovery.sql");
 const logoLib = read("src/lib/workspace-logo.ts");
 const administration = read("src/hooks/useWorkspaceAdministration.ts");
 const tenantContext = read("src/contexts/TenantContext.tsx");
@@ -24,13 +25,30 @@ test("workspace logo storage is private, constrained, and tenant-isolated", () =
   assert.match(migration, /on storage\.objects for delete to authenticated/);
 });
 
-test("workspace logo browser flow uses safe paths, signed reads, and fallback rendering", () => {
+test("workspace logo recovery policies permit only legacy reads or constrained versioned paths", () => {
+  assert.match(recoveryMigration, /drop policy if exists workspace_logos_staff_update/);
+  assert.match(recoveryMigration, /\(storage\.foldername\(name\)\)\[1\] = membership\.tenant_id::text/);
+  assert.match(recoveryMigration, /\(storage\.foldername\(name\)\)\[2\] = 'logo'/);
+  assert.match(recoveryMigration, /storage\.filename\(name\) ~\* '\^\[0-9a-f\]\{8\}/);
+  assert.match(recoveryMigration, /name = membership\.tenant_id::text \|\| '\/logo'/);
+  assert.match(recoveryMigration, /on storage\.objects for insert to authenticated/);
+  assert.match(recoveryMigration, /on storage\.objects for delete to authenticated/);
+  assert.doesNotMatch(recoveryMigration, /create policy workspace_logos_staff_update/);
+});
+
+test("workspace logo browser flow uses safe versioned paths, signed reads, and fallback rendering", () => {
   assert.match(logoLib, /workspace_logo_path/);
   assert.match(logoLib, /image\/jpeg/);
   assert.match(logoLib, /image\/png/);
   assert.match(logoLib, /image\/webp/);
   assert.match(logoLib, /SVG and other file types are not accepted/);
-  assert.match(administration, /\.upload\(path, file, \{ upsert: true/);
+  assert.match(logoLib, /\$\{tenantId\}\/logo\/\$\{version\}/);
+  assert.match(logoLib, /logo\\\/\[0-9a-f-\]\{36\}/);
+  assert.match(administration, /const previousPath = workspaceLogoPathFromSettings\(tenant\.settings\)/);
+  assert.match(administration, /\.upload\(path, file, \{ upsert: false/);
+  assert.match(administration, /if \(settingsError\) \{\s+const \{ error: cleanupError \} = await supabase\.storage\.from\(workspaceLogoBucket\)\.remove\(\[path\]\)/s);
+  assert.match(administration, /\.remove\(\[previousPath\]\)/);
+  assert.match(administration, /Workspace logo saved, but the previous image could not be removed/);
   assert.match(administration, /delete settings\.logo_url/);
   assert.match(administration, /\.remove\(\[path\]\)/);
   assert.match(tenantContext, /createSignedUrl\(logoPath, 60 \* 60\)/);

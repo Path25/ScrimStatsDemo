@@ -13,9 +13,17 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
 | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Discord Functions v6/v6/v2/v6/v6 contain the server release-state guard | Direct planned/disabled denial, then approved isolated-provider workflow matrix. |
-| [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) | QA and Release Auditor | Hosted private Storage migration plus local validation completed | Owner/admin/member/cross-tenant Storage matrix, invalid-file recovery, and desktop/mobile workspace identity checks. |
+
+## In Progress
+
+| Work order | Lane | Active scope | Collision risk |
+|---|---|---|---|
+| [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) | Core Features Developer | Approved recovery correction: versioned tenant logo paths, settings-first reference commit, and Storage/RLS policy update. | Do not overlap with WO-2026-023 or other tenant settings/Storage/RLS work. |
 
 ## Sequenced or blocked
+
+| Work order | Lane | Why it is not ready | Collision risk |
+|---|---|---|---|
 
 | Work order | Proposed lane / owner | Why it is not ready | Collision risk |
 |---|---|---|---|

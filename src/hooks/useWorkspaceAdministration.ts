@@ -168,10 +168,10 @@ export function useWorkspaceAdministration() {
       if (validationError) throw new Error(validationError);
 
       const path = workspaceLogoPath(tenant.id);
-      const hadManagedLogo = workspaceLogoPathFromSettings(tenant.settings) === path;
+      const previousPath = workspaceLogoPathFromSettings(tenant.settings);
       const { error: uploadError } = await supabase.storage
         .from(workspaceLogoBucket)
-        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
+        .upload(path, file, { upsert: false, cacheControl: "3600", contentType: file.type });
       if (uploadError) throw uploadError;
 
       const settings = { ...tenant.settings, [workspaceLogoSettingKey]: path };
@@ -181,12 +181,23 @@ export function useWorkspaceAdministration() {
         .update({ settings })
         .eq("id", tenant.id);
       if (settingsError) {
-        if (!hadManagedLogo) await supabase.storage.from(workspaceLogoBucket).remove([path]);
+        const { error: cleanupError } = await supabase.storage.from(workspaceLogoBucket).remove([path]);
+        if (cleanupError) {
+          throw new Error("The logo was not saved and its temporary upload could not be cleaned up. Please contact support.");
+        }
         throw settingsError;
       }
+
+      if (!previousPath || previousPath === path) return { cleanupError: null };
+      const { error: cleanupError } = await supabase.storage.from(workspaceLogoBucket).remove([previousPath]);
+      return { cleanupError };
     },
-    onSuccess: async () => {
+    onSuccess: async ({ cleanupError }) => {
       await refreshTenant();
+      if (cleanupError) {
+        toast.warning("Workspace logo saved, but the previous image could not be removed. Please contact support.");
+        return;
+      }
       toast.success("Workspace logo saved.");
     },
     onError: (error) => toast.error(message(error, "Workspace logo could not be saved.")),

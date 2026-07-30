@@ -1,7 +1,7 @@
 # WO-2026-017 - Add tenant-safe workspace identity customization
 
 - **ID reservation:** [WO-2026-017 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -143,3 +143,63 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 5. Attempt SVG, GIF, zero-byte, oversized, malformed-path, and upload-failure cases. Confirm clear error state and retention of the prior safe logo or initials fallback.
 
 The hosted migration is applied. No deployment, production data change, plan change, or external communication is approved by this handoff.
+
+## Independent QA audit - 2026-07-30
+
+### 1. Release verdict: HOLD
+
+The deployed Storage boundary is correctly private and tenant-scoped, but the replacement recovery path fails an explicit acceptance criterion. No authenticated browser or live object-operation matrix has been supplied, so release readiness is also unproven.
+
+### 2. What was verified
+
+- `node --test scripts/workspace-identity-contract.test.mjs` passed 2/2 locally.
+- Hosted project `tvcgjehreaayfazlhvps` records migration `20260730124701_workspace_logo_storage`; `workspace-logos` is private, RLS is enabled for `storage.objects`, the limit is 2,097,152 bytes, and only JPEG, PNG, and WebP are allowed.
+- Live Storage policy inspection confirms member read and owner/admin-only insert, update (`USING` and `WITH CHECK`), and delete. Each policy binds the object to the authenticated user's own `<tenant-id>/logo` path. The tenant settings update policy is also owner/admin-only with both `USING` and `WITH CHECK`.
+- Source review confirms managed-logo reads use one-hour signed URLs; the sidebar and workspace switcher share image-error initials fallback; SVG, zero-byte, and oversized client-side selections are rejected.
+- Security advisor output contains existing project-wide RLS and `SECURITY DEFINER` notices, but no new workspace-logo bucket/policy finding.
+
+### 3. Blocking issues
+
+- **Replacement recovery violates the acceptance criterion.** `saveWorkspaceLogo` uses `upload(path, file, { upsert: true })` at the fixed existing `<tenant-id>/logo` path before it writes `workspace_logo_path` to tenant settings. When a managed logo already exists, a subsequent tenant-settings error does not restore the previous object (`hadManagedLogo` skips cleanup). The user receives an error, but the old asset has already been overwritten; after a refresh or signed-URL cache expiry the new image can appear despite the failed operation. This does not retain the prior safe logo or an intentional initials fallback.
+
+### 4. Important risks
+
+- No authenticated hosted owner/admin/member/cross-tenant Storage operation has been run. Policy text and a private bucket do not prove Storage API enforcement, signed-URL creation, overwrite, or delete behaviour under real browser sessions.
+- No staged browser evidence covers file validation, replacement/removal, failed image load, sidebar/switcher consistency, or mobile layout.
+
+### 5. Unverified but required checks
+
+- After the recovery correction: owner/admin upload, replace, remove, and settings-write-failure recovery; member write denial; tenant-B read/write/update/delete and signed-URL denial for tenant-A's object.
+- PNG/JPEG/WebP success; SVG/GIF/zero-byte/over-2-MB rejection; simulated upload and settings failures; desktop and mobile identity rendering.
+
+### 6. Suggested fixes or next validation steps
+
+1. Core Features Developer must make replacement recoverable. Prefer a tenant-scoped versioned object reference: upload a new constrained tenant-path object, commit the new safe reference only after successful settings update, then clean up the prior object. Preserve the previous reference/object if either stage fails. Update Storage path policies and contract tests accordingly. A client-only delete attempt after overwriting the fixed path is not adequate recovery.
+2. Theo must approve any follow-on hosted migration or policy change before it is applied, because this changes Storage/RLS behaviour.
+3. Supply two isolated tenant sessions (owner/admin and member) for the authenticated Storage and browser matrix. Do not create test artifacts until Theo approves temporary test-logo creation and cleanup.
+
+## Recovery correction in progress - 2026-07-30
+
+Theo approved the recovery correction and a follow-on Storage/RLS migration on 2026-07-30. The corrected flow uses a new constrained versioned tenant object path for every upload, commits `workspace_logo_path` only after that upload succeeds, removes the new object if the settings write fails, and removes the prior referenced object only after the settings write commits. The legacy fixed `<tenant-id>/logo` path remains readable and deletable until each existing workspace replaces or removes its logo. Hosted migration application and authenticated browser verification remain separate approval/evidence gates.
+
+### Local implementation and validation evidence
+
+- **Changed areas:** `src/lib/workspace-logo.ts`, `src/hooks/useWorkspaceAdministration.ts`, `scripts/workspace-identity-contract.test.mjs`, and migration `supabase/migrations/20260730150313_workspace_logo_recovery.sql`.
+- **Recovery behavior:** New objects use `<tenant-id>/logo/<UUID>` with `upsert: false`. A settings-write failure removes only the newly uploaded object, retaining the prior reference and object. A successful write removes the previously referenced object afterwards; if that cleanup fails, the saved new logo remains referenced and the user receives an explicit support warning.
+- **Storage/RLS behavior proposed:** Versioned objects require an exact tenant first folder, a literal `logo` second folder, and a UUID object name. Member reads and staff deletes also retain the old fixed `<tenant-id>/logo` allowance only for legacy assets. New fixed-path uploads or updates are not permitted.
+- **Local checks passed (2026-07-30):** `tsc --noEmit`; `eslint . --max-warnings 0`; full `node --experimental-strip-types --test scripts/*.test.*` suite (182/182); focused workspace identity contract (3/3); production Vite build; bundle budget; and `git diff --check`.
+- **Local environment note:** `npm run typecheck` initially failed because the shell's globally resolved npm installation is missing, not because of a project failure. Direct project binaries were used for the successful validation above.
+
+### Updated QA handoff
+
+**Exact work order:** WO-2026-017 - Add tenant-safe workspace identity customization.
+
+1. Confirm applied migration `20260730150313_workspace_logo_recovery.sql`. It replaces the previous update policy with the versioned-path insert/delete/read policies while keeping the bucket private, MIME-limited, and size-limited.
+2. As tenant A owner/admin, upload a valid logo, then simulate a tenant-settings update failure during replacement. Confirm the existing referenced object and rendered logo remain unchanged; verify the newly uploaded versioned object is removed.
+3. As tenant A owner/admin, complete a replacement and removal. Confirm the new path is referenced only after the settings write and the prior fixed or versioned path is removed after success. Record the explicit cleanup-warning behavior if deletion is deliberately denied.
+4. As tenant A member and tenant B owner/admin/member, attempt direct versioned-path read, signed-URL creation, insert, delete, and tenant-settings mutation. Confirm only same-tenant members may read and only same-tenant owners/admins may write/delete.
+5. Repeat PNG/JPEG/WebP, invalid SVG/GIF/zero-byte/over-2-MB, failed-image fallback, and desktop/mobile Settings/sidebar/switcher checks. Use isolated non-customer accounts and approved temporary artifacts only.
+
+**Hosted migration evidence (2026-07-30):** Supabase project `tvcgjehreaayfazlhvps` records `20260730150313_workspace_logo_recovery`. Read-only inspection confirms `workspace-logos` remains private, has the 2,097,152-byte JPEG/PNG/WebP constraints, and now has exactly the member-read, staff-insert, and staff-delete versioned-path policies. No deployment or authenticated hosted verification has been performed for this correction.
+
+**Advisor review (2026-07-30):** The Supabase security advisor returned 52 existing project-wide notices; none reference `workspace-logos` or `workspace_logo` policy objects. Existing RLS-without-policy and `SECURITY DEFINER` notices remain outside this work order's scoped Storage correction.

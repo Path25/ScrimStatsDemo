@@ -28,6 +28,15 @@ test("Discord paths enforce released Elite access below the browser", () => {
 
   const install = read("supabase/functions/discord-install/index.ts");
   assert.match(install, /managerMembership\(oauthState\.user_id, oauthState\.tenant_id\)/);
+  assert.match(install, /const approvedAppOrigins = new Set/);
+  assert.match(install, /https:\/\/staging\.scrimstats\.gg/);
+  assert.match(install, /return_url: returnUrl/);
+  assert.match(install, /select\("id, tenant_id, user_id, return_url, expires_at, consumed_at"\)/);
+  assert.match(install, /new URL\(`\/integrations\?discord=/);
+  const redirectMigration = read("supabase/migrations/20260730181840_discord_oauth_return_url.sql");
+  assert.match(redirectMigration, /add column if not exists return_url text not null/);
+  assert.match(redirectMigration, /discord_oauth_states_return_url_check/);
+  assert.match(redirectMigration, /https:\/\/staging\.scrimstats\.gg/);
 });
 
 test("Discord reminder scheduling stays within the approved Elite promise", () => {
@@ -45,7 +54,7 @@ test("Discord dispatch stays within the selected Elite schedule scope", () => {
   assert.doesNotMatch(dispatch, /availability_reminder|collector_reminder/);
   assert.match(dispatch, /discordEntitled\(event\.tenant_id\)/);
   assert.match(dispatch, /claim_integration_events_for_provider/);
-  assert.match(config, /\[functions\.discord-install\]\s+verify_jwt = true/);
+  assert.match(config, /\[functions\.discord-install\]\s+verify_jwt = false/);
   assert.match(config, /\[functions\.discord-config\]\s+verify_jwt = true/);
   assert.match(config, /\[functions\.discord-schedule-reminders\]\s+verify_jwt = false/);
   assert.match(config, /\[functions\.discord-dispatch\]\s+verify_jwt = false/);
@@ -70,10 +79,17 @@ test("Discord owner controls use server-enforced Functions and bounded prompt ty
   assert.match(hook, /action: "disconnect"/);
   assert.match(panel, /Connect Discord/);
   assert.match(panel, /Save schedule prompts/);
+  assert.match(panel, /deliveryConfigured = subscriptions\.length > 0/);
+  assert.match(panel, /Delivery active/);
+  assert.match(panel, /Server connected — delivery not configured/);
+  assert.doesNotMatch(panel, /installation \? "Connected" : "Setup required"/);
   assert.match(panel, /never relays scouting, review, player, or credential content/);
   assert.match(panel, /discordEventTypes/);
   assert.match(manifest, /## Test-only Discord delivery functions/);
   assert.doesNotMatch(manifest, /Roadmap-preview Discord delivery/);
+  const support = read("docs/operations/DISCORD_DELIVERY_SUPPORT.md");
+  assert.match(support, /Server connected — delivery not configured/);
+  assert.match(support, /Delivery active/);
 });
 
 test("Discord worker scheduling remains Vault-backed and operator-only", () => {

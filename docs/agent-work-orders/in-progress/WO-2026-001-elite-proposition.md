@@ -1,6 +1,6 @@
 # WO-2026-001 - Define and deliver a credible Elite proposition
 
-- **Status:** In Progress
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -433,3 +433,206 @@ The current delivery path is an outbound Discord bot integration implemented thr
 - **Hosted verification:** `public.configure_discord_test_worker_schedule()` exists as `SECURITY DEFINER` with an empty search path; execution is denied to `anon` and `authenticated` and retained for `service_role`. No Discord reminder or dispatch cron job exists after migration application (`0`).
 - **Security review:** The Supabase security advisor reported no new warning for this helper. Pre-existing project-wide advisor findings remain outside this work order; none were changed or suppressed.
 - **Boundary preserved:** The migration added no Vault values, did not invoke the helper, schedule a job, send a Discord message, change OAuth configuration, or change any tenant feature state.
+
+## Test-tenant release-state verification - 2026-07-30
+
+- **Theo-approved data change:** Only the non-customer `clash` workspace Discord module was changed from `planned` to `live`; `is_enabled` remained `true`. No customer workspace was changed.
+- **Hosted browser evidence:** Signed in as the `clash` owner on `https://staging.scrimstats.gg/integrations`, the integration panel progressed from its loading state to exactly one visible `Connect Discord` control. This confirms the deployed owner/admin control path is reachable for the approved Elite test tenant.
+- **Responsive evidence:** At a 390px mobile viewport, the `Connect Discord` control remained visible and fully within the viewport (left `76.7px`, right `242.7px`, viewport width `390px`).
+- **Boundary preserved:** The button was not pressed. No OAuth request, provider credential, secret/Vault change, cron invocation, Discord message, or tenant other than `clash` was affected.
+
+## Test-worker configuration check - 2026-07-30
+
+- **Theo approval recorded:** Theo approved isolated secret/Vault configuration and worker scheduling for the non-customer `clash` test path.
+- **Read-only prerequisite check:** Vault contains `project_url` and `publishable_key`; `discord_dispatch_secret` is not present.
+- **Safe stop:** This session does not have a Supabase Edge Function secret-management capability. Creating only a Vault value would leave the two worker Functions without the matching `DISCORD_DISPATCH_SECRET` and cause unauthorized scheduled calls. The schedule helper was therefore not invoked.
+- **No side effects:** No credential was generated or exposed; no Vault or Edge Function secret changed; no cron job, OAuth action, or Discord message was created.
+
+## Test-worker scheduling - 2026-07-30
+
+- **Prerequisite evidence:** After Theo configured the server-side secret pair, the Vault name `discord_dispatch_secret` was confirmed present without reading its value.
+- **Approved scheduler invocation:** `public.configure_discord_test_worker_schedule()` completed successfully.
+- **Hosted schedule evidence:** Active job `scrimstats-discord-dispatch` runs every minute (`* * * * *`, job `5`) and active job `scrimstats-discord-reminders` runs every 15 minutes (`*/15 * * * *`, job `4`). Stored command text was deliberately not queried because it can contain the dispatch credential.
+- **Boundary preserved:** No OAuth installation, channel configuration, test event, Discord message, or customer-tenant module change was performed. Edge Function secret equality and first worker HTTP result remain for the controlled provider QA.
+
+## OAuth callback QA finding - 2026-07-30
+
+- **Reproduction:** Theo completed the approved Discord test-server authorization flow for the `clash` workspace. The redirect reached the hosted `discord-install` callback but returned `UNAUTHORIZED_NO_AUTH_HEADER`; no installation was created and the one-time state remains unconsumed.
+- **Cause:** Hosted `discord-install` has platform `verify_jwt = true`. Discord cannot supply a Supabase user JWT on the provider callback, so the platform rejects the GET before the Function can validate its one-time OAuth state.
+- **Required correction:** Set only `[functions.discord-install] verify_jwt = false` and deploy the reviewed Function. The existing Function continues to require a valid user via `authenticatedUser()` for POST install starts; GET callbacks remain protected by the state hash, expiry, single-use claim, renewed entitlement, and renewed manager-role checks.
+- **Release boundary:** This requires Theo approval for the Function configuration/deployment correction. Do not retry the existing callback; its provider code is one-time use.
+
+## OAuth callback correction and hosted deployment - 2026-07-30
+
+- **Theo approval:** Theo explicitly approved the narrow callback configuration correction and `discord-install` deployment.
+- **Change:** `[functions.discord-install] verify_jwt` is now `false` in `supabase/config.toml`. The corresponding contract test now asserts the callback-safe configuration.
+- **Why this remains protected:** Supabase's platform JWT gate is disabled only so Discord's unauthenticated provider redirect can reach the handler. The POST install-start path still authenticates the user and checks manager membership plus Elite/live/enabled entitlement. The GET callback still requires a hashed, unexpired, single-use state and repeats the entitlement and manager-role checks before creating an installation.
+- **Hosted deployment evidence:** `discord-install` deployed successfully to project `tvcgjehreaayfazlhvps` as active version `8`, with hosted `verify_jwt=false`. The hosted revision was read back after deployment.
+- **Local validation:** `node --test scripts/discord-elite-contract.test.mjs` passed 6/6; `tsc --noEmit` passed; `git diff --check` passed (line-ending notices only).
+- **Fresh-provider test required:** The earlier Discord authorization code must not be replayed. Start a new install from the `clash` test workspace, then have Theo confirm the final Discord server-add action for the private test server. Verify the resulting installation via the authenticated status endpoint before sending or scheduling any message.
+
+## OAuth provider-install verification and redirect finding - 2026-07-30
+
+- **Provider result:** Theo completed a fresh, approved authorization for the private test server. The hosted database now contains one `active` Discord installation for the non-customer `clash` workspace, associated with the test guild `ScrimStats Integration Test`. No channel subscription, configuration, test event, or Discord message was created.
+- **Callback evidence:** Hosted `discord-install` version `8` received the new install-start POST with `200`, then the Discord callback GET with `500`. The state was successfully claimed and the installation was persisted before the failure, so this is not a failed provider authorization.
+- **Remaining defect:** `appRedirect()` constructs a relative redirect whenever `SCRIMSTATS_APP_URL` is unset. `Response.redirect()` requires an absolute URL, producing the generic `Internal Server Error` after a successful installation. The application did not return the user to the integrations screen.
+- **Required decision before correction:** Configure an appropriate server-side app URL for this environment, or implement a state-bound return URL so one shared Supabase project can safely return users to the originating approved app host. The latter is safer for staging/production coexistence but requires a schema migration, Function revision, and separate Theo approval. Do not set a staging-only URL as a permanent shared-backend default without that decision.
+
+## State-bound OAuth return correction - 2026-07-30
+
+- **Theo approval:** Theo explicitly approved the state-bound callback correction, hosted migration, and `discord-install` deployment.
+- **Changed files:** `supabase/migrations/20260730181840_discord_oauth_return_url.sql`, `supabase/functions/discord-install/index.ts`, and `scripts/discord-elite-contract.test.mjs`.
+- **Security design:** New OAuth states store an allowlisted originating app origin (`scrimstats.gg`, `www`, staging, or approved localhost) in the already service-role-only `discord_oauth_states` table. The callback uses that persisted value, never an untrusted callback parameter. Unknown request origins fall back to the production app origin. Existing user authentication, one-time state hashing/expiry/claim, renewed entitlement, and manager-role checks are unchanged.
+- **Hosted database evidence:** Migration `20260730181840_discord_oauth_return_url` is in hosted history. `discord_oauth_states.return_url` is non-null with a production-origin default and a database allowlist constraint.
+- **Hosted Function evidence:** `discord-install` version `9` is active with `verify_jwt=false`; it includes the state-bound redirect revision.
+- **Browser verification:** The authenticated `clash` owner now sees `Discord delivery — Connected`, the private test server name, `Disconnect`, and the bounded channel/prompt controls on staging. No channel was loaded, no subscription was saved, and no Discord message was sent.
+- **Validation:** Discord contract tests 6/6, ESLint zero warnings, TypeScript, production Vite build, and `git diff --check` passed. The build emitted only the pre-existing stale Browserslist-data notice. A full `npm` validation was unavailable because the system npm shim is broken; an attempted alternate package-manager invocation moved package folders into `node_modules/.ignored` before failing network access. All moved folders were restored locally without deletion before the successful direct-tool validation.
+- **Advisor review:** No new issue was introduced by this additive, service-role-only column. The advisor continues to report pre-existing project-wide RLS-without-policy informational findings (including this intentionally service-role-only state table) and unrelated `SECURITY DEFINER`/Auth warnings; none were suppressed or changed.
+
+### Exact QA handoff (post-return correction)
+
+1. From the authenticated non-customer `clash` Elite owner workspace on staging, begin a new Discord install and complete the private-server provider authorization. Confirm the callback returns to `https://staging.scrimstats.gg/integrations?discord=connected` rather than an error page.
+2. Confirm the installation remains active via `discord-config` status and that the staging screen shows `Connected` plus the expected test server name.
+3. Test an expired/replayed state and an unsupported Origin without changing any customer tenant. Confirm neither permits installation and both use a safe absolute redirect.
+4. Retain the existing provider QA boundary: do not load channels, save prompt subscriptions, create a schedule event, or send a Discord message unless those specific actions are separately approved.
+
+## Approved slash-command scheduling extension - 2026-07-30
+
+- **Theo approval:** Theo approved this WO extension and confirmed that Discord-originated scheduling must use a slash command, not native Discord Scheduled Events.
+- **Outcome / users:** An explicitly delegated Discord staff member can create a ScrimStats practice block with `/scrim`. Coaches and managers who work in ScrimStats receive the same canonical block; configured Discord channels receive the existing selected create/change/cancel notices from that canonical record.
+- **Size / risk / owner:** M / High / Core Features Developer. The public Discord interaction endpoint is an external-provider and authorization boundary.
+- **Authorisation policy:** A workspace owner/admin must configure one or more permitted Discord roles for the installed guild. The interaction must have a valid Discord Ed25519 signature, target the installed guild, and include one of those roles. Browser state, user-editable metadata, and arbitrary guild users are never trusted.
+- **Duplicate and conflict policy:** Persist a provider interaction receipt for idempotency; the same interaction can create at most one block. Reject an overlapping active practice block and return a clear ephemeral response rather than silently creating a duplicate. ScrimStats remains the canonical schedule; the existing provider-scoped outbox controls outbound notices.
+- **Likely affected areas:** a secure `discord-interactions` Edge Function; server-side Discord role discovery/configuration; interaction receipt and role-access tables/functions/RLS; canonical schedule creation path; Discord integration settings UI; Edge Function manifest; contract tests and QA runbook.
+- **Acceptance criteria:** signed PING validation; signed `/scrim` only creates a block for an enabled Elite/live Discord workspace and authorised configured role; invalid signature, wrong guild, missing role, replay, overlap, Free/Pro, disabled/revoked, and non-manager configuration paths deny safely; a successful block reaches the canonical ScrimStats calendar and queues only the opted-in outbound notice; no duplicate block or provider delivery is produced for a single interaction.
+- **QA scenario:** Use the isolated `clash` workspace/private test server. Configure one permitted test role, invoke a valid `/scrim`, verify one canonical block and one queued outbound event, replay it, exercise an overlap and unauthorised role, then verify configured create/change/cancel delivery without customer data or customer guilds.
+- **Required provider handoff:** After deployment, Theo must set the Discord application's Interactions Endpoint URL to the deployed Function and set the server-only `DISCORD_PUBLIC_KEY` value from Discord Developer Portal. The endpoint must verify the signature and return PONG before Discord accepts it. Command registration and the first provider command invocation remain separate, approved external actions.
+
+## Independent QA re-audit - 2026-07-30
+
+### 1. Release verdict: HOLD
+
+The isolated test path is now materially further forward: the guarded Functions, test-only scheduler, OAuth callback, return routing, and one non-customer installation are hosted. It is not ready for customer release or an Elite availability claim because no selected channel, delivery event, message, failure/retry, role-denial, or outbox-isolation behaviour has been independently exercised.
+
+### 2. What was verified
+
+- **Hosted revisions and migrations:** `discord-install` is active at v9 with platform JWT verification disabled for the provider callback; the other current Discord Function paths retain their reviewed guarded configuration. Migrations `20260730173144_discord_test_worker_schedule` and `20260730181840_discord_oauth_return_url` are present in hosted history.
+- **Hosted security boundary:** `configure_discord_test_worker_schedule()` is `SECURITY DEFINER` with an empty search path; `anon` and `authenticated` cannot execute it, while `service_role` can. The approved test worker jobs are active: dispatch every minute and reminders every 15 minutes.
+- **Test-tenant state:** Only the non-customer `clash` workspace is Elite, Discord `live`/enabled, and has an active Discord installation. It has **zero** enabled channel subscriptions and **zero** Discord outbox events, so this review caused no message delivery.
+- **Source and local regression:** The owner/admin UI uses Functions rather than direct database mutation. The focused Discord contract suite passed 6/6 in this review. Billing retains the qualified copy, `Discord schedule prompts when available`, and the release manifest now correctly identifies Discord as test-only rather than retired.
+- **Support path exists:** `docs/operations/DISCORD_DELIVERY_SUPPORT.md` defines unavailable, connected, retrying, failed, and disconnected support states without asking support staff to handle Discord tokens.
+
+### 3. Blocking issues
+
+- **No end-to-end delivery proof:** QA has not approved or performed loading the test channels, saving a subscription, generating a schedule/reminder event, dispatching a message, or proving provider receipt. The current installation alone is not a completed customer workflow.
+- **No authenticated negative-path proof:** The latest provider configuration has not been exercised for Free/Pro, Elite member/viewer, planned, live-disabled, OAuth expiry/replay, post-start role removal, downgrade, or cross-tenant behaviour.
+
+### 4. Important risks
+
+- **State-contract mismatch:** The UI renders `Connected` whenever an installation exists, but the support runbook defines `Connected` as an installation with one or more selected channel subscriptions. The current `clash` test tenant has an active installation and zero subscriptions, reproducing this mismatch. Return to Developer: distinguish `Server connected — delivery not configured` from `Delivery active`, update the support copy/contract test, and retest loading/empty/error states.
+- **Current browser evidence unavailable to this re-audit:** No claimable authenticated staging browser tab was available. Prior handoff browser evidence is retained, but this re-audit did not independently repeat it.
+
+### 5. Unverified but required checks
+
+- Approved test-server channel listing, selection save, all four allowed event types, exactly one successful message, no private data or mentions, deduplication, retry/backoff/final failure, disconnect, and downgrade cancellation.
+- Direct Function denial for all non-entitled/non-manager/module-state combinations; provider-scoped outbox isolation with a non-Discord event; worker HTTP results and dispatch-secret rejection.
+- Desktop/mobile loading, empty, error, connected-but-unconfigured, and active-delivery presentation after the status wording correction.
+
+### 6. Suggested next validation steps
+
+1. Developer resolves the connected-versus-configured status mismatch and supplies a deployed revision plus focused regression evidence.
+2. Theo explicitly approves one bounded test: load the private test-server channels, select only `#scrimstats-test`, subscribe to one schedule event, create one disposable test schedule change, and allow one dispatch. QA will then verify the message and immediately remove the subscription/test event.
+3. Approve a separate controlled failure/retry exercise and role/module denial matrix. Keep every customer Discord module planned/disabled until both matrices pass and Theo makes a customer-release decision.
+
+## Independent QA scope recheck - 2026-07-30 (slash-command extension)
+
+### 1. Release verdict: HOLD
+
+The new `/scrim` requirement expands WO-001 from outbound notifications to a public, signed Discord-to-ScrimStats mutation path. It is specified but not implemented or deployed. The existing outbound test path also retains its previously recorded delivery and negative-path evidence gaps.
+
+### 2. What was verified
+
+- The work order contains a bounded authorization, idempotency, conflict, and tenant-entitlement contract for `/scrim`.
+- Hosted Edge Function inventory has no `discord-interactions` Function. Repository search found no corresponding handler, interaction-receipt table/migration, Discord-role access data model, or command-configuration UI.
+- The existing Discord UI still renders `Connected` from installation presence alone; the previously recorded connected-versus-configured mismatch is not corrected.
+
+### 3. Blocking issues
+
+- **Slash-command workflow unimplemented:** No signed PING, Ed25519 verification, Discord public-key secret, role mapping, replay receipt, canonical schedule creation, overlap protection, command registration, or provider endpoint exists. The new accepted scope cannot be released, tested as a complete workflow, or claimed available.
+- **Outbound delivery remains unproven:** The isolated installation has no subscribed channel or queued event, so no actual delivery/failure/retry proof exists.
+
+### 4. Important risks
+
+- **Dispatch-board drift:** The board still says Discord hosting/configuration is gated even though the work order records hosted v9, active test jobs, and a test installation. It also does not describe the new high-risk slash-command work. PM should refresh the dispatch note before assigning further work.
+- **Status wording unresolved:** Do not use `Connected` as proof that delivery is active until a selected subscription exists.
+
+### 5. Unverified but required checks
+
+- All existing outbound test, role, module-state, retry, and cross-provider checks remain required.
+- After implementation: valid/invalid Discord signatures, PING, wrong guild, unauthorised role, replay, overlap, Free/Pro, revoked/disabled module, canonical record creation, and exactly-once outbound queueing.
+
+### 6. Suggested next validation steps
+
+1. PM keeps WO-001 with Core Features Developer and updates the assignment board to show the slash-command scope and the outstanding connected-state correction.
+2. Developer implements the bounded interaction path with migrations, RLS/grants, contract coverage, and a complete hosted handoff; no external endpoint or key is configured yet.
+3. Theo then separately approves setting `DISCORD_PUBLIC_KEY`, the Discord Interactions Endpoint URL, command registration, and one private-server command invocation. QA will review the PING/signature boundary before allowing a test `/scrim` mutation.
+
+## Scope partition and final developer handoff - 2026-07-30
+
+WO-001 remains the bounded outbound Discord delivery proposition. The separate inbound `/scrim` slash-command feature is now [WO-2026-025](../proposed/WO-2026-025-discord-slash-command-scheduling.md) and must not receive implementation work under this order.
+
+The approved worker-schedule and OAuth-return migrations are already hosted, and the guarded owner/admin controls, test worker jobs, state-bound callback, and isolated installation are evidenced above. They are not a current developer blocker.
+
+The only remaining development item in WO-001 is to correct the status contract identified by QA: show **`Server connected — delivery not configured`** when an installation exists with zero enabled channel subscriptions, and show **`Delivery active`** only once at least one selected subscription exists. Update the relevant support copy and focused contract coverage, preserving all existing tenant, entitlement, and provider controls. Do not add slash-command code, migrations, provider configuration, delivery events, or customer-facing availability changes in this work order.
+
+After this focused change, record its local validation and return WO-001 to QA for the previously approved isolated outbound delivery matrix. Do not continue expanding this work order.
+
+## Connected-versus-configured status correction - 2026-07-30
+
+- **Scope completed:** Only the QA-returned status contract was changed; no `/scrim` work, migration, provider configuration, delivery event, or customer-module change was made.
+- **Presentation:** An installed server with zero enabled subscriptions now shows `Server connected` and explains that delivery is not configured. `Delivery active` appears only once at least one enabled subscription exists. `Setup required` remains the uninstalled state.
+- **Support contract:** The support runbook now names the three distinct states: setup required/unavailable, server connected but delivery not configured, and delivery active.
+- **Focused regression coverage:** The Discord contract test asserts the subscription-derived state, both customer-visible labels, and the matching support language.
+- **Validation evidence:** `node --test scripts/discord-elite-contract.test.mjs` passed 6/6 and `git diff --check` passed. TypeScript and ESLint could not be rerun because their local package entrypoints are missing from `node_modules`; this is an environment dependency fault, not a passing result.
+- **QA handoff:** On staging with `clash` (active installation, zero subscriptions), confirm `Server connected` and the delivery-not-configured explanation at desktop and 390px mobile. Then, only under the already-approved isolated outbound matrix, save one enabled subscription and confirm the label transitions to `Delivery active`; do not send a message unless separately approved.
+
+## Independent QA recheck - 2026-07-30 (status correction)
+
+### 1. Release verdict: HOLD
+
+The status-contract correction passes source and focused local contract review, but no staging deployment/revision or authenticated browser result is recorded. The underlying outbound provider workflow remains intentionally unexercised. This is **Pass with follow-up** for the local correction, not a release pass.
+
+### 2. What was verified
+
+- `DiscordScheduleIntegration` now derives `deliveryConfigured` from enabled subscription count and displays `Setup required`, `Server connected`, or `Delivery active` accordingly.
+- The installed-but-unconfigured explanatory copy is present, and `DISCORD_DELIVERY_SUPPORT.md` now defines the same three distinct states.
+- `node --test scripts/discord-elite-contract.test.mjs` passed **6/6** independently in this review; the test explicitly covers both labels and the subscription-derived state. `git diff --check` reported no content errors (line-ending notices only).
+- The slash-command expansion is correctly partitioned into WO-2026-025; it is not treated as implemented under WO-001.
+
+### 3. Blocking issues
+
+- **Hosted correction unverified:** The developer handoff records no staging frontend deployment or authenticated browser proof for the new labels. Local source cannot establish what the `clash` owner currently sees.
+- **No delivery proof:** No channel subscription, test schedule event, dispatch, Discord message, failure/retry, or provider receipt has been approved or exercised.
+
+### 4. Important risks
+
+- TypeScript and ESLint were not rerun because local package entrypoints are missing. The focused Node contract test passes, but full local validation is incomplete.
+
+### 5. Unverified but required checks
+
+- Staging desktop and 390px view: `clash` with zero subscriptions must show `Server connected` plus the no-delivery explanation; after one enabled subscription it must show `Delivery active`.
+- Existing owner/admin, Free/Pro, member/viewer, planned/disabled, OAuth replay/expiry, cross-tenant, worker, outbox-isolation, retry/failure, disconnect, downgrade, and message-minimisation matrix.
+
+### 6. Suggested next validation steps
+
+1. Developer deploys the focused UI/support correction to staging and records the deployment revision; restore TypeScript/ESLint dependencies and provide their results.
+2. Theo approves the exact bounded test mutation: load only the private test-server channels, select `#scrimstats-test`, enable exactly one schedule event, and save. QA will verify the `Delivery active` transition; no message will be sent in that step.
+3. Obtain separate approval before creating one disposable schedule event and allowing the worker to dispatch one message, then immediately remove the subscription/event and return `clash` to Free when the matrix completes.
+
+## Status-correction deployment and QA handoff - 2026-07-30
+
+- **Approved scope preserved:** Only the connected-versus-configured UI/status correction, matching support copy, and a focused regression test were released. No `/scrim` implementation, migration, Discord credential/configuration, subscription mutation, dispatch, customer communication, or module-state change was made.
+- **Staging revision:** Commit `95f294b` (`Clarify Discord delivery status`) was pushed to `origin/codex/Staging`, the existing staging deployment branch.
+- **Local validation:** After `npm ci` restored the local dependency tree, ESLint passed with zero warnings, TypeScript passed, `node --test scripts/discord-elite-contract.test.mjs` passed 6/6, `node --test scripts/discord-status-contract.test.mjs` passed 1/1, the production Vite build passed, bundle budgets passed, and `git diff --check` found no content errors. The shell's bare `npm` shim still targets a missing global npm path; checks were run through the repaired Node/npm runtime instead.
+- **Hosted browser evidence:** On authenticated `https://staging.scrimstats.gg/integrations` as the `clash` owner, the installed `ScrimStats Integration Test` server with zero subscriptions displayed the exact badge `Server connected — delivery not configured` and the explanatory copy. At a 390px viewport, the single badge was visible and fully within the viewport (left 61.1px, right 343.3px of 390px).
+- **QA handoff:** Recheck the same `clash` workspace at desktop and 390px. It must show `Server connected — delivery not configured` while no subscription is enabled. Do not create a subscription, send a Discord message, or exercise `/scrim` under this handoff. The separate, already-recorded outbound delivery matrix and all authorization/provider checks remain release gates.

@@ -10,17 +10,18 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | L / High | Safe four-role/two-tenant fixture | Shared Draft, Scouting, Analytics role/capability and RLS/RPC work; do not run overlapping work in these areas. |
 
+
 ## Ready for QA
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
 | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) | QA and Release Auditor | Append-only service-role grant migration is applied; live grants/RLS/scorecard boundary verified | One approved non-customer source-trigger exercise, idempotency retry, and aggregate scorecard check shared with WO-003. |
+| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | `95f294b` pushed to `codex/Staging`; authenticated desktop and 390px zero-subscription status evidence recorded | Recheck the connected-versus-configured state only; do not create a subscription, dispatch a message, or test `/scrim` under this handoff. |
 
 ## In Progress
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
-| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | Core Features Developer | Owner/admin controls, manifest correction, and test-worker schedule preparation complete locally; hosted deployment/configuration remains gated. | Discord Functions, module state, entitlement logic, and contract tests; do not overlap with another Discord or plan-entitlement change. |
 
 ## QA blocked — Theo or PM input required
 
@@ -40,6 +41,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) | Core Features Developer | Depends on WO-2026-019's accepted evidence/fixture handoff | Shared `ChampionAvatar` and catalogue path; Core owns remediation after Fast Lane completes. |
 
 | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) | Core Features Developer | Theo approved implementation; WO-2026-009 sequencing lock is lifted | Billing-adjacent migration, Stripe worker, Vault, and cron work; preserve Collector/billing evidence boundaries. |
+| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | Core Features Developer | Split inbound `/scrim` feature; wait for WO-2026-001 correction and QA handoff | Shared Discord helpers/UI/outbox/manifest; do not run concurrently with WO-2026-001. |
 
 ## Fast Lane
 

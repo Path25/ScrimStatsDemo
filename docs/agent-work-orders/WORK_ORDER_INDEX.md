@@ -1,6 +1,6 @@
 # Work order index
 
-This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-024`; the next available 2026 ID is `WO-2026-025`.
+This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-025`; the next available 2026 ID is `WO-2026-026`.
 
 ## Reservation protocol
 
@@ -37,4 +37,5 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Blocked | Core Features Developer | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
 | WO-2026-023 | Let workspace owners create additional independent workspaces | Backlog | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
 | WO-2026-024 | Give players reliable read-only intelligence access | Ready for Development | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
+| WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Backlog | Core Features Developer | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Ready for Development | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |

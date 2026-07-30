@@ -19,7 +19,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA reproduced the deployed Tenant-A member Scouting/report staff-only denial. Reconcile the staging bundle and role gate with the approved member/viewer read-only scope, then provide a new hosted handoff. | Shared Scouting pages, role gate, and RLS/RPC contract; do not overlap Draft/Scouting refactors. |
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA found the deployed member evidence `Revise` mutation control. Guard it for member/viewer read-only access, validate, then provide a new staging handoff. | Shared Scouting report role gate and role contract; do not overlap Draft/Scouting refactors. |
 
 ## QA blocked — Theo or PM input required
 

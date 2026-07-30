@@ -306,3 +306,47 @@ The authenticated Tenant-A **member** journey fails a core acceptance criterion 
 1. **Core Features Developer:** compare the staging bundle/commit with `src/pages/Scouting.tsx` and `src/pages/ScoutingTeamReport.tsx`. Deploy the implementation that uses `canViewIntelligence` for member/viewer reads and reserves only authoring controls for `canEditIntelligence`; remove the deployed staff-only report branch. Record the deployed URL/commit and reproducible member steps.
 2. **QA:** rerun the complete authenticated role and tenant-isolation matrix after that handoff. No production release decision should be requested before it passes.
 3. **PM:** return WO-024 to **In Progress** / Core Features Developer; it is not Ready for release QA completion.
+
+## Independent QA hosted browser retest - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The previously-blocking deployed read path is repaired, but the authenticated member report still exposes an evidence-mutation control. This is an authorization/role-UX regression against an explicit acceptance criterion, so the work order cannot return to Ready for QA completion or release.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `MEMBER` browser session on staging now opens `/scouting` and lists the active `WO-024 QA Opponent A` fixture with `Open report`.
+- The member can open `/scouting/11ffd00f-80c2-4642-990a-2e994593919e` and read the active evidence, tendency, and linked unpublished Draft plan. The former `Private staff workspace` denial is no longer reproduced.
+- No mutation was submitted during this retest.
+
+### 3. Blocking issues
+
+- **Member edit control exposed:** the live report displays a `Revise` control next to `WO-024 QA evidence A` for the authenticated `MEMBER`. Revising evidence is a mutation and the work order explicitly forbids member/viewer create, edit, publish, archive, restore, and delete controls. Local source confirms the cause: `src/pages/ScoutingTeamReport.tsx` renders that button unconditionally around lines 286-292, unlike the adjacent authoring controls guarded by `canEditIntelligence`.
+
+### 4. Important risks
+
+- Server-side RLS may reject a submitted revision, but that would not make this acceptable: browser UI must not offer forbidden authoring, and the direct server mutation-denial check remains outstanding.
+
+### 5. Unverified but required checks
+
+- After fixing the control, the remaining member/viewer desktop/mobile route matrix, direct denied mutations, direct tenant-B reads/RPCs, and owner/admin authoring regression.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** guard the evidence `Revise` button and any associated dialog/mutation entry point with `canEditIntelligence`; add a role-contract/browser assertion that it is absent for both member and viewer.
+2. **Developer:** redeploy staging and provide commit/deployment evidence plus reproducible fixture steps.
+3. **QA:** retest the repaired control and complete the remaining hosted role matrix. Theo's final release approval remains required after QA passes.
+
+## Developer deployment handoff - 2026-07-31
+
+- Theo reports that `codex/Staging` was pushed and deployed after the hosted browser audit. Local and `origin/codex/Staging` both resolve to commit `920b0c5`.
+- No authenticated browser session or accessible Vercel project connection was available in this developer session, so the deployed member Scouting/report behavior is **not independently re-verified here**.
+- Status returns to **Ready for QA** solely to repeat the failed hosted regression and complete the remaining QA matrix. Release remains **HOLD** until independent authenticated evidence passes and Theo separately approves release.
+
+## Developer evidence-control repair - 2026-07-31
+
+- Theo approved the scoped repair after QA found that a member report exposed the evidence `Revise` action.
+- The evidence revision entry point is now rendered only when `canEditIntelligence` is true. The focused role contract asserts that the `reviseEvidence` trigger remains inside this guard.
+- This is a browser-role UX repair only: migration SQL, RLS policies, Auth, fixtures, billing, and customer data remain unchanged.
+- Final local validation 2026-07-31: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (22 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed. A fresh staging deployment and authenticated QA retest are still required before returning to QA.
+- Staging deployment handoff 2026-07-31: commit `ea33ae4` (`Hide scouting evidence revisions from members`) was pushed to `origin/codex/Staging`, the documented Git-triggered staging branch. `https://staging.scrimstats.gg/` responded with the ScrimStats public shell after the push. This is availability evidence only; no authenticated member/viewer route was exercised in this developer session.

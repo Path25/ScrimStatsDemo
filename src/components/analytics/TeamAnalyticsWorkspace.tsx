@@ -3,10 +3,12 @@ import {
   Activity,
   BarChart3,
   CheckCircle2,
+  ChevronDown,
   DatabaseZap,
   LineChart as LineChartIcon,
   Network,
   ShieldCheck,
+  SlidersHorizontal,
   Swords,
   Users,
 } from "lucide-react";
@@ -109,10 +111,21 @@ function AnalyticsFilters({
   onChange: (filters: TeamAnalyticsFilters) => void;
 }) {
   const playerOptions = useMemo(() => playerAnalytics(dataset), [dataset]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const active = Object.values(filters).some(Boolean);
+  const advancedFilterCount = [filters.format, filters.patch, filters.gameMode, filters.provider, filters.completeness, filters.classification, filters.playerId].filter(Boolean).length;
   return (
     <DataSurface className="p-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5 2xl:grid-cols-10">
+      <div className="flex flex-col gap-3 border-b border-[var(--workspace-rule)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="font-semibold">Focus the review</h2>
+          <p className="mt-1 text-sm text-[var(--workspace-muted)]">Start with the opponent, side, or result you want to discuss. Qualifying-game counts update below.</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setAdvancedOpen((open) => !open)} aria-expanded={advancedOpen}>
+          <SlidersHorizontal className="mr-2 h-4 w-4" />Advanced filters{advancedFilterCount ? ` (${advancedFilterCount})` : ""}<ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
+        </Button>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <FilterSelect label="Opponent" value={filters.opponentKey || "all"} onChange={(value) => onChange({ ...filters, opponentKey: value === "all" ? undefined : value })}>
           <SelectItem value="all">All opponents</SelectItem>
           {dataset.filter_options.opponents.map((option) => <SelectItem key={option.key} value={option.key}>{option.name}</SelectItem>)}
@@ -120,12 +133,15 @@ function AnalyticsFilters({
         <FilterSelect label="Side" value={filters.side || "all"} onChange={(value) => onChange({ ...filters, side: value === "all" ? undefined : value as "blue" | "red" })}>
           <SelectItem value="all">Both sides</SelectItem><SelectItem value="blue">Blue</SelectItem><SelectItem value="red">Red</SelectItem>
         </FilterSelect>
+        <FilterSelect label="Result" value={filters.result || "all"} onChange={(value) => onChange({ ...filters, result: value === "all" ? undefined : value as TeamAnalyticsFilters["result"] })}>
+          <SelectItem value="all">All results</SelectItem><SelectItem value="win">Wins</SelectItem><SelectItem value="loss">Losses</SelectItem><SelectItem value="draw">Draws</SelectItem>
+        </FilterSelect>
+      </div>
+      {advancedOpen && (
+        <div className="mt-3 grid gap-3 border-t border-[var(--workspace-rule)] pt-4 sm:grid-cols-2 xl:grid-cols-4">
         <FilterSelect label="Format" value={filters.format || "all"} onChange={(value) => onChange({ ...filters, format: value === "all" ? undefined : value })}>
           <SelectItem value="all">All formats</SelectItem>
           {dataset.filter_options.formats.map((format) => <SelectItem key={format} value={format}>{format}</SelectItem>)}
-        </FilterSelect>
-        <FilterSelect label="Result" value={filters.result || "all"} onChange={(value) => onChange({ ...filters, result: value === "all" ? undefined : value as TeamAnalyticsFilters["result"] })}>
-          <SelectItem value="all">All results</SelectItem><SelectItem value="win">Wins</SelectItem><SelectItem value="loss">Losses</SelectItem><SelectItem value="draw">Draws</SelectItem>
         </FilterSelect>
         <FilterSelect label="Patch" value={filters.patch || "all"} onChange={(value) => onChange({ ...filters, patch: value === "all" ? undefined : value })}>
           <SelectItem value="all">All patches</SelectItem>
@@ -135,11 +151,11 @@ function AnalyticsFilters({
           <SelectItem value="all">All game modes</SelectItem>
           {(dataset.filter_options.game_modes ?? []).map((mode) => <SelectItem key={mode} value={mode}>{mode}</SelectItem>)}
         </FilterSelect>
-        <FilterSelect label="Capture" value={filters.provider || "all"} onChange={(value) => onChange({ ...filters, provider: value === "all" ? undefined : value as EvidenceProvider })}>
-          <SelectItem value="all">All compatible evidence</SelectItem><SelectItem value="desktop_collector">Game Capture</SelectItem><SelectItem value="grid">GRID</SelectItem><SelectItem value="manual">Manual</SelectItem>
+        <FilterSelect label="Data source" value={filters.provider || "all"} onChange={(value) => onChange({ ...filters, provider: value === "all" ? undefined : value as EvidenceProvider })}>
+          <SelectItem value="all">All compatible records</SelectItem><SelectItem value="desktop_collector">Game Capture</SelectItem><SelectItem value="grid">GRID</SelectItem><SelectItem value="manual">Manual</SelectItem>
         </FilterSelect>
-        <FilterSelect label="Evidence" value={filters.completeness || "all"} onChange={(value) => onChange({ ...filters, completeness: value === "all" ? undefined : value as "core" | "advanced" })}>
-          <SelectItem value="all">Any completeness</SelectItem><SelectItem value="core">Core complete</SelectItem><SelectItem value="advanced">Advanced evidence</SelectItem>
+        <FilterSelect label="Recorded detail" value={filters.completeness || "all"} onChange={(value) => onChange({ ...filters, completeness: value === "all" ? undefined : value as "core" | "advanced" })}>
+          <SelectItem value="all">Any recorded detail</SelectItem><SelectItem value="core">Core game record</SelectItem><SelectItem value="advanced">Advanced evidence</SelectItem>
         </FilterSelect>
         <FilterSelect label="Game type" value={filters.classification || "all"} onChange={(value) => onChange({ ...filters, classification: value === "all" ? undefined : value as TeamAnalyticsFilters["classification"] })}>
           <SelectItem value="all">All game types</SelectItem><SelectItem value="standard_5v5">Standard 5v5</SelectItem><SelectItem value="nonstandard_custom">Non-standard custom</SelectItem><SelectItem value="incomplete_capture">Incomplete capture</SelectItem>
@@ -148,7 +164,8 @@ function AnalyticsFilters({
           <SelectItem value="all">Any lineup</SelectItem>
           {playerOptions.map((player) => <SelectItem key={player.key} value={player.key}>{player.name}</SelectItem>)}
         </FilterSelect>
-      </div>
+        </div>
+      )}
       <div className="mt-3 flex items-center justify-between gap-4 border-t border-[var(--workspace-rule)] pt-3">
         <p className="text-xs leading-5 text-[var(--workspace-subtle)]">Every metric shows the number of qualifying games. Capture filters help explain why some games support different analysis.</p>
         <Button size="sm" variant="ghost" disabled={!active} onClick={() => onChange({})}>Clear filters</Button>
@@ -233,6 +250,14 @@ function OverviewView({ dataset }: { dataset: TeamAnalyticsDataset }) {
   const summary = summarizeTeamAnalytics(dataset);
   return (
     <div className="space-y-6">
+      <DataSurface className="p-5">
+        <p className="workspace-eyebrow">Start the review here</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div><h2 className="font-semibold">What changed?</h2><p className="mt-1 text-sm leading-6 text-[var(--workspace-muted)]">Start with the saved record, performance timeline, and recent form.</p></div>
+          <div><h2 className="font-semibold">Why did it change?</h2><p className="mt-1 text-sm leading-6 text-[var(--workspace-muted)]">Use the improvement comparison only when two complete ten-game windows exist.</p></div>
+          <div><h2 className="font-semibold">Which games support it?</h2><p className="mt-1 text-sm leading-6 text-[var(--workspace-muted)]">Open a review or evidence drilldown to see the exact qualifying records.</p></div>
+        </div>
+      </DataSurface>
       <MetricStrip items={[
         { label: "Saved record", value: summary.resultGames.length ? `${summary.wins}–${summary.losses}` : "Not recorded", detail: `${summary.resultGames.length} games with explicit outcomes` },
         { label: "Games analysed", value: summary.games.length, detail: `${summary.blocks} practice blocks` },

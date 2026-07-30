@@ -1,0 +1,124 @@
+# WO-2026-023 - Let workspace owners create additional independent workspaces
+
+- **ID reservation:** [WO-2026-023 in the work-order index](../WORK_ORDER_INDEX.md)
+- **Status:** Backlog
+- **Assigned owner:** Core Features Developer
+- **Size:** L
+- **Risk:** High
+- **Priority:** High
+- **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing
+
+- **Area / files likely affected:** `CreateWorkspace`, `Workspaces`, `WorkspaceGate`, `TenantContext`, tenant selection, self-service workspace RPC, `tenants`/`tenant_users` RLS, onboarding contracts, and funnel events.
+- **Dependencies:** Theo implementation approval; reviewed forward-only RPC/migration design; isolated owner/member/cross-tenant accounts. Production migration/release approval remains separate.
+- **Collision risk:** Do not overlap with WO-2026-021 Auth/onboarding recovery, WO-2026-017 tenant settings/storage, or tenant-membership/RPC migration work.
+
+## Problem and user impact
+
+Workspace selection already supports multiple memberships, but `create_self_service_workspace` rejects any user with an existing membership. An organisation owner cannot create a separate workspace for a second team, despite needing separate roster, practice, review, scouting, and permission boundaries.
+
+## Why now
+
+Multi-team organisations are within the target buyer profile. The current one-workspace limit blocks a legitimate owner workflow and encourages unsafe account workarounds.
+
+## Scope
+
+- Allow a verified user who is an **owner of at least one workspace** to create another independent Free workspace and become its owner.
+- Provide a clear account/workspace-selection entry point without losing the selected current workspace.
+- Preserve strict independence: roster, settings, billing state, integrations, data, and membership do not cross workspace boundaries.
+- Use a reviewed server-side owner check; never rely on browser state or user-editable metadata.
+
+## Explicit non-goals
+
+- No organisation parent entity, shared cross-workspace roster, consolidated billing, white-label packaging, bulk provisioning, or automatic staff copying.
+- No additional-workspace creation by non-owner admin/member/viewer roles.
+- No reassigning memberships or changing existing workspace data.
+
+## Acceptance criteria
+
+- A verified owner can create a second Free workspace and is recorded as owner only of the new one.
+- Member/admin/viewer-only accounts are denied server-side, including direct RPC calls.
+- The new workspace starts empty, Free, and independent: no data, integration, paid module, billing, or membership leaks from source workspace.
+- Owner can select/switch both; a user with no workspace retains the existing creation path.
+- Tenant/RPC RLS/grants, funnel events, contracts, and authenticated multi-tenant browser checks prove the boundary.
+
+## Relevant files, workflows, or data areas
+
+- `src/pages/CreateWorkspace.tsx`, `src/pages/Workspaces.tsx`, `src/components/auth/WorkspaceGate.tsx`
+- `src/contexts/TenantContext.tsx`, `src/contexts/AuthContext.tsx`
+- `supabase/migrations/20260727111002_self_service_signup.sql`
+- `public.tenants`, `public.tenant_users`, self-service workspace RPC, `workspace_funnel_events`
+- `scripts/self-service-signup-contract.test.mjs`, tenant/RPC/RLS tests
+
+## Risks
+
+- **Permissions / Supabase RLS:** High. Server must verify authenticated/confirmed user plus owner membership, fixed search path, and least-privilege function grants.
+- **Billing / entitlement:** New workspace must be Free and must not inherit Stripe customer/subscription or paid-module state.
+- **Email / customer communication:** Not applicable; no automated invitation/email.
+- **Production / data:** Identity and tenant-boundary migration/RPC change; use dedicated accounts and require production approval.
+
+## Required validation
+
+- RPC, RLS, role, tenant-isolation, entitlement-seeding, and funnel-event contracts; TypeScript, zero-warning ESLint, production build, bundle budget.
+- Authenticated browser checks: owner creates/switches, non-owner denial, no-workspace creation, and two-tenant separation.
+- Migration/function/grants/advisor review and hosted verification after approved migration application.
+- Confirm new workspace Stripe/paid-module fields are Free/empty and existing workspace unchanged.
+
+## QA scenario / reproducible test steps
+
+1. Prepare controlled owner-with-one-workspace, member-only, admin-only, viewer-only, no-workspace, and second-tenant accounts.
+2. Use the product entry point and direct RPC calls to attempt additional workspace creation for each role.
+3. Verify only owner creates a new empty Free workspace, switches between both, and sees no source data; verify other roles are denied.
+4. Record responses, role/membership rows, plan/module state, browser journeys, RLS/grant/advisor evidence, and funnel behaviour with no customer data.
+
+## Role involvement and handoffs
+
+| Role | Involvement | Required input or handoff | Evidence / link |
+|---|---|---|---|
+| PM | Involved | Keep outcome to independent owner-created workspaces; reject organisation hierarchy scope. | This work order |
+| Developer – Fast Lane | Not applicable | Tenant/RPC/auth work is shared and high-risk. | N/A |
+| Core Features Developer | Involved | Design/implement server boundary, UI entry, and switching. | Commit/PR |
+| QA | Involved | Test role/tenant/billing/module isolation. | QA audit |
+| Analyst | Consulted | Confirm workspace-created funnel semantics for multiple workspaces. | Metrics Dictionary |
+| Marketing | Consulted | No public claim before hosted proof. | Message Ledger |
+
+## Release audit
+
+### Acceptance-criteria traceability
+
+| Acceptance criterion | Evidence | Evidence level | Result |
+|---|---|---|---|
+| Owner-only creation | Direct RPC and browser matrix | Hosted | Outstanding |
+| Tenant independence | Two-tenant data/billing/module inspection | Hosted | Outstanding |
+| Safe switching | Browser journey and selected-workspace state | Browser | Outstanding |
+| Function/RLS/grant safety | Migration review and Advisor output | Hosted | Outstanding |
+
+### Final verdict
+
+- **Verdict:** HOLD
+- **Rationale:** Current server creation is intentionally single-membership; no reviewed multi-workspace boundary exists.
+
+### Outstanding checks
+
+| Check | Owner | Required evidence to close | Status |
+|---|---|---|---|
+| Theo implementation approval | Theo | Written approval | Open |
+| Owner-only server design | Core Features Developer / QA | Reviewed RPC, grants, RLS | Open |
+| Hosted multi-tenant matrix | QA | Authenticated evidence | Open |
+
+### Theo approval record
+
+| Approval | Required? | Decision | Date | Notes |
+|---|---|---|---|---|
+| Implementation | Yes | Pending | - | Tenant/RPC/auth boundary change. |
+| Production migration/release | Yes | Pending | - | Separate approval after review. |
+
+## Decision and approval record
+
+- 2026-07-30 - Theo requested owner-created additional independent workspaces for multi-team organisations.
+
+## Implementation and review evidence
+
+- Source: Workspaces already selects multiple memberships, but self-service creation rejects any `tenant_users` membership.
+- **Highest evidence achieved:** Source reviewed.

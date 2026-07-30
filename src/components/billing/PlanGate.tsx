@@ -7,10 +7,11 @@ import { DataSurface } from "@/components/workspace/DataSurface";
 import { useTenant } from "@/contexts/TenantContext";
 import { planIncludes, planNames, type SubscriptionPlan } from "@/lib/plan-entitlements";
 
-export function PlanGate({ minimum, feature, children }: { minimum: SubscriptionPlan; feature: string; children: ReactNode }) {
+export function PlanGate({ minimum, feature, children, preview }: { minimum: SubscriptionPlan; feature: string; children: ReactNode; preview?: ReactNode }) {
   const { tenant } = useTenant();
   const current = tenant?.subscriptionTier || "free";
   if (planIncludes(current, minimum) && (feature !== 'collector capture' || tenant?.collectorEntitled)) return <>{children}</>;
+  if (preview) return <>{preview}</>;
 
   return (
     <DataSurface className="mx-auto mt-12 max-w-2xl p-8 text-center">

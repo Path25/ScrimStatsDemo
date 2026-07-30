@@ -1,8 +1,8 @@
 # WO-2026-021 - Restore existing-account workspace creation and confirmation recovery
 
 - **ID reservation:** [WO-2026-021 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
-- **Assigned owner:** Core Features Developer
+- **Status:** Done
+- **Assigned owner:** QA
 - **Size:** M
 - **Risk:** Medium
 - **Priority:** High
@@ -142,3 +142,31 @@ It blocks self-service workspace creation at the first conversion step while cla
 5. Verify no membership-bearing account is redirected into workspace creation, and preserve the existing invite `from` return path.
 
 Do not test against customer accounts. Hosted mailbox/Auth-log verification, Auth configuration changes, and deployment need Theo's separate approval.
+
+## QA kickoff - 2026-07-30
+
+- **Outcome:** Blocked on approved controlled hosted-account access; not a local implementation failure.
+- **Independent local evidence:** `node --test scripts/self-service-signup-contract.test.mjs` passed 4/4. Source review confirms the sign-up and recovery completion states are non-enumerating, membership-free accounts route to `/create-workspace`, and `create_self_service_workspace` still requires an authenticated, confirmed account with no existing membership before creating one Free owner workspace.
+- **Exact blocker:** The work order has no approval for controlled hosted identities, mailbox observation, Auth-log inspection, or deployment. QA will not create Auth users, send recovery/confirmation mail, or test against customer accounts without it.
+- **Required Theo approval to proceed:** Approve four controlled non-customer identities (fresh, confirmed/no-tenant, unconfirmed, and recovery) and their mailbox/Auth-log observation in the target environment. No SMTP/Auth configuration changes, customer email, customer account, or production release is included.
+
+## Controlled-account preparation - 2026-07-30
+
+- **Theo approval:** Recorded. Four founder-controlled addresses may be used for the hosted non-customer matrix, including mailbox and Auth-log observation. No configuration or customer-data authority was granted.
+- **Read-only classification:** One approved account is confirmed with zero memberships and is suitable for the existing-account/no-workspace sign-in case. One is confirmed with existing memberships and is suitable for the membership-bearing denial case. One approved address has no Auth account and is suitable for the fresh/unconfirmed confirmation path.
+- **Tooling block:** QA's approved public Auth API request failed in the local execution environment before reaching Supabase, and the available browser connector cannot initialise because its required runtime file is absent. No Auth user was created, no password was retained, and no confirmation or recovery email was sent by QA.
+- **Immediate manual handoff:** Use the confirmed/no-workspace controlled account to sign in at staging and verify the redirect to `/create-workspace`. Use the non-existent controlled address to submit the normal staging sign-up form and inspect its confirmation mail. Tell QA when each is complete; QA can then inspect dated Auth logs and continue the server-boundary review.
+
+## QA hosted-account results - 2026-07-30
+
+- **Pass — confirmed, membership-free recovery:** The controlled confirmed account with zero memberships signed in on staging and reached `/create-workspace`. Supabase Auth records the successful password login. No workspace was created, so the one-workspace server rejection remains unexercised.
+- **Pass — password recovery delivery:** Theo received the recovery email for the controlled existing account. This is hosted mailbox evidence that the recovery request path can deliver; the surface is generic and does not disclose account existence.
+- **Pass — repeated-signup truthfulness:** Auth logs classify the attempted sign-up as `user_repeated_signup` for a separate existing, confirmed, membership-bearing controlled account. The generic post-sign-up state that advises checking mail, signing in, or requesting recovery was therefore truthful and non-enumerating. It does not claim that a new confirmation email was sent.
+- **Unverified — fresh confirmation delivery:** The supplied new-address spelling was not the address used in the repeated-signup test. No fresh controlled account confirmation email has been verified. This is a remaining hosted check, not evidence that confirmation email delivery is broken.
+- **New product request, out of scope:** Supporting a second workspace for an existing owner conflicts with this work order's present single-workspace server boundary. It requires a separate PM-scoped work order covering authorised multi-tenant creation, workspace selection/return path, invitation and billing ownership, RLS/tenant-isolation regressions, migration safety, and recovery. Do not weaken `create_self_service_workspace` within WO-021.
+
+## Theo completion decision - 2026-07-30
+
+- Theo confirms the fresh-account confirmation test was completed successfully with another controlled non-customer address. This is founder-provided hosted browser/mailbox evidence; no customer account or configuration change was used.
+- **Outcome:** Marked `Done`. The original recovery defect is resolved: existing confirmed membership-free users reach Create Workspace; repeated signup is non-enumerating and truthful; and controlled recovery and fresh confirmation delivery were observed.
+- **Scope boundary retained:** Multiple-workspace creation for an existing owner remains a separate product request and is not authorised or implemented by this completion decision.

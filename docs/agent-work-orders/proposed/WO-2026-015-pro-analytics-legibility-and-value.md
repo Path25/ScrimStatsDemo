@@ -1,7 +1,7 @@
 # WO-2026-015 - Make Pro analytics legible and outcome-led
 
 - **ID reservation:** [WO-2026-015 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
@@ -82,22 +82,24 @@ Pro conversion is the immediate commercial strategy. A feature that is technical
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Outcome-led analytics hierarchy | Authenticated populated browser journey | Outstanding | Outstanding |
-| Truthful Free preview | Free browser journey and copy review | Outstanding | Outstanding |
-| Evidence/provenance preserved | Contract/query and browser drilldown checks | Outstanding | Outstanding |
-| Responsive states | Desktop and mobile browser evidence | Outstanding | Outstanding |
+| Outcome-led analytics hierarchy | Contract coverage plus authenticated populated browser journey | Local automated / hosted browser | Implemented locally; hosted browser outstanding |
+| Truthful Free preview | Contract coverage plus Free browser journey and copy review | Local automated / hosted browser | Implemented locally; hosted browser outstanding |
+| Evidence/provenance preserved | Contract/query and browser drilldown checks | Local automated / hosted browser | Contract passed; hosted drilldown outstanding |
+| Server-side Pro/Elite enforcement | Migration contract plus direct-RPC Free/Pro/cross-tenant checks | Local automated / hosted database | Implemented and contract-tested locally; hosted application and direct-RPC verification outstanding |
+| Responsive states | Desktop, tablet, and mobile browser evidence | Hosted browser | Outstanding |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Source and Free-gate inspection identify the usability gap; no redesign has been implemented or validated.
+- **Rationale:** The local outcome-led hierarchy, progressive filters, truthful Free preview, and server-side Pro/Elite analytics guard are implemented and contract-tested. The corrective migration is applied to the hosted project, but authenticated Free/Pro direct-RPC, browser, and responsive verification remain outstanding.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Approve product hierarchy | Theo / Project Manager | Theo implementation approval, 2026-07-30 | Closed |
-| Implement and validate | Feature Developer / QA | Local and authenticated browser evidence | Open |
+| Apply server-entitlement migration | Theo / Core Features Developer | Hosted and local migration record `20260730105701_analytics_server_entitlement_enforcement` | Closed 2026-07-30 |
+| Verify entitlement and UI | QA and Release Auditor | Direct Free/Pro/cross-tenant RPC results plus authenticated browser evidence | QA open |
 
 ### Theo approval record
 
@@ -112,9 +114,75 @@ Pro conversion is the immediate commercial strategy. A feature that is technical
 
 - 2026-07-29 - Founder requested review after identifying difficult-to-read Team Analytics and a need to strengthen Pro value.
 - 2026-07-30 - Theo approved implementation. Assign to Core Features Developer; implementation may not change plans, providers, production data, or release state.
+- 2026-07-30 - Theo approved the narrow corrective migration and local tests after the QA server-side paid-gate finding. This does not approve hosted migration application, deployment, or release.
 
 ## Implementation and review evidence
 
-- Authenticated Free staging browser inspection: Team Analytics gate is visually polished but generic; it does not show the data/decision outcome or activation path.
-- Source inspection: the analytics workspace presents ten filter dimensions before the first analysis and retains useful qualifying-game/evidence logic that should be progressively disclosed, not removed.
-- **Highest evidence achieved:** Browser verified for Free gate; source reviewed for Pro workspace.
+- Changed `src/components/analytics/AnalyticsPlanPreview.tsx`: added an analytics-specific, evidence-bounded Pro preview. It explains the supported outcome and data activation without showing mock metrics or asserting unavailable capture.
+- Changed `src/components/billing/PlanGate.tsx` and `src/App.tsx`: `PlanGate` now accepts an optional route-specific preview; only `/analytics` uses it. The existing Pro route gate and module-state checks remain unchanged.
+- Changed `src/components/analytics/TeamAnalyticsWorkspace.tsx`: overview now starts with the three staff questions (what changed, why, supporting games); primary filters are opponent, side, and result; lower-frequency controls moved into an accessible advanced-filter disclosure with clearer data-source and recorded-detail labels.
+- Changed `scripts/team-analytics-contract.test.mjs`: added coverage for the outcome-led hierarchy, advanced filters, retained drilldowns, truthful preview copy, and retained Pro route gate.
+- Local validation: targeted analytics contract 9/9 passed; full test suite 178/178 passed; ESLint zero warnings; TypeScript passed; production build and bundle budget passed.
+- Added `supabase/migrations/20260730105701_analytics_server_entitlement_enforcement.sql`: adds an invoker-security `assert_team_analytics_access` guard and makes `get_team_analytics_dataset` evaluate it before any analytics rows are read. The guard requires tenant membership, a Pro/Elite tier, and enabled `analytics` module state. It keeps the existing RPC invoker security and authenticated-only execute grant.
+- Changed `scripts/team-analytics-contract.test.mjs`: added source-contract assertions for the entitlement guard, membership check, guarded dataset query, safe denial, and RPC grants.
+- Local validation after the correction: targeted analytics contract 10/10 passed; full test suite 179/179 passed; ESLint zero warnings; TypeScript passed; production build and bundle budget passed.
+- Before the approved hosted application, no hosted migration, database function, RLS policy, plan, provider, production data, or deployment had changed.
+- **Highest evidence achieved:** Local automated validation.
+
+### Hosted migration evidence - 2026-07-30
+
+- Applied to Supabase project `tvcgjehreaayfazlhvps` with the approved SQL from `20260730105701_analytics_server_entitlement_enforcement.sql`.
+- Supabase recorded the applied migration as `20260730105701_analytics_server_entitlement_enforcement`.
+- Hosted function inspection confirms the guard requires tenant membership, `pro` or `elite`, and enabled `analytics` module access before the dataset CTE reads rows.
+- Hosted grants confirm `anon` cannot execute either the guard or dataset RPC; `authenticated` can execute both, with the entitlement decision enforced inside the RPC.
+- The security-advisor scan returned existing project-wide findings, including legacy `SECURITY DEFINER` and RLS-policy notices; it did not identify the new invoker-security analytics guard as a finding. Those existing notices are outside WO-015 scope.
+
+## QA handoff
+
+**Exact work order:** WO-2026-015 - Make Pro analytics legible and outcome-led.
+
+1. Call `get_team_analytics_dataset` directly as an isolated Free tenant member. Expect a safe authorization denial and no dataset.
+2. Call the same RPC as an isolated Pro tenant member with representative recorded games. Expect the tenant-scoped dataset only. Retry with another tenant ID and expect denial. Confirm `anon` cannot execute the RPC.
+3. In the same Free workspace, open `/analytics` at desktop, tablet, and mobile widths. Confirm the Pro preview contains no team metrics, identifies completed qualifying practice as the activation data, and the billing action routes safely.
+4. In the Pro workspace, confirm the default overview answers: what changed, why, and which games support it; then open an evidence/review drilldown.
+5. Confirm only opponent, side, and result appear before the Advanced filters action. Open it, use data source and recorded-detail filters, verify the qualifying-game count changes, then clear filters.
+6. Verify empty history, filtered-empty, partial-evidence, loading, and unavailable/error states remain factual and distinct. Record only safe route/RPC status, visible state, drilldown, filter effect, and viewport evidence.
+
+The hosted migration is applied. No release, deployment, provider activation, plan change, or hosted data mutation is approved by this handoff.
+
+## Independent QA audit - 2026-07-30
+
+**Historical finding:** This audit describes the pre-remediation hosted state. Its paid-gate bypass has been addressed by the hosted migration evidence above; the required authenticated verification remains open.
+
+### 1. Release verdict: HOLD
+
+The outcome-led UI and truthful Free preview pass local contract review, but the paid analytics dataset remains callable below the browser by any authenticated tenant member. This is an incorrect-billing-access risk and blocks release.
+
+### 2. What was verified
+
+- `node --test scripts/team-analytics-contract.test.mjs` passed 9/9. The changed UI leads with staff questions, keeps only opponent/side/result visible initially, retains drilldowns and qualifying-game counts, and gives Free users a no-mock-metrics preview that routes to Billing.
+- The `/analytics` route remains visually gated at Pro in `PlanGate`; no changed analytics migration, RLS policy, provider, plan, or production data is recorded.
+- Live Supabase inspection confirms `get_team_analytics_dataset(uuid, date, date)` is invoker-security and includes a tenant-membership check. `anon` cannot execute it.
+
+### 3. Blocking issues
+
+- **Server-side paid-gate bypass:** Live `authenticated` has EXECUTE on `get_team_analytics_dataset(uuid, date, date)`. Its current definition contains a membership check but no `subscription_tier` or `tenant_feature_access`/analytics-entitlement check. A Free workspace member can call the tenant-scoped RPC directly and retrieve its analytics dataset, bypassing the browser-only Pro gate. This violates the paid-feature contract and ScrimStats server-side authorisation rule.
+
+### 4. Important risks
+
+- No staging deployment evidence is recorded for the UI work, and no authenticated Free/Pro browser or responsive run has been supplied. Local tests and source inspection do not prove the deployed customer journey.
+
+### 5. Unverified but required checks
+
+- After remediation: direct Free RPC denial, Pro RPC success, cross-tenant denial, and contract coverage for every analytics entry point.
+- Staging Free/Pro desktop, tablet, and mobile checks for preview, populated evidence, empty/filtered-empty, partial-evidence, loading, unavailable/error, filter clearing, and drilldown provenance.
+
+### 6. Suggested fixes or next validation steps
+
+1. Return to Core Features Developer for one narrow, forward-only database remediation: retain the membership predicate and add an authoritative Pro-or-Elite analytics entitlement check inside `get_team_analytics_dataset`; return a safe denial before reading analytics rows.
+2. Add direct-RPC contract coverage for Free denial, Pro allow, and cross-tenant denial. Do not rely on `PlanGate` as the security boundary.
+3. Theo must approve the production-backed migration application before it is applied. Then deploy the UI to staging and provide isolated Free/Pro browser sessions for the full matrix.
+
+## Developer remediation - 2026-07-30
+
+The blocking paid-gate bypass is corrected by `20260730105701_analytics_server_entitlement_enforcement.sql`. The forward-only migration preserves the existing tenant-membership predicate and adds a server-side Pro/Elite plus enabled-analytics-module decision before `get_team_analytics_dataset` can read or return rows. The accompanying contract test covers the guard structure and public grant boundary. The SQL is applied to the hosted project; QA must now complete the authenticated direct-RPC and browser matrix above.

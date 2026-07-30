@@ -6,9 +6,12 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const migration = read("supabase/migrations/20260726150000_capture_profiles_and_team_analytics.sql");
 const collectorV3Migration = read("supabase/migrations/20260726234404_collector_json_analytics_v3.sql");
 const analyticsV3Migration = read("supabase/migrations/20260727144415_game_capture_v5_team_analytics.sql");
+const analyticsEntitlementMigration = read("supabase/migrations/20260730105701_analytics_server_entitlement_enforcement.sql");
 const gridDraftMigration = read("supabase/migrations/20260727152749_normalize_grid_drafts_for_analytics.sql");
 const page = read("src/pages/Analytics.tsx");
 const workspace = read("src/components/analytics/TeamAnalyticsWorkspace.tsx");
+const analyticsPreview = read("src/components/analytics/AnalyticsPlanPreview.tsx");
+const app = read("src/App.tsx");
 const collector = read("supabase/functions/collector-ingest/index.ts");
 const grid = read("supabase/functions/grid-auto-monitoring/index.ts");
 const block = read("src/components/scrims/ScrimBlockView.tsx");
@@ -42,6 +45,20 @@ test("analytics exposes normalized facts rather than raw provider payloads", () 
   assert.match(workspace, /AnalyticsGameDrilldown/);
   assert.match(migration, /reconciliation\.status = 'pending'/);
   assert.match(migration, /reconciliation\.accepted_game_id <> game\.id/);
+});
+
+test("analytics is server-enforced for entitled tenant members", () => {
+  assert.match(analyticsEntitlementMigration, /create or replace function public\.assert_team_analytics_access/);
+  assert.match(analyticsEntitlementMigration, /public\.user_belongs_to_tenant\(p_tenant_id\)/);
+  assert.match(analyticsEntitlementMigration, /tenant\.subscription_tier in \('pro'::public\.subscription_tier, 'elite'::public\.subscription_tier\)/);
+  assert.match(analyticsEntitlementMigration, /access\.module_key = 'analytics'/);
+  assert.match(analyticsEntitlementMigration, /access\.is_enabled/);
+  assert.match(analyticsEntitlementMigration, /Analytics access is unavailable for this workspace/);
+  assert.match(analyticsEntitlementMigration, /with access_guard as materialized/);
+  assert.match(analyticsEntitlementMigration, /cross join access_guard/);
+  assert.match(analyticsEntitlementMigration, /security invoker/);
+  assert.match(analyticsEntitlementMigration, /revoke all on function public\.get_team_analytics_dataset\(uuid, date, date\) from public, anon/);
+  assert.match(analyticsEntitlementMigration, /grant execute on function public\.get_team_analytics_dataset\(uuid, date, date\) to authenticated/);
 });
 
 test("collector game mode and map context reach analytics without exposing the raw payload", () => {
@@ -100,4 +117,18 @@ test("active page uses the v3 workspace and Scrim Review exposes evidence covera
   assert.doesNotMatch(workspace, /!filtered\.games\.length\s*\?\s*<WorkspaceState/);
   assert.doesNotMatch(page, /useTeamPerformanceSummary|useCompetitiveDraftAnalytics|Collector coverage/);
   assert.match(block, /GameEvidenceDialog/);
+});
+
+test("analytics leads with staff questions while retaining evidence and a truthful Pro preview", () => {
+  assert.match(workspace, /What changed\?/);
+  assert.match(workspace, /Why did it change\?/);
+  assert.match(workspace, /Which games support it\?/);
+  assert.match(workspace, /Advanced filters/);
+  assert.match(workspace, /Data source/);
+  assert.match(workspace, /Recorded detail/);
+  assert.match(workspace, /AnalyticsGameDrilldown/);
+  assert.match(analyticsPreview, /completed, qualifying game evidence/);
+  assert.match(analyticsPreview, /No sample metrics are shown/);
+  assert.doesNotMatch(analyticsPreview, /mock|example team|predicted/i);
+  assert.match(app, /path="\/analytics" element={<PlanGate minimum="pro" feature="team analytics" preview={<AnalyticsPlanPreview/);
 });

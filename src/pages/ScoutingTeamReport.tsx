@@ -488,6 +488,7 @@ export default function ScoutingTeamReport() {
         opponentTeamId={team.id}
         opponentName={team.name}
         briefs={briefs}
+        canEdit={canEditIntelligence}
       />
 
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && reset()}>

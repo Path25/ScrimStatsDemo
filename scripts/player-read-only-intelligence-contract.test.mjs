@@ -7,6 +7,8 @@ const migration = read("supabase/migrations/20260730211300_player_read_only_inte
 const consolidationMigration = read("supabase/migrations/20260730211922_consolidate_player_intelligence_read_policies.sql");
 const scouting = read("src/pages/Scouting.tsx");
 const report = read("src/pages/ScoutingTeamReport.tsx");
+const leaguepedia = read("src/components/scouting/LeaguepediaDraftHistory.tsx");
+const leaguepediaHook = read("src/hooks/useLeaguepediaDraftHistory.ts");
 const capabilities = read("src/lib/workspace-capabilities.ts");
 const analytics = read("supabase/migrations/20260730105701_analytics_server_entitlement_enforcement.sql");
 
@@ -44,6 +46,12 @@ test("Scouting loads read-only views and keeps every mutation control staff-only
   assert.match(report, /canEditIntelligence \? \(/);
   assert.match(report, /\{canEditIntelligence && <Button[\s\S]*setPlayerActive\(\{ id: player\.id, isActive: true \}\)/);
   assert.match(report, /\{canEditIntelligence && \(\s*<Button[\s\S]*onClick=\{\(\) => reviseEvidence\(item\)\}/);
+  assert.match(report, /<LeaguepediaDraftHistory[\s\S]*canEdit=\{canEditIntelligence\}/);
+  assert.match(leaguepedia, /\{canEdit && \([\s\S]*Exact Leaguepedia team name[\s\S]*Import history/);
+  assert.match(leaguepedia, /\{canEdit && \([\s\S]*Attach selected games to a draft brief[\s\S]*Save evidence selection/);
+  assert.match(leaguepedia, /\{canEdit && \(\s*<Checkbox/);
+  assert.match(leaguepediaHook, /useLeaguepediaDraftHistory\(opponentTeamId\?: string, enabled = true, canMutate = true\)/);
+  assert.match(leaguepediaHook, /if \(!canMutate\) throw new Error\("Your workspace role is read-only\."\)/);
   assert.doesNotMatch(scouting, /\) : !canEditIntelligence \? \(/);
   assert.doesNotMatch(report, /if \(!canEditIntelligence\)/);
   assert.match(report, /same workspace intelligence in read-only form/);

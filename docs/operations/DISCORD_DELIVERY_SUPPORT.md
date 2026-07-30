@@ -7,7 +7,8 @@ Elite Discord automation is limited to selected schedule-change and practice-rem
 ## Honest states
 
 - **Unavailable:** Discord credentials, callback configuration, worker scheduling, or bot permissions are not configured. Do not present delivery as available.
-- **Connected:** An Elite owner or admin completed installation and selected one or more supported channel subscriptions.
+- **Server connected — delivery not configured:** An Elite owner or admin completed installation, but no supported channel subscription is enabled. No Discord delivery can occur until a channel and prompt type are selected.
+- **Delivery active:** An Elite owner or admin completed installation and selected one or more supported channel subscriptions.
 - **Retrying:** A Discord delivery attempt failed and is queued with backoff. This is not delivery confirmation.
 - **Failed:** Five dispatch attempts failed. Retain the delivery-attempt evidence and direct the workspace to reconnect or select a valid channel.
 - **Disconnected:** Subscription delivery is disabled. Historical delivery evidence is retained.

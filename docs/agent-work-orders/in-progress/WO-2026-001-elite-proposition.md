@@ -629,6 +629,167 @@ The status-contract correction passes source and focused local contract review, 
 2. Theo approves the exact bounded test mutation: load only the private test-server channels, select `#scrimstats-test`, enable exactly one schedule event, and save. QA will verify the `Delivery active` transition; no message will be sent in that step.
 3. Obtain separate approval before creating one disposable schedule event and allowing the worker to dispatch one message, then immediately remove the subscription/event and return `clash` to Free when the matrix completes.
 
+## Independent QA recheck - 2026-07-30 (deployed-status handoff)
+
+### 1. Release verdict: HOLD
+
+The status correction is now claimed deployed and the local source is coherent, but independent hosted/browser proof could not be obtained in this session. More importantly, the isolated test workspace has no delivery subscription or Discord event. The correction is a **Pass with follow-up**; WO-001 is not release-ready.
+
+### 2. What was verified
+
+- **Current test state:** `clash` remains Elite with Discord live/enabled and an active test-server installation; it has **zero** enabled channel subscriptions and **zero** Discord outbox events. This review created no external effect.
+- **Source/contract:** The current component derives its three statuses from the installation and enabled-subscription state. The matching support guidance is present. Focused Discord contracts passed **6/6**; independent ESLint and TypeScript checks passed with zero reported failures.
+- **Scope boundary:** WO-2026-025 now owns the unimplemented inbound slash-command work, so it is no longer incorrectly treated as an outstanding WO-001 implementation item.
+
+### 3. Blocking issues
+
+- **No customer outcome proof:** No selected channel, saved subscription, scheduled change/reminder, queued event, dispatched message, provider receipt, retry/failure, or disconnect/downgrade behaviour has been tested.
+- **Hosted visual check not independently reproduced:** The connected Vercel account exposes no projects for deployment inspection, and no authenticated staging browser tab was available to this review. The developer's branch/browser record is useful handoff evidence but is not independent proof.
+
+### 4. Important risks
+
+- The production build could not be conclusively recorded in this review: its sandboxed run was denied filesystem access; the approved retry began successfully but did not return a final completion result. Treat the developer's claimed build as unverified pending a reproducible completed result.
+
+### 5. Unverified but required checks
+
+- Authenticated staging desktop/mobile confirmation of the zero-subscription state.
+- The existing full entitlement/role/module/OAuth/provider/worker/outbox/failure matrix, including actual message minimisation and receipt.
+
+### 6. Suggested next validation steps
+
+1. Provide an authenticated `clash` staging session or accessible staging deployment record so QA can independently confirm the zero-subscription state at desktop and 390px.
+2. Theo approves the already-defined subscription-only mutation before QA loads channels and selects one test prompt; retain the separate approval for any message dispatch.
+3. Do not mark WO-001 Done or make an Elite availability claim until the provider delivery and negative-path matrix passes.
+
+## Independent QA recheck - 2026-07-30 (configured delivery)
+
+### 1. Release verdict: HOLD
+
+The deployed status correction now passes authenticated staging review, but the configured outbound path is failing before it can claim or deliver events. This is a reproducible hosted defect, not an absence-of-error pass.
+
+### 2. What was verified
+
+- **Authenticated staging:** As `fridayxiiiempire@gmail.com`, owner of the isolated `clash` Elite workspace, `/integrations` displayed the private `ScrimStats Integration Test` server, four enabled prompt types, and the exact **`Delivery active`** label. Desktop and 390px mobile layouts were readable; the browser recorded no console errors or warnings.
+- **Hosted configuration state:** The database contained four enabled subscriptions (created, changed, cancelled, and reminder) for the test installation. Two approved test outbox records were pending: `schedule_created` and `practice_reminder`.
+- **Scheduler reachability:** The dispatch and reminder cron jobs ran successfully every minute/15 minutes respectively. `pg_net` responses prove the dispatcher endpoint was invoked rather than merely scheduled.
+- **Regression evidence:** Independent ESLint and TypeScript checks passed; `scripts/discord-elite-contract.test.mjs` passed 6/6. The separate `/scrim` scope remains correctly assigned to WO-2026-025.
+
+### 3. Blocking issues
+
+- **Hosted outbound delivery is not configured:** Repeated dispatcher invocations returned HTTP **503** with `Discord delivery is not configured` (for example 19:13 through 19:22 UTC). The two test events remain unclaimed/pending with no delivery attempt or provider receipt. The `discord-dispatch` function returns that response when one or more of `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DISCORD_BOT_TOKEN`, or `SCRIMSTATS_APP_URL` is unavailable in its hosted environment. The exact missing variable cannot be determined safely from the response.
+
+### 4. Important risks
+
+- The UI truthfully says **Delivery active** because subscriptions are configured, but a customer would reasonably interpret that as messages are deliverable. Until the hosted worker configuration is repaired, the state is operationally misleading and events will accumulate.
+- Existing queued test events may be delivered once the configuration is corrected. Do not make the configuration change until Theo decides whether those two isolated test messages may be sent, or whether the queue should instead be safely cancelled under separate approval.
+
+### 5. Unverified but required checks
+
+- After configuration is repaired: confirm the worker claims both existing approved test events, records delivery attempts, and receives Discord provider message IDs; then verify the message content is minimised, has no mentions, and links only to the isolated test workspace.
+- Execute the previously required negative path: one provider rejection/retry, disconnect, entitlement downgrade/module disable, Free/Pro and non-manager denials, and tenant/outbox isolation. Confirm the `Delivery active` label changes appropriately when the last subscription is removed.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo approval required:** approve the secret/configuration change and state whether the two queued isolated test events may dispatch after repair. Do not expose any value in code, chat, or `VITE_*` variables.
+2. **Core Features Developer:** in the Supabase project, compare the deployed `discord-dispatch` environment against its required server-side variables and set the missing value(s), especially the intended canonical `SCRIMSTATS_APP_URL`; retain the existing bot token and dispatch secret securely. Record only variable *names* and the deployment revision, never values.
+3. **QA:** once the developer supplies that handoff, rerun the isolated worker trace and provider-receipt test. WO-001 remains `Ready for QA`/`HOLD`; it must not be marked Done or made customer-available yet.
+
+## Independent QA re-review - 2026-07-30 (hosted delivery)
+
+### 1. Release verdict: HOLD
+
+WO-001 remains on HOLD. The visible staging configuration is healthy, but the hosted delivery worker is still unable to process its queued isolated test events.
+
+### 2. What was verified
+
+- Authenticated staging `/integrations` as the `clash` owner shows `DELIVERY ACTIVE`, the private test server, four selected prompt types, and the customer-facing statement that delivery is tracked separately. No console errors were observed.
+- The two existing isolated Discord events (`schedule_created` and `practice_reminder`) remain `pending`, with `attempt_count = 0`, no delivery timestamp, and no provider attempt record.
+- Fresh worker evidence at 19:34 UTC shows the scheduled dispatcher endpoint was invoked and returned HTTP 503 with `Discord delivery is not configured`. The failure remains reproducible, not historical.
+
+### 3. Blocking issues
+
+- **Outbound Discord delivery remains unconfigured in the deployed Edge Function.** Since the function rejects before claiming the outbox, neither a real message nor its retry/receipt behaviour can be verified. UI configuration alone is not release evidence.
+
+### 4. Important risks
+
+- The UI does not falsely claim a provider receipt, but retaining `Delivery active` while all worker calls return 503 can still mislead an Elite customer about operational availability.
+
+### 5. Unverified but required checks
+
+- A successful isolated worker run: outbox claim, Discord API receipt/message ID, delivered status, payload minimisation, and no mentions.
+- One controlled failure/retry plus disconnect, downgrade/module-disable, Free/Pro, non-manager, and cross-tenant/outbox isolation checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** approve the configuration repair and decide whether the two queued isolated test messages may dispatch once it is live, or must be cancelled under a separate data-change approval.
+2. **Core Features Developer:** reconcile the deployed `discord-dispatch` server-side environment against its required variables, including the canonical application URL; record names/revision only and never secret values.
+3. **QA:** rerun this trace immediately after the developer handoff. Do not mark WO-001 Done, or enable/publish Elite Discord availability, before the required provider and negative-path evidence exists.
+
+## Independent QA re-review - 2026-07-30 (delivery recovered)
+
+### 1. Release verdict: CONDITIONAL
+
+The hosted configuration blocker is resolved and the isolated outbound happy path is now independently proven. WO-001 is not yet READY because required failure, denial, and tenant-isolation validation remains unverified.
+
+### 2. What was verified
+
+- **Authenticated staging UI:** `/integrations` as the `clash` owner still shows the private test server, four enabled schedule prompt types, `DELIVERY ACTIVE`, and the disclosure that message delivery is tracked separately. The browser had no console errors.
+- **Worker recovery:** At 19:38 UTC the scheduled dispatcher returned `processed: 2, delivered: 2`; its next run returned `processed: 0, delivered: 0`. The preceding 503 configuration failure therefore no longer prevents execution.
+- **End-to-end receipt evidence:** The queued `schedule_created` and `practice_reminder` events are both now `delivered`, have no delivery error, and each has a distinct persisted Discord provider message reference. This proves worker claim, dispatch, and provider acceptance for the isolated test tenant.
+
+### 3. Blocking issues
+
+- None currently reproduced for the narrowly tested isolated happy path.
+
+### 4. Important risks
+
+- A successful message receipt is not proof of safe behaviour when delivery fails, an installation is disconnected, entitlement is downgraded/disabled, or a caller lacks the required workspace role.
+
+### 5. Unverified but required checks
+
+- Controlled Discord rejection and retry/backoff outcome.
+- Disconnect behaviour, Elite-to-non-Elite/module-disabled revocation, Free/Pro and non-manager direct-function denials.
+- Cross-tenant channel/outbox isolation and payload minimisation/absence of mentions, confirmed against the delivered test messages.
+
+### 6. Suggested fixes or next validation steps
+
+1. Keep WO-001 `Ready for QA` with a **Conditional** release recommendation; do not make it generally customer-available yet.
+2. Theo approves one bounded negative-path session on the isolated test tenant (failure/retry, disconnect, then restore) so QA can complete the remaining release checks without involving customer data.
+3. After those checks pass, obtain Theo's separate release approval before changing any customer module state or public Elite claim.
+
+## Independent QA failure - 2026-07-30 (delivered-message presentation)
+
+### 1. Release verdict: HOLD
+
+The isolated delivery transport works, but the actual customer-visible messages fail the required quality and clarity bar. This returns WO-001 to Core Features Developer; it is not a release candidate.
+
+### 2. What was verified
+
+- Discord accepted and displayed the two isolated test messages. The supplied customer-view screenshot is consistent with the persisted delivery receipts.
+- The active deployed `discord-dispatch` function (version 9) directly constructs the message from raw `match_date` and `scheduled_time` strings. It also contains the literal mojibaked separator `Â·`.
+- The message link is `https://staging.scrimstats.gg/scrims/<id>` and Discord renders its unfurl as **`Overview - Vercel`** with Vercel artwork, not ScrimStats branding.
+
+### 3. Blocking issues
+
+- **Unreadable scheduling content:** Messages display duplicate raw ISO timestamps and the visible `Â·` encoding error, e.g. `2026-07-30T19:30:00+00:00 at 2026-07-30T19:30:00+00:00`. This is not an acceptable end-user practice prompt.
+- **Incorrect third-party link preview:** Discord presents a Vercel-branded preview for a ScrimStats workflow link. This violates the promised polished ScrimStats customer journey and makes the destination look untrusted.
+
+### 4. Important risks
+
+- A public Discord unfurl must not reveal private opponent, schedule, roster, review, or tenant data to a recipient who is not authenticated to the workspace. A branded generic preview is sufficient; do not solve this by placing private scrim data in Open Graph metadata.
+
+### 5. Unverified but required checks
+
+- A newly generated isolated test message, after the correction, has one human-readable and recipient-localised schedule time, no encoding artefacts, and no duplicate date/time.
+- A fresh Discord unfurl of the staging scrim route shows a ScrimStats title and image (not Vercel). Existing Discord preview caches may require a fresh disposable test URL/message for proof.
+- Existing delivery, retry, disconnect, entitlement, role, and tenant-isolation checks remain required.
+
+### 6. Required developer handoff
+
+1. **Format time in the dispatcher:** derive one value from the valid scheduled timestamp; use a Discord timestamp token such as `<t:UNIX:F>` so each recipient sees it in their locale. If parsing fails, show an honest `Time to be confirmed` state. Do not concatenate `match_date` and `scheduled_time`, and remove the mojibaked character.
+2. **Repair the unfurl at the deployment boundary:** ensure the exact staging scrim URL fetched by Discord returns ScrimStats Open Graph title, image, and canonical metadata; the generic preview must reveal no tenant-owned data. Do not merely suppress the card or rely on an existing Discord cache.
+3. Add focused formatter and hosted preview contract coverage, deploy to staging, and record a fresh isolated message plus Discord preview screenshot. No customer tenant may be used.
+
 ## Status-correction deployment and QA handoff - 2026-07-30
 
 - **Approved scope preserved:** Only the connected-versus-configured UI/status correction, matching support copy, and a focused regression test were released. No `/scrim` implementation, migration, Discord credential/configuration, subscription mutation, dispatch, customer communication, or module-state change was made.
@@ -636,3 +797,29 @@ The status-contract correction passes source and focused local contract review, 
 - **Local validation:** After `npm ci` restored the local dependency tree, ESLint passed with zero warnings, TypeScript passed, `node --test scripts/discord-elite-contract.test.mjs` passed 6/6, `node --test scripts/discord-status-contract.test.mjs` passed 1/1, the production Vite build passed, bundle budgets passed, and `git diff --check` found no content errors. The shell's bare `npm` shim still targets a missing global npm path; checks were run through the repaired Node/npm runtime instead.
 - **Hosted browser evidence:** On authenticated `https://staging.scrimstats.gg/integrations` as the `clash` owner, the installed `ScrimStats Integration Test` server with zero subscriptions displayed the exact badge `Server connected — delivery not configured` and the explanatory copy. At a 390px viewport, the single badge was visible and fully within the viewport (left 61.1px, right 343.3px of 390px).
 - **QA handoff:** Recheck the same `clash` workspace at desktop and 390px. It must show `Server connected — delivery not configured` while no subscription is enabled. Do not create a subscription, send a Discord message, or exercise `/scrim` under this handoff. The separate, already-recorded outbound delivery matrix and all authorization/provider checks remain release gates.
+
+## Dispatcher environment compatibility repair - 2026-07-30
+
+- **Theo approval:** Theo approved repair of the isolated `discord-dispatch` hosted configuration path and allowed the two already-queued isolated test events to dispatch after repair.
+- **Cause addressed:** The dispatcher and shared server client previously accepted only the legacy `SUPABASE_SERVICE_ROLE_KEY`. They now preserve that value when present and otherwise accept the platform-provided `SUPABASE_SECRET_KEYS.default` server key. The public HTTP response remains generic; missing variable names are logged only server-side without values.
+- **Hosted deployment:** `discord-dispatch` version **8** is active in Supabase project `tvcgjehreaayfazlhvps`, with its existing `verify_jwt=false` custom dispatch-secret protection unchanged. Source revision `724a9d4` (`Harden Discord dispatch environment lookup`) was pushed to `origin/codex/Staging`.
+- **Validation:** `node --test scripts/discord-dispatch-env-contract.test.mjs scripts/discord-elite-contract.test.mjs` passed 7/7; ESLint and TypeScript passed; `git diff --check` reported no content errors.
+- **Hosted result so far:** The two isolated events remain pending with attempt count zero. The first post-deploy `pg_net` response timed out without a body; no provider delivery attempt or Discord message is evidenced. No secret values were read or changed.
+- **QA handoff:** Wait for and capture the first completed `discord-dispatch` v8 invocation. Verify either (a) both isolated events become delivered with two `integration_delivery_attempts` records and provider references, or (b) the safe server-side missing-variable diagnostic identifies the remaining configuration name for an approved secret-only correction. Do not mark WO-001 Done until delivery, minimised message content, and the agreed negative-path matrix are independently verified.
+
+## Hosted isolated delivery evidence - 2026-07-30
+
+- **Configuration outcome:** After Theo set the server-only `SCRIMSTATS_APP_URL` for staging, the existing worker path processed the two explicitly approved isolated events. No secret value was read or recorded.
+- **Delivered evidence:** At 19:38 UTC, one `schedule_created` event and one `practice_reminder` event both transitioned to `delivered`, each with attempt count zero and a delivery timestamp. `integration_delivery_attempts` contains exactly two `delivered` records for Discord; both have provider references and neither is null.
+- **Boundary preserved:** This verifies only the approved private test-server events. It does not establish customer availability, message-content review, failure/retry, disconnect, entitlement/role denial, tenant isolation, or slash-command behaviour.
+- **QA handoff:** Independently inspect the two test-server messages for minimal content, no mentions, and isolated ScrimStats links. Then execute the separately approved negative-path matrix before considering WO-001 for completion. Keep `/scrim` with WO-2026-025.
+
+## Delivered-message presentation correction - 2026-07-30
+
+- **Approved scope:** Theo approved the focused customer-visible Discord presentation correction and its staging deployment. The inbound `/scrim` work remains exclusively with WO-2026-025.
+- **Changed area:** `discord-dispatch` now selects one valid schedule timestamp (`scheduled_time`, otherwise `match_date`) and emits Discord's recipient-local `<t:UNIX:F>` format. An unparsable or absent value truthfully renders **`Time to be confirmed`**. The prior duplicated raw ISO values and mojibaked separator were removed.
+- **Unfurl boundary:** New outbound scrim links include the disposable `?source=discord` query to avoid the prior Discord cache key. The exact staging scrim route was browser-inspected before deployment: its document title, canonical URL, Open Graph title, and Open Graph image are the generic ScrimStats values only; no tenant, opponent, roster, or schedule fields are in the crawler metadata.
+- **Hosted deployment:** Supabase project `tvcgjehreaayfazlhvps` now has active `discord-dispatch` version **10**, retaining the existing custom dispatch-secret authentication (`verify_jwt=false`). The retrieved hosted source contains both the Discord timestamp formatter and cache-fresh query parameter.
+- **Local validation:** `node --test scripts/discord-message-presentation-contract.test.mjs scripts/discord-dispatch-env-contract.test.mjs scripts/discord-elite-contract.test.mjs scripts/public-layout-contract.test.mjs` passed **17/17**; ESLint passed with zero warnings; TypeScript passed; production Vite build and bundle budget passed; and `git diff --check` passed after the final newline correction.
+- **Intentionally not performed:** No new outbox event, schedule record, or Discord message was created. Those are an external/provider-facing staging mutation and require Theo's separate approval for one fresh disposable test event.
+- **QA handoff:** After Theo approves one fresh, isolated private-server schedule prompt, confirm the delivered Discord message contains exactly one localised schedule time (or `Time to be confirmed`), no mojibake or duplicate timestamp, and no mentions. Capture a screenshot showing the new `?source=discord` link preview as generic ScrimStats branding rather than Vercel. This approval/test still does not cover the existing retry, disconnect, entitlement, role, or tenant-isolation release gates.

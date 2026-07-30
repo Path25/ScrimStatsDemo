@@ -17,11 +17,19 @@ type IntegrationEvent = {
 
 const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
 
+function discordTime(payload: Record<string, unknown>) {
+  const scheduledTime = typeof payload.scheduled_time === "string"
+    ? payload.scheduled_time
+    : typeof payload.match_date === "string"
+      ? payload.match_date
+      : null;
+  const instant = scheduledTime ? Date.parse(scheduledTime) : Number.NaN;
+  return Number.isFinite(instant) ? `<t:${Math.floor(instant / 1_000)}:F>` : "Time to be confirmed";
+}
+
 function eventMessage(event: IntegrationEvent, appUrl: string) {
   const opponent = typeof event.payload.opponent_name === "string" ? event.payload.opponent_name : "opponent";
-  const date = typeof event.payload.match_date === "string" ? event.payload.match_date : "date pending";
-  const time = typeof event.payload.scheduled_time === "string" ? ` at ${event.payload.scheduled_time}` : "";
-  const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}` : `${appUrl}/scrims`;
+  const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}?source=discord` : `${appUrl}/scrims?source=discord`;
   const title =
     event.event_type === "schedule_created"
       ? "Practice block scheduled"
@@ -33,7 +41,7 @@ function eventMessage(event: IntegrationEvent, appUrl: string) {
           ? "Practice block coming up"
           : "Practice block updated";
   return {
-    content: `**${title}**\nvs ${opponent} · ${date}${time}\n${link}`,
+    content: `**${title}**\nvs ${opponent}\n${discordTime(event.payload)}\n${link}`,
     allowed_mentions: { parse: [] },
   };
 }

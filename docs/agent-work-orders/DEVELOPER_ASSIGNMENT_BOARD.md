@@ -16,7 +16,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
 | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) | QA and Release Auditor | Append-only service-role grant migration is applied; live grants/RLS/scorecard boundary verified | One approved non-customer source-trigger exercise, idempotency retry, and aggregate scorecard check shared with WO-003. |
-| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | `95f294b` pushed to `codex/Staging`; authenticated desktop and 390px zero-subscription status evidence recorded | Recheck the connected-versus-configured state only; do not create a subscription, dispatch a message, or test `/scrim` under this handoff. |
+| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Dispatcher presentation correction is active as Supabase Edge Function version 10; local contracts, lint, typecheck, build, and bundle budget pass | After Theo separately approves one fresh isolated test event, verify one localised timestamp, generic ScrimStats preview, no mojibake/mentions, and retain `/scrim` with WO-2026-025. |
 
 ## In Progress
 

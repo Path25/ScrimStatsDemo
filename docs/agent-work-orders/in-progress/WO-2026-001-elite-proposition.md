@@ -863,3 +863,36 @@ For this private operational message, suppress the Discord link embed rather tha
 - **Hosted deployment and delivery:** Supabase project `tvcgjehreaayfazlhvps` has active `discord-dispatch` version **11**. One Theo-approved dummy `schedule_changed` event for the isolated `clash` Elite test tenant was queued after deployment and delivered on the next scheduled worker run with attempt count zero, no error, and a persisted Discord provider receipt.
 - **Visual boundary:** No private Discord browser session is available in this workspace, so the receipt proves provider acceptance but does not itself prove the rendered absence of a card. Do not treat it as a screenshot substitute.
 - **QA handoff:** In the isolated private test channel, capture the new delivered message. It must retain the visible ScrimStats link, have no rich preview card, one localised schedule time, no mojibake, and no mentions. Keep the existing retry, disconnect, entitlement, role, and tenant-isolation matrix as separate release gates. `/scrim` remains with WO-2026-025.
+
+## Independent QA recheck - 2026-07-30 (message presentation passed)
+
+### 1. Release verdict: CONDITIONAL
+
+The isolated Discord happy path now passes. The release remains conditional because negative-path and cross-tenant evidence has not been exercised; those checks need reversible actions in the shared production database and private Discord test server.
+
+### 2. What was verified
+
+- **Customer-view evidence:** Theo manually confirmed the latest isolated Discord message has a readable time and correct presentation.
+- **Deployed implementation:** Active `discord-dispatch` version 11 uses one Discord-localised timestamp, no malformed characters, `allowed_mentions: { parse: [] }`, and Discord's suppress-embeds flag.
+- **Hosted delivery:** Fresh `schedule_changed` and `schedule_created` events were delivered at 20:41 and 20:49 UTC with zero attempts/errors and distinct provider message receipts.
+- **Independent local regression:** 17 focused Discord/presentation/public-layout contracts passed, as did ESLint with zero warnings and TypeScript.
+- **Server enforcement source/contract:** The dispatcher retains its dispatch-secret check and server-side Elite plus live/enabled module check. The focused contract suite covers provider-scoped outbox claims and owner-bound integration controls.
+
+### 3. Blocking issues
+
+- None reproduced for the isolated happy path.
+
+### 4. Important risks
+
+- The happy path does not prove safe recovery or revocation. It must not be treated as proof that delivery stops correctly on disconnect/downgrade or that a Discord/provider failure is recorded and retried correctly.
+
+### 5. Unverified but required checks
+
+- Provider failure and retry/backoff using the isolated test channel only.
+- Disconnect and reconnect of the isolated installation; confirm no delivery after disconnect.
+- Elite/module revocation and Free/Pro/non-manager direct-function denials.
+- Cross-tenant channel/outbox isolation.
+
+### 6. Exact approval needed to complete QA
+
+Theo must explicitly approve a reversible, isolated negative-path session: temporarily deny the bot Send Messages permission in the private test channel, create one disposable test event, observe retry evidence, restore the permission, then disconnect/reconnect the isolated installation. A separate explicit production-data approval is required before temporarily changing the test tenant's entitlement/module state. No customer tenant, customer Discord server, or customer message is in scope.

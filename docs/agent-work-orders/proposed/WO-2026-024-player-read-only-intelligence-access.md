@@ -1,7 +1,7 @@
 # WO-2026-024 - Give players reliable read-only intelligence access
 
 - **ID reservation:** [WO-2026-024 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -170,3 +170,139 @@ The local implementation has credible source and contract evidence, but the high
 1. **Core Features Developer:** correct the published-only copy and record the completed local validation as a developer handoff.
 2. **Theo/PM:** create or approve a non-customer two-tenant/four-role fixture, then separately approve applying this high-risk migration to the shared production database.
 3. **QA:** after that handoff, perform the authenticated RLS/browser matrix. Do not move this work order to Ready for QA until the developer records the deployment/migration evidence and reproducible fixture details.
+
+## Independent QA re-review - 2026-07-30 (hosted policy review)
+
+### 1. Release verdict: HOLD
+
+Hosted policy state supports the intended read-only access model, but WO-024 is blocked from release by migration-history divergence and incomplete independent browser validation.
+
+### 2. What was verified
+
+- Hosted policy inventory contains each intended tenant-member `SELECT` policy for Scouting and Draft. Their predicates are tenant membership only; the existing mutation policies remain owner/admin-only with restrictive `USING` and `WITH CHECK` predicates.
+- `ScoutingTeamReport` copy now accurately says members receive the same workspace intelligence in read-only form.
+- The underlying two named migrations exist in the hosted project as `20260730211300_player_read_only_intelligence_access` and `20260730211922_consolidate_player_intelligence_read_policies`.
+
+### 3. Blocking issues
+
+- **Migration provenance mismatch:** local files are versioned `20260730205840_player_read_only_intelligence_access.sql` and `20260730211820_consolidate_player_intelligence_read_policies.sql`, while the hosted migration history records different versions (`20260730211300` and `20260730211922`) for the same logical changes. This makes schema history non-reproducible and can make a later migration deployment fail or apply an unintended duplicate. Do not treat the work-order migration evidence as reconciled.
+- **Independent authenticated browser matrix incomplete:** no QA-controlled member/viewer browser session or direct API mutation/cross-tenant check has yet been performed.
+
+### 4. Important risks
+
+- The security advisor still has broad pre-existing project warnings, including exposed `SECURITY DEFINER` functions and RLS-without-policy information. They were not introduced by this work order, but they do not replace the required targeted browser/RLS verification.
+
+### 5. Unverified but required checks
+
+- Tenant-A member and viewer desktop/mobile journeys for Analytics, Scouting list/report, and Draft, including loading, empty, unavailable, and error states.
+- Direct member/viewer mutations and direct tenant-B reads/RPC calls using the fixture identities.
+
+### 6. Required next steps
+
+1. **Core Features Developer / PM:** reconcile local and hosted migration history before any further database deployment. First compare the exact applied SQL/state; rename/repair only with an explicit, reviewed plan. Theo must approve any production migration-history repair.
+2. **Developer:** provide QA a safe sign-in or recoverable access path for the existing non-customer member/viewer fixture identities, plus the tenant-A/tenant-B test matrix. Do not share passwords in the work order.
+3. **QA:** after history reconciliation, execute and record the authenticated browser and direct API matrix. Separate Theo release approval remains required even if it passes.
+
+## Developer migration-history reconciliation - 2026-07-30
+
+- Theo approved a repository-only alignment on 2026-07-30. No hosted migration-history, schema, RLS policy, Auth, fixture, billing, or customer data was modified.
+- Renamed `20260730205840_player_read_only_intelligence_access.sql` to `20260730211300_player_read_only_intelligence_access.sql` and `20260730211820_consolidate_player_intelligence_read_policies.sql` to `20260730211922_consolidate_player_intelligence_read_policies.sql`.
+- Read-only hosted migration inventory confirms the corresponding hosted records are `20260730211300_player_read_only_intelligence_access` and `20260730211922_consolidate_player_intelligence_read_policies`.
+- Migration provenance blocker is resolved. This work order is **Ready for QA**; release remains **HOLD** until the independent authenticated browser and direct API matrix is complete and Theo separately approves release.
+
+## Independent QA re-review - 2026-07-30 (migration-alignment regression)
+
+### 1. Release verdict: HOLD
+
+Hosted migration history is now correctly aligned with the renamed local migration files, but the required player-intelligence contract test was not updated with that rename and fails. WO-024 must return to Core Features Developer before QA can rely on its regression suite.
+
+### 2. What was verified
+
+- Hosted history contains `20260730211300_player_read_only_intelligence_access` and `20260730211922_consolidate_player_intelligence_read_policies`, matching the current local filenames.
+- The Draft and Team Analytics contract files executed successfully in the focused run.
+
+### 3. Blocking issues
+
+- **Broken required contract:** `scripts/player-read-only-intelligence-contract.test.mjs` still reads `20260730205840_player_read_only_intelligence_access.sql` and `20260730211820_consolidate_player_intelligence_read_policies.sql`, neither of which exists after the approved rename. The focused validation run fails with `ENOENT` before executing the player-intelligence assertions (19 passed, 1 failed test file).
+
+### 4. Important risks
+
+- The developer handoff's claim of 22 passing focused contracts is stale after the migration-history correction. Do not use it as evidence for a release decision.
+
+### 5. Unverified but required checks
+
+- Repaired focused contracts, then the outstanding authenticated member/viewer browser and direct API mutation/cross-tenant matrix.
+
+### 6. Required developer handoff
+
+1. Update the two migration paths in `scripts/player-read-only-intelligence-contract.test.mjs` to the reconciled filenames.
+2. Rerun and record the complete 22-test focused suite, ESLint, TypeScript, and build. Return the work order to Ready for QA only after they pass.
+3. Keep the migration versions unchanged; no database action is required for this repair.
+
+## Developer regression repair - 2026-07-30
+
+- Theo approved the local regression repair on 2026-07-30. Updated the two file paths in `scripts/player-read-only-intelligence-contract.test.mjs` to the reconciled hosted migration versions; no migration SQL, hosted schema, RLS policy, Auth, fixture, billing, or customer data changed.
+- Final local validation 2026-07-30: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (22 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed.
+- Status returned to **Ready for QA**. The outstanding independent authenticated browser and direct API role matrix remains the only release-evidence blocker; Theo's separate release approval is still required.
+
+## Independent QA recheck - 2026-07-30 (regression repair passed)
+
+### 1. Release verdict: CONDITIONAL
+
+The migration-history alignment and its contract regression are repaired. The work order is Ready for QA, but cannot be released until the authenticated member/viewer browser and direct API matrix is independently completed.
+
+### 2. What was verified
+
+- Independently ran the focused player-intelligence, Draft workspace, and Team Analytics suite: **22/22 passed**.
+- The corrected contract now references the reconciled migration filenames, so it exercises the intended policy assertions rather than failing at file load.
+
+### 3. Blocking issues
+
+- No current source/build blocker is reproduced. Release evidence remains incomplete rather than failed.
+
+### 4. Important risks
+
+- The current authenticated staging session is not identified as either non-customer fixture member/viewer. It cannot establish the required role, mutation-denial, or tenant-isolation behaviour.
+
+### 5. Unverified but required checks
+
+- Tenant-A member and viewer browser checks for Analytics, Scouting list/report, and Draft at desktop and mobile.
+- Direct member/viewer write and tenant-B read/RPC attempts using the fixture accounts.
+
+### 6. Exact next action
+
+Provide a staging sign-in session for `wo-024-qa-tenant-a` **member** first, then its **viewer** (or provide the safe recovery/sign-in path for those existing fixture identities). QA will perform only read-only browsing and controlled direct API denials; no fixture records will be created, edited, or deleted.
+
+## Independent QA hosted browser audit - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The authenticated Tenant-A **member** journey fails a core acceptance criterion in the deployed staging application. The member can view Analytics and the unpublished Draft plan, but is explicitly denied the live Scouting report that the work order requires them to read. Database/RLS evidence cannot compensate for this deployed application failure.
+
+### 2. What was verified
+
+- Authenticated browser identity: `WO-024 QA Tenant A`, role `MEMBER` (non-customer fixture).
+- `/analytics` loaded successfully. Its zero-game state was truthful: it reported `0 qualifying games`, did not substitute sample data, and retained the expected filters and unavailable-data explanations.
+- `/draft` loaded `WO-024 QA unpublished plan A`, including its non-customer unpublished-plan description and one factual prompt. The member-visible controls were navigation/review controls only; no Draft authoring control was exposed in that view.
+- Read-only fixture inventory independently confirmed the active Tenant-A opponent `WO-024 QA Opponent A` (`11ffd00f-80c2-4642-990a-2e994593919e`) with one evidence item. This establishes that the following report test was not an honest empty-state result.
+
+### 3. Blocking issues
+
+- **Deployed member Scouting/report denial:** opening `/scouting/11ffd00f-80c2-4642-990a-2e994593919e` while authenticated as the Tenant-A member rendered: `Private staff workspace` and `Living opponent evidence is restricted to owners and admins. Open Draft to read published snapshots shared with the team.` This is the pre-WO staff-only dead end and conflicts directly with the approved scope: member/viewer access to live Scouting reports and unpublished Draft material in read-only form. The member cannot reach the active report/evidence in staging.
+
+### 4. Important risks
+
+- The staging Scouting list also rendered a staff-only experience (`Private staff workspace` / `Open published plans`) rather than the implemented local `Private scouting` list. This strongly indicates the staging deployment is serving an older application bundle or an unreconciled role gate, even though the hosted RLS fixture has the intended records.
+- Only the member desktop journey was independently tested. Viewer, mobile/responsive, owner/admin authoring regression, direct mutation denial, and tenant-B isolation remain unverified; do not infer them from the earlier hosted database simulation.
+
+### 5. Unverified but required checks
+
+- After the deployed Scouting fix, repeat Tenant-A member and viewer journeys for `/analytics`, `/scouting`, the fixture report, and `/draft` on desktop and mobile.
+- Perform controlled direct member/viewer mutation denials and tenant-B read/RPC attempts using the fixture identities; record the actual request outcomes.
+- Verify owner/admin can still author, then obtain Theo's separate release approval.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** compare the staging bundle/commit with `src/pages/Scouting.tsx` and `src/pages/ScoutingTeamReport.tsx`. Deploy the implementation that uses `canViewIntelligence` for member/viewer reads and reserves only authoring controls for `canEditIntelligence`; remove the deployed staff-only report branch. Record the deployed URL/commit and reproducible member steps.
+2. **QA:** rerun the complete authenticated role and tenant-isolation matrix after that handoff. No production release decision should be requested before it passes.
+3. **PM:** return WO-024 to **In Progress** / Core Features Developer; it is not Ready for release QA completion.

@@ -14,12 +14,12 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 |---|---|---|---|
 | [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) | QA and Release Auditor | Append-only service-role grant migration is applied; live grants/RLS/scorecard boundary verified | One approved non-customer source-trigger exercise, idempotency retry, and aggregate scorecard check shared with WO-003. |
 | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Embed suppression is active as Supabase Edge Function version 11; a Theo-approved isolated event has provider receipt; local contracts, lint, typecheck, build, and bundle budget pass | Capture the isolated Discord message: visible link, no preview card, one localised timestamp, no mojibake/mentions; retain `/scrim` with WO-2026-025. |
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | QA and Release Auditor | Production migrations applied; two non-customer Elite fixtures and hosted RLS read/isolation/mutation evidence recorded | Independently complete the desktop/mobile authenticated role matrix and direct API mutation checks; release remains HOLD pending Theo approval. |
 
 ## In Progress
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA reproduced the deployed Tenant-A member Scouting/report staff-only denial. Reconcile the staging bundle and role gate with the approved member/viewer read-only scope, then provide a new hosted handoff. | Shared Scouting pages, role gate, and RLS/RPC contract; do not overlap Draft/Scouting refactors. |
 
 ## QA blocked — Theo or PM input required
 

@@ -11,9 +11,20 @@ export const json = (body: unknown, status = 200) => new Response(JSON.stringify
   headers: { ...collectorCorsHeaders, 'Content-Type': 'application/json' },
 });
 
+function serviceRoleKey() {
+  const legacyKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (legacyKey) return legacyKey;
+
+  try {
+    return JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}').default ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const serviceClient = () => createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  serviceRoleKey()!,
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 

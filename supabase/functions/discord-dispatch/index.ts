@@ -49,10 +49,24 @@ Deno.serve(async (request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? (() => {
+    try {
+      return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}").default ?? null;
+    } catch {
+      return null;
+    }
+  })();
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   const appUrl = (Deno.env.get("SCRIMSTATS_APP_URL") || "").replace(/\/$/, "");
   if (!supabaseUrl || !serviceKey || !botToken || !appUrl) {
+    console.error("Discord delivery is not configured", {
+      missing: [
+        !supabaseUrl && "SUPABASE_URL",
+        !serviceKey && "SUPABASE_SERVICE_ROLE_KEY_or_SUPABASE_SECRET_KEYS.default",
+        !botToken && "DISCORD_BOT_TOKEN",
+        !appUrl && "SCRIMSTATS_APP_URL",
+      ].filter(Boolean),
+    });
     return Response.json({ error: "Discord delivery is not configured" }, { status: 503, headers: corsHeaders });
   }
 

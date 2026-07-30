@@ -203,3 +203,41 @@ Theo approved the recovery correction and a follow-on Storage/RLS migration on 2
 **Hosted migration evidence (2026-07-30):** Supabase project `tvcgjehreaayfazlhvps` records `20260730150313_workspace_logo_recovery`. Read-only inspection confirms `workspace-logos` remains private, has the 2,097,152-byte JPEG/PNG/WebP constraints, and now has exactly the member-read, staff-insert, and staff-delete versioned-path policies. No deployment or authenticated hosted verification has been performed for this correction.
 
 **Advisor review (2026-07-30):** The Supabase security advisor returned 52 existing project-wide notices; none reference `workspace-logos` or `workspace_logo` policy objects. Existing RLS-without-policy and `SECURITY DEFINER` notices remain outside this work order's scoped Storage correction.
+
+## Independent QA re-review - 2026-07-30
+
+### 1. Release verdict: HOLD
+
+The original replacement-recovery blocker is corrected in source and the new migration is present in the hosted project. Release remains on hold: authenticated Storage/browser evidence is missing, and the revised path policy still permits unbounded nested object retention within an authorised tenant.
+
+### 2. What was verified
+
+- `node --test scripts/workspace-identity-contract.test.mjs` passed 3/3 locally.
+- Hosted project `tvcgjehreaayfazlhvps` records migration `20260730150313_workspace_logo_recovery`; the bucket remains private, RLS-protected, limited to 2 MB, and restricted to JPEG/PNG/WebP.
+- The client now uploads a new UUID path with `upsert: false`, removes that new object on a tenant-settings write failure, and removes the prior referenced asset only after a successful settings write. This closes the previous fixed-path overwrite finding.
+- The live policy set removes update access and has member read, owner/admin insert, and owner/admin delete policies. It retains legacy fixed-path read/delete only for existing logo assets.
+
+### 3. Blocking issues
+
+- No currently reproduced cross-tenant exposure or replacement-recovery blocker.
+
+### 4. Important risks
+
+- **Versioned-path policy is not exact or bounded.** It checks only folders 1 and 2 and that the final filename is UUID-shaped. A path such as `<own-tenant-id>/logo/arbitrary/nesting/<uuid>` also satisfies those predicates. An owner/admin can therefore create arbitrary additional objects in its own private tenant namespace through the Storage API. This does not expose another tenant's assets, but it conflicts with the explicit non-goal of bounded logo retention and the handoff's claim of a constrained exact versioned path.
+- No authenticated owner/admin/member/cross-tenant Storage or staging browser test has been supplied. Hosted policy inspection is not a substitute for Storage API and signed-URL behaviour.
+
+### 5. Unverified but required checks
+
+- Exact-path rejection for nested and malformed versioned paths; repeat upload/replacement/removal and settings-write-failure recovery with approved temporary artifacts.
+- Owner/admin success; member write/delete denial; tenant-B read/write/delete and signed-URL denial for tenant-A paths.
+- PNG/JPEG/WebP success; invalid-file and failed-image fallback; sidebar/switcher at desktop and mobile widths.
+
+### 6. Suggested fixes or next validation steps
+
+1. Core Features Developer: constrain the policy to exactly `<tenant-id>/logo/<uuid>` (for example, require exactly two folder components) and add a contract assertion for a nested-path rejection. Decide and document the retained-object bound/cleanup mechanism.
+2. Theo must approve any further hosted Storage/RLS migration before application.
+3. With Theo's temporary-artifact approval, QA can run the authenticated two-tenant Storage and browser matrix.
+
+## Exact-path correction in progress - 2026-07-30
+
+Theo approved a narrow follow-up correction after QA found that versioned paths could include extra nested folders. Migration `20260730152136_workspace_logo_exact_path` requires `cardinality(storage.foldername(name)) = 2` for every versioned read, insert, and delete path, so only the exact `<tenant-id>/logo/<UUID>` layout is permitted. Legacy fixed-path read/delete remains solely for existing assets. The focused regression contract verifies the three exact-folder predicates and policy replacement. Local validation passed: TypeScript, zero-warning ESLint, full suite 183/183, and `git diff --check`. Hosted inspection confirms the migration record and exact-cardinality predicate in all three policies; the security advisor reports no workspace-logo-specific finding.

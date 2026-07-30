@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/20260730124701_workspace_logo_storage.sql");
 const recoveryMigration = read("supabase/migrations/20260730150313_workspace_logo_recovery.sql");
+const exactPathMigration = read("supabase/migrations/20260730152136_workspace_logo_exact_path.sql");
 const logoLib = read("src/lib/workspace-logo.ts");
 const administration = read("src/hooks/useWorkspaceAdministration.ts");
 const tenantContext = read("src/contexts/TenantContext.tsx");
@@ -34,6 +35,15 @@ test("workspace logo recovery policies permit only legacy reads or constrained v
   assert.match(recoveryMigration, /on storage\.objects for insert to authenticated/);
   assert.match(recoveryMigration, /on storage\.objects for delete to authenticated/);
   assert.doesNotMatch(recoveryMigration, /create policy workspace_logos_staff_update/);
+});
+
+test("workspace logo policies reject nested versioned paths", () => {
+  const folderCount = /cardinality\(storage\.foldername\(name\)\) = 2/g;
+  assert.equal((exactPathMigration.match(folderCount) || []).length, 3);
+  assert.match(exactPathMigration, /drop policy if exists workspace_logos_member_read/);
+  assert.match(exactPathMigration, /drop policy if exists workspace_logos_staff_insert/);
+  assert.match(exactPathMigration, /drop policy if exists workspace_logos_staff_delete/);
+  assert.match(exactPathMigration, /storage\.filename\(name\) ~\* '\^\[0-9a-f\]\{8\}/);
 });
 
 test("workspace logo browser flow uses safe versioned paths, signed reads, and fallback rendering", () => {

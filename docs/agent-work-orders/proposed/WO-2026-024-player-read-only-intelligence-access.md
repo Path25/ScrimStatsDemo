@@ -1,7 +1,7 @@
 # WO-2026-024 - Give players reliable read-only intelligence access
 
 - **ID reservation:** [WO-2026-024 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -96,22 +96,22 @@ This is a core daily-use workflow and a weak first impression for a Pro team. It
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Member/viewer reads three intelligence workflows reliably | Not implemented | Proposed | Outstanding |
-| Member/viewer mutations fail below browser layer | Not implemented | Proposed | Outstanding |
-| Owner/admin authoring and tenant isolation remain intact | Not implemented | Proposed | Outstanding |
-| Pro/Elite server entitlement remains enforced | Not implemented | Proposed | Outstanding |
+| Member/viewer reads three intelligence workflows reliably | Additive tenant-member Scouting/Draft `SELECT` policies and read-only Scouting views implemented; local contract tests pass | Locally tested | Authenticated browser and hosted verification outstanding |
+| Member/viewer mutations fail below browser layer | Existing owner/admin-only mutation policies retained; migration adds no mutation policy; local contract tests pass | Locally tested | Direct authenticated mutation attempts outstanding |
+| Owner/admin authoring and tenant isolation remain intact | All new reads use `public.user_belongs_to_tenant(tenant_id)`; mutation controls remain staff-only in UI | Locally tested | Four-role/two-tenant RLS matrix outstanding |
+| Pro/Elite server entitlement remains enforced | Analytics retains `assert_team_analytics_access` and `SECURITY INVOKER` contract; local contract test passes | Locally tested | Authenticated and hosted verification outstanding |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** The user impact and conflicting current role controls are source-evidenced, but implementation, migration review, authenticated tests, and hosted verification are outstanding.
+- **Rationale:** Local implementation and source-contract checks are complete, but the migration is not applied and no authenticated or hosted role evidence exists yet.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Prepare safe four-role/two-tenant fixtures | Core Features Developer | Reproducible owner/admin/member/viewer test setup | Open |
-| Implement/test role, RLS, and RPC contract | Core Features Developer | PR/commit, test output, reproducible handoff | Open |
+| Apply/test role, RLS, and RPC contract locally | Core Features Developer | Local migration application plus direct read/mutation matrix | Open |
 | Independent authorization/release audit | QA and Release Auditor | Role matrix, RLS/grant/Advisor, browser and hosted evidence | Open |
 
 ### Theo approval record
@@ -128,4 +128,7 @@ This is a core daily-use workflow and a weak first impression for a Pro team. It
 ## Implementation and review evidence
 
 - Source review 2026-07-30: `Scouting.tsx`/`ScoutingTeamReport.tsx` gate non-editors into staff-only states; `get_draft_workspace` and Draft RLS shape member access around published records; Team Analytics checks entitled tenant membership.
-- **Highest evidence achieved:** Proposed
+- Local implementation 2026-07-30: added `20260730205840_player_read_only_intelligence_access.sql`, which grants only authenticated tenant-member reads for Scouting/Draft records and preserves existing owner/admin mutation policies. Scouting list/report now load read-only views for members/viewers; authoring, archive, restore, and edit controls remain staff-only.
+- Local validation 2026-07-30: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (22 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed.
+- Environment note 2026-07-30: a bundled pnpm invocation attempted an npm-to-pnpm conversion and was blocked from registry access. The moved package directories were restored before validation; no dependency manifest or lockfile was changed.
+- **Highest evidence achieved:** Locally tested

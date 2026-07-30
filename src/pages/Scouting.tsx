@@ -32,7 +32,7 @@ import { useOpponentTeams, type OpponentTeam } from "@/hooks/useOpponentTeams";
 import { useWorkspaceModules } from "@/hooks/useWorkspaceModules";
 
 export default function Scouting() {
-  const { canEditIntelligence } = useRole();
+  const { canEditIntelligence, canViewIntelligence } = useRole();
   const { modules } = useWorkspaceModules();
   const moduleEnabled = modules.scouting.enabled;
   const {
@@ -114,16 +114,11 @@ export default function Scouting() {
           title="Scouting is not enabled for this workspace"
           description="When enabled, staff can connect opponent evidence to Draft match plans."
         />
-      ) : !canEditIntelligence ? (
+      ) : !canViewIntelligence ? (
         <WorkspaceState
           icon={ShieldCheck}
-          title="Private staff workspace"
-          description="Owners and admins maintain the living opponent report. Published fixture briefs and draft scenarios are available to the full team in Draft."
-          action={
-            <Button asChild variant="outline">
-              <Link to="/draft?view=published">Open published plans</Link>
-            </Button>
-          }
+          title="Scouting is unavailable"
+          description="Your current workspace role cannot read this intelligence workspace."
         />
       ) : (
         <>
@@ -189,23 +184,25 @@ export default function Scouting() {
                           Open report <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEdit(team)}
-                        aria-label={`Edit ${team.name}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={isArchiving}
-                        onClick={() => void archiveTeam(team.id)}
-                        aria-label={`Archive ${team.name}`}
-                      >
-                        <Archive className="h-4 w-4" />
-                      </Button>
+                      {canEditIntelligence && <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(team)}
+                          aria-label={`Edit ${team.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isArchiving}
+                          onClick={() => void archiveTeam(team.id)}
+                          aria-label={`Archive ${team.name}`}
+                        >
+                          <Archive className="h-4 w-4" />
+                        </Button>
+                      </>}
                     </div>
                   </article>
                 ))}
@@ -223,7 +220,7 @@ export default function Scouting() {
                   : "Create a private opponent record, attach evidence from practice, and publish a focused Draft match plan."
               }
               action={
-                !query ? (
+                !query && canEditIntelligence ? (
                   <Button onClick={openCreate}>
                     <Plus className="h-4 w-4" /> Add first opponent
                   </Button>
@@ -261,14 +258,14 @@ export default function Scouting() {
                           {team.region || "Region not recorded"}
                         </p>
                       </div>
-                      <Button
+                      {canEditIntelligence && <Button
                         variant="outline"
                         size="sm"
                         disabled={isArchiving}
                         onClick={() => void restoreTeam(team.id)}
                       >
                         <RotateCcw className="h-4 w-4" /> Restore
-                      </Button>
+                      </Button>}
                     </div>
                   ))}
                 </div>

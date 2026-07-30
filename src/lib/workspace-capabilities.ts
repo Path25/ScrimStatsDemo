@@ -9,6 +9,7 @@ export type WorkspaceCapabilities = {
   manageIntelligence: boolean;
   manageIntegrations: boolean;
   manageMemberships: boolean;
+  viewIntelligence: boolean;
   viewPublishedIntelligence: boolean;
 };
 
@@ -19,6 +20,7 @@ const readOnly: WorkspaceCapabilities = {
   manageIntelligence: false,
   manageIntegrations: false,
   manageMemberships: false,
+  viewIntelligence: true,
   viewPublishedIntelligence: true,
 };
 

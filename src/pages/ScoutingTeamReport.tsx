@@ -56,9 +56,9 @@ type SoloQPlayer = {
 
 export default function ScoutingTeamReport() {
   const { opponentId } = useParams();
-  const { canEditIntelligence } = useRole();
+  const { canEditIntelligence, canViewIntelligence } = useRole();
   const { modules } = useWorkspaceModules();
-  const scouting = useScoutingWorkspace(opponentId, modules.scouting.enabled && canEditIntelligence);
+  const scouting = useScoutingWorkspace(opponentId, modules.scouting.enabled && canViewIntelligence);
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -166,13 +166,12 @@ export default function ScoutingTeamReport() {
     );
   }
 
-  if (!canEditIntelligence) {
+  if (!canViewIntelligence) {
     return (
       <WorkspaceState
         icon={ShieldCheck}
-        title="Private staff workspace"
-        description="Living opponent evidence is restricted to owners and admins. Open Draft to read published snapshots shared with the team."
-        action={<Button asChild variant="outline"><Link to="/draft?view=published">Open published plans</Link></Button>}
+        title="Scouting is unavailable"
+        description="Your current workspace role cannot read this intelligence workspace."
       />
     );
   }
@@ -431,14 +430,14 @@ export default function ScoutingTeamReport() {
                           {player.role || "unassigned"}
                         </p>
                       </div>
-                      <Button
+                      {canEditIntelligence && <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => void scouting.setPlayerActive({ id: player.id, isActive: true })}
                       >
                         <RotateCcw className="h-4 w-4" /> Restore
-                      </Button>
+                      </Button>}
                     </div>
                   ))}
                 </div>

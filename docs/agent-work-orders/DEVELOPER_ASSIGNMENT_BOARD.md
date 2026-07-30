@@ -8,9 +8,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 |---|---|---|---|---|
 | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) | Developer – Fast Lane | S / Low | Local or isolated test data | Evidence/fixture-only work; must not edit `ChampionAvatar` or catalogue implementation. |
 
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | L / High | Safe four-role/two-tenant fixture | Shared Draft, Scouting, Analytics role/capability and RLS/RPC work; do not run overlapping work in these areas. |
-
-
 ## Ready for QA
 
 | Work order | Owner | Deployment evidence | QA dependency |
@@ -22,6 +19,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | Local migration, read-only role matrix, and contract evidence complete; awaiting safe four-role/two-tenant fixture for direct RLS/browser checks | Shared Draft, Scouting, Analytics role/capability and RLS/RPC work; do not run overlapping work in these areas. |
 
 ## QA blocked — Theo or PM input required
 

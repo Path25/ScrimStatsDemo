@@ -476,7 +476,7 @@ export default function ScoutingTeamReport() {
           <DataSurface className="p-5">
             <div className="flex gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
-              <p className="text-sm leading-6 text-[var(--workspace-muted)]">Staff edit the living report. Team members receive read-only published Draft plans.</p>
+              <p className="text-sm leading-6 text-[var(--workspace-muted)]">Staff edit the living report. Team members receive the same workspace intelligence in read-only form.</p>
             </div>
           </DataSurface>
         </div>

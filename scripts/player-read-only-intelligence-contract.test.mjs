@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/20260730205840_player_read_only_intelligence_access.sql");
+const consolidationMigration = read("supabase/migrations/20260730211820_consolidate_player_intelligence_read_policies.sql");
 const scouting = read("src/pages/Scouting.tsx");
 const report = read("src/pages/ScoutingTeamReport.tsx");
 const capabilities = read("src/lib/workspace-capabilities.ts");
@@ -25,6 +26,14 @@ test("members and viewers receive tenant-scoped read-only intelligence access", 
   ]) assert.match(migration, new RegExp(`create policy ${policy}`));
   assert.doesNotMatch(migration, /for (insert|update|delete) to authenticated/i);
   assert.match(migration, /user_belongs_to_tenant\(tenant_id\)/);
+  for (const policy of [
+    "Users can view opponent teams in their tenant",
+    "Users can view opponent players from their tenant teams",
+    "staff read scouting evidence",
+    "staff read scouting tendencies",
+    "staff read tendency evidence",
+    "members read published brief evidence",
+  ]) assert.match(consolidationMigration, new RegExp(`drop policy if exists "${policy}"`));
 });
 
 test("Scouting loads read-only views and keeps every mutation control staff-only", () => {
@@ -36,6 +45,7 @@ test("Scouting loads read-only views and keeps every mutation control staff-only
   assert.match(report, /\{canEditIntelligence && <Button[\s\S]*setPlayerActive\(\{ id: player\.id, isActive: true \}\)/);
   assert.doesNotMatch(scouting, /\) : !canEditIntelligence \? \(/);
   assert.doesNotMatch(report, /if \(!canEditIntelligence\)/);
+  assert.match(report, /same workspace intelligence in read-only form/);
 });
 
 test("analytics retains its independent server-side entitlement guard", () => {

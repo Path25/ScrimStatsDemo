@@ -1,7 +1,7 @@
 # WO-2026-024 - Give players reliable read-only intelligence access
 
 - **ID reservation:** [WO-2026-024 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -96,23 +96,23 @@ This is a core daily-use workflow and a weak first impression for a Pro team. It
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Member/viewer reads three intelligence workflows reliably | Additive tenant-member Scouting/Draft `SELECT` policies and read-only Scouting views implemented; local contract tests pass | Locally tested | Authenticated browser and hosted verification outstanding |
-| Member/viewer mutations fail below browser layer | Existing owner/admin-only mutation policies retained; migration adds no mutation policy; local contract tests pass | Locally tested | Direct authenticated mutation attempts outstanding |
-| Owner/admin authoring and tenant isolation remain intact | All new reads use `public.user_belongs_to_tenant(tenant_id)`; mutation controls remain staff-only in UI | Locally tested | Four-role/two-tenant RLS matrix outstanding |
-| Pro/Elite server entitlement remains enforced | Analytics retains `assert_team_analytics_access` and `SECURITY INVOKER` contract; local contract test passes | Locally tested | Authenticated and hosted verification outstanding |
+| Member/viewer reads three intelligence workflows reliably | Hosted authenticated-role simulation reads tenant-A live Scouting plus unpublished Draft records; fixture is Elite and module-enabled | Hosted database verified | Browser journey outstanding |
+| Member/viewer mutations fail below browser layer | Member/viewer direct update attempt returned zero rows; owner/admin policies were not widened | Hosted database verified | Browser/API mutation attempts outstanding |
+| Owner/admin authoring and tenant isolation remain intact | Tenant-B read/RPC returns no data after rollback-only removal of the cross-membership; admin Draft RPC and update succeed | Hosted database verified | Browser role matrix outstanding |
+| Pro/Elite server entitlement remains enforced | Member Analytics RPC returns `team-analytics-v3`; fixture is Elite with Analytics enabled | Hosted database verified | Browser journey outstanding |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** Local implementation and source-contract checks are complete, but the migration is not applied and no authenticated or hosted role evidence exists yet.
+- **Verdict:** READY FOR QA (release HOLD)
+- **Rationale:** Theo-approved production migrations and a non-customer two-tenant fixture are in place. Hosted database/RLS checks pass, but independent authenticated browser QA and release approval remain required.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Prepare safe four-role/two-tenant fixtures | Core Features Developer | Reproducible owner/admin/member/viewer test setup | Open |
-| Apply/test role, RLS, and RPC contract locally | Core Features Developer | Local migration application plus direct read/mutation matrix | Open |
-| Independent authorization/release audit | QA and Release Auditor | Role matrix, RLS/grant/Advisor, browser and hosted evidence | Open |
+| Prepare safe four-role/two-tenant fixtures | Core Features Developer | `wo-024-qa-tenant-a` and `wo-024-qa-tenant-b`, each Elite with owner/admin/member/viewer | Complete |
+| Apply/test role, RLS, and RPC contract | Core Features Developer | Production migrations, hosted read/isolation/mutation simulation, Advisor review | Complete |
+| Independent authenticated browser/release audit | QA and Release Auditor | Browser role matrix, mobile/desktop evidence, direct API mutation attempts, release verdict | Open |
 
 ### Theo approval record
 
@@ -131,4 +131,42 @@ This is a core daily-use workflow and a weak first impression for a Pro team. It
 - Local implementation 2026-07-30: added `20260730205840_player_read_only_intelligence_access.sql`, which grants only authenticated tenant-member reads for Scouting/Draft records and preserves existing owner/admin mutation policies. Scouting list/report now load read-only views for members/viewers; authoring, archive, restore, and edit controls remain staff-only.
 - Local validation 2026-07-30: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (22 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed.
 - Environment note 2026-07-30: a bundled pnpm invocation attempted an npm-to-pnpm conversion and was blocked from registry access. The moved package directories were restored before validation; no dependency manifest or lockfile was changed.
-- **Highest evidence achieved:** Locally tested
+- Hosted implementation 2026-07-30: Theo-approved migrations `20260730205840_player_read_only_intelligence_access` and `20260730211820_consolidate_player_intelligence_read_policies` applied to `tvcgjehreaayfazlhvps`. The latter removed six legacy duplicate read policies after Advisor review; no mutation policies changed.
+- Hosted fixture 2026-07-30: created non-customer Elite workspaces `wo-024-qa-tenant-a` and `wo-024-qa-tenant-b`, each with owner/admin/member/viewer. Tenant A has one active Scouting evidence item, one tendency, one unpublished Draft playbook, and one unpublished Draft plan; tenant B has distinct Scouting evidence for isolation checks. No Stripe identifiers, provider credentials, customer workspaces, or billing records were changed.
+- Hosted RLS evidence 2026-07-30: rollback-only authenticated-role checks showed tenant-A member/viewer read the tenant-A Scouting item plus 1 unpublished Draft playbook/plan, see zero tenant-B Scouting rows, receive `NULL` from tenant-B `get_draft_workspace`, and update zero opponent rows. Tenant-A admin created a rollback-only Draft playbook, updated one opponent row, and received `team-analytics-v3`; member Analytics also returned `team-analytics-v3` with an honest empty-game set.
+- Hosted Advisor review 2026-07-30: no affected multiple-permissive-policy notices remain. The only relevant security notices are pre-existing `SECURITY DEFINER` functions `set_preparation_brief_evidence` and `supersede_scouting_evidence`, neither modified by this work order.
+- Final local validation 2026-07-30: 22 focused contracts passed; ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed.
+- **Highest evidence achieved:** Hosted database verified
+
+## Independent QA preliminary audit - 2026-07-30
+
+### 1. Release verdict: HOLD
+
+The local implementation has credible source and contract evidence, but the high-risk migration has not been applied to the hosted project and no authenticated role/tenant matrix exists. It is not Ready for QA or release.
+
+### 2. What was verified
+
+- Independently ran `player-read-only-intelligence`, Draft workspace, and Team Analytics contracts: **22/22 passed**.
+- Inspected the proposed migration: it adds only `SELECT` policies with tenant-membership predicates and retains owner/admin-only mutation policies; it does not introduce a `SECURITY DEFINER` shortcut.
+- Read the current hosted policy inventory. Existing mutation policies for the relevant Scouting and Draft tables are owner/admin-only with appropriate `USING`/`WITH CHECK` predicates. The migration is therefore not masking an inherited all-member write path.
+- Confirmed the migration `20260730205840_player_read_only_intelligence_access` is absent from hosted migration history. No production/staging policy behaviour has changed.
+
+### 3. Blocking issues
+
+- **Hosted security/functionality unverified:** No migration application, authenticated member/viewer reads, direct mutation denials, cross-tenant reads, or hosted browser journey is available. Local contracts cannot establish RLS behaviour.
+
+### 4. Important risks
+
+- **Contradictory member copy:** `ScoutingTeamReport.tsx` still tells members they receive read-only **published** Draft plans, despite the accepted scope and migration granting same-tenant access to unpublished working material. Correct the copy before QA; otherwise the product makes a materially narrower promise than the actual access model.
+
+### 5. Unverified but required checks
+
+- Four roles (owner, admin, member, viewer) across two entitled test tenants: Analytics, Scouting list/report, and every Draft view, including loading/empty/error states.
+- Direct member/viewer mutation attempts and direct tenant-B reads/RPC calls.
+- Hosted migration/policy/grant/function review and Supabase Advisor run after approved application.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** correct the published-only copy and record the completed local validation as a developer handoff.
+2. **Theo/PM:** create or approve a non-customer two-tenant/four-role fixture, then separately approve applying this high-risk migration to the shared production database.
+3. **QA:** after that handoff, perform the authenticated RLS/browser matrix. Do not move this work order to Ready for QA until the developer records the deployment/migration evidence and reproducible fixture details.

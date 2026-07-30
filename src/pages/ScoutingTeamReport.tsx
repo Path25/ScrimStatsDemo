@@ -282,14 +282,16 @@ export default function ScoutingTeamReport() {
                         <SourceBadge source={item.source_kind === "collector" ? "collector" : "manual"} compact />
                         <span className="ss-mono text-xs uppercase text-[var(--workspace-subtle)]">{item.evidence_type.replace("_", " ")}</span>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => reviseEvidence(item)}
-                      >
-                        <Pencil className="h-4 w-4" /> Revise
-                      </Button>
+                      {canEditIntelligence && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => reviseEvidence(item)}
+                        >
+                          <Pencil className="h-4 w-4" /> Revise
+                        </Button>
+                      )}
                     </div>
                     <p className="mt-3 text-sm leading-6 text-[var(--workspace-muted)]">{item.observation}</p>
                     <div className="mt-4 flex flex-wrap gap-4 text-xs text-[var(--workspace-subtle)]">

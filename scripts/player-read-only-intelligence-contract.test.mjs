@@ -43,6 +43,7 @@ test("Scouting loads read-only views and keeps every mutation control staff-only
   assert.match(scouting, /\{canEditIntelligence && <>/);
   assert.match(report, /canEditIntelligence \? \(/);
   assert.match(report, /\{canEditIntelligence && <Button[\s\S]*setPlayerActive\(\{ id: player\.id, isActive: true \}\)/);
+  assert.match(report, /\{canEditIntelligence && \(\s*<Button[\s\S]*onClick=\{\(\) => reviseEvidence\(item\)\}/);
   assert.doesNotMatch(scouting, /\) : !canEditIntelligence \? \(/);
   assert.doesNotMatch(report, /if \(!canEditIntelligence\)/);
   assert.match(report, /same workspace intelligence in read-only form/);

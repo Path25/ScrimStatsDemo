@@ -80,7 +80,7 @@ export default function Integrations() {
               <Bot className="h-5 w-5 text-[#8994ff]" />
               <h2 className="font-semibold">Discord schedule assistant</h2>
             </div>
-            <ModuleStateBadge state={modules.discord.state} />
+            <ModuleStateBadge state={modules.discord.state} enabled={hasEliteAccess && modules.discord.enabled} />
           </div>
           {canManageIntegrations && hasEliteAccess && modules.discord.state === "live" ? <DiscordScheduleIntegration /> : <IntegrationPlanPreview
             locked={!hasEliteAccess}

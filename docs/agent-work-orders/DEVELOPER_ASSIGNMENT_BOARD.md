@@ -8,17 +8,26 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 |---|---|---|---|---|
 | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) | Developer – Fast Lane | S / Low | Local or isolated test data | Evidence/fixture-only work; must not edit `ChampionAvatar` or catalogue implementation. |
 
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | L / High | Safe four-role/two-tenant fixture | Shared Draft, Scouting, Analytics role/capability and RLS/RPC work; do not run overlapping work in these areas. |
+
 ## Ready for QA
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Discord Functions v6/v6/v2/v6/v6 contain the server release-state guard | Direct planned/disabled denial, then approved isolated-provider workflow matrix. |
+| [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) | QA and Release Auditor | Append-only service-role grant migration is applied; live grants/RLS/scorecard boundary verified | One approved non-customer source-trigger exercise, idempotency retry, and aggregate scorecard check shared with WO-003. |
 
 ## In Progress
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
-| [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) | Core Features Developer | Approved recovery correction: versioned tenant logo paths, settings-first reference commit, and Storage/RLS policy update. | Do not overlap with WO-2026-023 or other tenant settings/Storage/RLS work. |
+| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | Core Features Developer | Owner/admin controls, manifest correction, and test-worker schedule preparation complete locally; hosted deployment/configuration remains gated. | Discord Functions, module state, entitlement logic, and contract tests; do not overlap with another Discord or plan-entitlement change. |
+
+## QA blocked — Theo or PM input required
+
+| Work order | Owner | Current blocker | Required routing |
+|---|---|---|---|
+| [WO-2026-002](review/WO-2026-002-pro-paid-core-hosted-verification.md) | QA | Its July handoff is obsolete relative to completed/accepted-risk WO-009 lifecycle work and has no current deployed test matrix. | PM must reconcile, narrow, split, or supersede the work order; Developer must provide a current deployed revision/test-account handoff if it remains active. |
+| [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | No approved isolated funnel journey has produced an event; the ledger and scorecard remain empty. | Theo must approve the minimal temporary non-customer schedule/completed-game workflow; PM must keep any browser scorecard exposure under WO-011. |
 
 ## Sequenced or blocked
 
@@ -42,7 +51,6 @@ WO-2026-019 is the sole eligible Fast Lane item. It is S, low-risk, and explicit
 |---|---|---|---|
 | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) | Core Features Developer | Changes plan entitlement and existing module state; Theo approval required | Avoid overlapping any new entitlement migration; preserve the completed Collector contract. |
 | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) | Core Features Developer | Tenant/RPC/auth boundary needs Theo approval and reviewed design | Do not overlap with WO-2026-021, WO-2026-017, or tenant-membership/RPC migration work. |
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | High-risk role/RLS/RPC changes need Theo implementation approval | Do not overlap with Draft, Scouting, Analytics role/capability, or intelligence-policy work. |
 
 ## Vague or incomplete before assignment
 

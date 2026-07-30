@@ -1,7 +1,7 @@
 # WO-2026-017 - Add tenant-safe workspace identity customization
 
 - **ID reservation:** [WO-2026-017 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Done
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -241,3 +241,74 @@ The original replacement-recovery blocker is corrected in source and the new mig
 ## Exact-path correction in progress - 2026-07-30
 
 Theo approved a narrow follow-up correction after QA found that versioned paths could include extra nested folders. Migration `20260730152136_workspace_logo_exact_path` requires `cardinality(storage.foldername(name)) = 2` for every versioned read, insert, and delete path, so only the exact `<tenant-id>/logo/<UUID>` layout is permitted. Legacy fixed-path read/delete remains solely for existing assets. The focused regression contract verifies the three exact-folder predicates and policy replacement. Local validation passed: TypeScript, zero-warning ESLint, full suite 183/183, and `git diff --check`. Hosted inspection confirms the migration record and exact-cardinality predicate in all three policies; the security advisor reports no workspace-logo-specific finding.
+
+## Independent QA re-review - 2026-07-30 (exact-path correction)
+
+### 1. Release verdict: HOLD
+
+The versioned-path recovery and exact-path policy defects are corrected in the hosted project. Release is still on hold because the required authenticated two-tenant Storage and browser acceptance tests have not been performed.
+
+### 2. What was verified
+
+- `node --test scripts/workspace-identity-contract.test.mjs` passed 4/4 locally, including the nested-path regression assertion.
+- Hosted project `tvcgjehreaayfazlhvps` records migration `20260730152136_workspace_logo_exact_path`.
+- The live `workspace-logos` bucket remains private and Storage RLS remains enabled.
+- Live policy inspection confirms exactly three workspace-logo policies: member read, owner/admin insert, and owner/admin delete. Each versioned branch includes tenant folder, literal `logo` folder, UUID filename, and exact two-folder cardinality predicates. The prior update policy is absent, matching the `upsert: false` versioned replacement design.
+
+### 3. Blocking issues
+
+- No outstanding source or hosted-policy defect was found in this re-review.
+
+### 4. Important risks
+
+- No authenticated owner/admin/member/cross-tenant Storage API evidence exists. Policy inspection does not prove upload, signed URL, delete, or denial behaviour under real user credentials.
+- No deployed browser evidence exists for Settings, sidebar/switcher rendering, failure recovery, or responsive states.
+
+### 5. Unverified but required checks
+
+- Using approved temporary non-customer assets: owner/admin PNG/JPEG/WebP upload, replacement, removal, and tenant-settings failure recovery.
+- Member mutation denial; tenant-B direct read, signed-URL, insert, and delete denial for tenant-A paths; malformed and nested-path denial.
+- SVG/GIF/zero-byte/over-2-MB rejection plus desktop and mobile Settings/sidebar/switcher checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must approve creation and immediate cleanup of temporary logo artifacts for two isolated non-customer tenants.
+2. QA then runs the authenticated Storage and browser matrix above and records the route, role, operation, result, and cleanup evidence.
+3. Theo must explicitly approve release/promotion after that matrix passes.
+
+## Independent QA authenticated RLS check - 2026-07-30
+
+### 1. Release verdict: HOLD
+
+The hosted database-level tenant and role boundary passes for the approved non-customer identities. The work order remains Ready for QA because actual Storage API/signed-URL and staged browser acceptance evidence is still absent.
+
+### 2. What was verified
+
+- Using approved non-customer owner/member/cross-tenant identities and rolled-back transactions only: a same-tenant member read the exact versioned object (`1` row); an unrelated tenant read returned `0` rows.
+- A same-tenant member insert, cross-tenant owner insert, and nested-path owner insert each failed with SQLSTATE `42501` (Storage RLS denial).
+- An owner exact-path insert passed the policy stage. A direct database delete was then rejected by Storage's `protect_delete` guard, as designed; the transaction was rolled back, so no test object or tenant-setting change persisted.
+- The earlier local focused contract remains 4/4 passing, including exact-path policy coverage.
+
+### 3. Blocking issues
+
+- No reproduced RLS, tenant-isolation, recovery, or exact-path defect remains at the database-policy layer.
+
+### 4. Important risks
+
+- The database-level check does not prove the Supabase Storage API's upload body handling, `createSignedUrl`, or Storage API deletion. Direct `storage.objects` deletion is intentionally disallowed, so it cannot substitute for the API workflow.
+- No authenticated staged browser evidence covers Settings upload/replace/remove, rejected-file messaging, rendered logo refresh, initials fallback, sidebar/switcher consistency, or responsive widths.
+
+### 5. Unverified but required checks
+
+- In an authenticated staged browser with the approved temporary artifact: owner/admin upload, signed display, replace, remove, and settings-write-failure recovery through the Storage API.
+- Same-tenant member and cross-tenant signed-URL/API denials through the Storage API.
+- PNG/JPEG/WebP success; SVG/GIF/zero-byte/over-2-MB failure states; desktop and mobile UI states.
+
+### 6. Suggested fixes or next validation steps
+
+1. Use an authenticated staging browser session for the remaining Storage API and UI matrix; immediately remove the temporary object after the test.
+2. Theo must explicitly approve release/promotion only after those browser checks pass. No production deployment is approved by this audit.
+
+## Theo completion decision - 2026-07-30
+
+Theo manually validated the staged workspace-identity flow and approved WO-017 to move to Done. This accepts the remaining browser/API evidence gap recorded above. The completed work-order status does not itself approve a production deployment or any further Storage/RLS change.

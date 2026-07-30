@@ -1,7 +1,7 @@
 # WO-2026-001 - Define and deliver a credible Elite proposition
 
-- **Status:** Ready for QA
-- **Assigned owner:** QA and Release Auditor
+- **Status:** In Progress
+- **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
 - **Priority:** High
@@ -67,8 +67,8 @@ First assess and complete the existing `discord-install`, `discord-channels`, `d
 | Role | State | Handoff |
 | --- | --- | --- |
 | Project Manager | Involved | Keep the Elite promise limited to the approved Discord scheduling outcome; reject speculative feature additions until separately scoped. |
-| Feature Developer | Assigned | Audit and complete the existing installation, channel-selection, reminder, and dispatch path without enabling production delivery. |
-| QA & Release Auditor | Pending | Verify tenant/role isolation, OAuth-state handling, channel subscription controls, event deduplication, delivery failure states, and hosted evidence before release. |
+| Core Features Developer | Assigned | Correct server-side Discord release-state enforcement and direct-invocation regression coverage without enabling provider delivery. |
+| QA & Release Auditor | Pending | Re-audit the direct planned/disabled denial after the developer handoff, then retain the full hosted/provider matrix for a later approved test. |
 | Technical Reporting Analyst | Consulted | Define only safe operational delivery/reliability evidence; do not treat a queued reminder as customer receipt. |
 | Lead Marketer & Growth | Consulted | Prepare no public claim until QA confirms a complete customer/support path; collect additional Elite feature ideas separately. |
 
@@ -248,6 +248,17 @@ The hosted remediation is present, and the customer-facing preview remains hones
 
 1. Developer implements and tests server-side module release-state enforcement before provider configuration is considered.
 2. Theo approves dedicated Discord test credentials, callback URL, bot permissions, worker schedule, and the narrow production-backed test-workspace scope; no customer workspace or public Discord server should be used.
+
+## Return to development - 2026-07-30
+
+Theo returned this work order to development after the QA finding below. The Core Features Developer must:
+
+1. Add one shared server-side Discord entitlement helper that requires the caller's workspace to be both Elite and explicitly live/enabled for the Discord module.
+2. Use that helper in `discord-install`, `discord-channels`, `discord-config`, `discord-schedule-reminders`, and `discord-dispatch`; direct invocation must not bypass the planned/disabled customer state.
+3. Add focused regression coverage proving planned and disabled module states deny each user, scheduler, and dispatcher path, while the existing authorised Elite-manager path remains available only when the module is live/enabled.
+4. Preserve existing tenant/manager checks, OAuth role revalidation, provider-scoped outbox behaviour, and no-JWT callback/worker secret checks. Do not configure provider credentials, alter OAuth configuration, deploy, enable customer delivery, or change customer claims.
+
+The developer handoff must include changed files, targeted test output, typecheck, zero-warning lint, production build, and reproducible QA steps. It returns to QA only after that evidence is recorded.
 3. QA runs the full authenticated/provider matrix, including a non-Discord outbox regression. Only then can Theo approve changing Discord from `planned` to `live`, enabling customer delivery, or making an Elite availability claim.
 
 ## Developer release-state correction - 2026-07-29
@@ -325,6 +336,11 @@ The release-state remediation is now deployed and the Discord capability remains
 - QA set the workspace to `elite` / `active`, cleared its prior cancellation lifecycle fields, and set its Discord module to `live` and enabled. Read-back verification confirmed those exact values.
 - This is a reversible QA entitlement only. It does not create a Stripe subscription, payment, customer claim, provider credential, OAuth configuration, worker schedule, or Discord delivery approval. Restore Free/planned/disabled after the agreed test matrix unless Theo records a different decision.
 
+## QA browser-session attempt - 2026-07-30
+
+- Theo reported an Elite staging session was signed in. The QA browser binding had no claimable user tab and a new staging `/integrations` tab remained at `Opening workspace…`; it did not inherit an authenticated workspace session. No Discord endpoint was invoked, no module state changed, and no provider/OAuth action was attempted.
+- This is an evidence-transport limitation only. It does not alter the existing deployed-function, RLS, or release-state verification, and it does not satisfy the outstanding authenticated behavioural matrix.
+
 ## QA recheck - 2026-07-29 (release-state correction)
 
 ### 1. Release verdict: HOLD
@@ -356,3 +372,64 @@ The reported release-state fix passes local review, but it is not deployed. The 
 1. Theo approves deployment of the five matched Discord Function revisions only; do not add Discord credentials, callback configuration, worker schedules, or change module data in this deployment.
 2. Developer deploys and records the new revisions; QA verifies the deployed source/version and exercises planned/live-disabled denial with a non-customer test workspace.
 3. Retain HOLD until the provider activation and complete customer/support-path checks are separately approved and passed.
+
+## QA authenticated staging recheck - 2026-07-30
+
+### Result: Pass with follow-up (safe unavailable state only)
+
+- **Authenticated scope:** Staging `/integrations` was reviewed as the `OnceUponATeam` Elite workspace owner. No integration action, OAuth action, credential change, data mutation, or endpoint invocation was performed.
+- **Customer-safe presentation:** The Discord section states **`Discord delivery`** and **`Unavailable`**, explains that installation and channel controls remain unavailable until the complete delivery path is verified, and exposes no Discord install or channel-control action. This matches the current approved non-release state.
+- **Responsive/error check:** At a 390 x 844 viewport, the unavailable text and non-interactive Discord state remain present and readable. The staged browser console contained no warnings or errors during this read-only review.
+- **Follow-up / UX ambiguity:** The surrounding Discord assistant card also carries a generic **`Available`** badge while its actual delivery state is **`Unavailable`**. It did not expose access or controls in this check, so this is not a release bypass; however, it should be reconciled before customer-facing Discord positioning to avoid a misleading availability signal.
+- **Release effect:** This closes the prior browser-state evidence gap only. It does not prove direct deployed denial for the planned/live-disabled matrix, role/tenant isolation, or any OAuth/provider/delivery path. The overall verdict remains **HOLD**.
+
+## Proposed completion plan - 2026-07-30 (pending Theo approval)
+
+### Finding
+
+The current delivery path is an outbound Discord bot integration implemented through Supabase Edge Functions; it does not require a separate always-on bot process. It is incomplete because the customer UI is deliberately a non-interactive preview, no Discord provider credentials or worker schedule are configured, and the release manifest still labels the Discord Functions as retired while the QA handoff records deployed v6/v2 revisions. The manifest/deployment conflict must be reconciled before any release decision.
+
+### Required delivery sequence
+
+1. **PM / Core Features Developer:** Re-open this high-risk work order for Core Features Developer work. Reconcile the Edge Function manifest with the actual intended active functions; implement the real owner/admin integration controls (status, begin install, callback result, selected channel/event configuration, disconnect, loading, empty, and failure states). Do not add private data or a second Discord workspace.
+2. **Developer / secure configuration:** Keep all provider values server-side. Configure `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, and a generated `DISCORD_DISPATCH_SECRET` only in the target Supabase secret/Vault path; configure the reminder and dispatch jobs using the existing Vault-backed `pg_cron`/`pg_net` pattern. Do not place any value in `VITE_*`, source, migration text, work-order evidence, or chat.
+3. **The staging test boundary:** Use a newly created, organisation-owned Discord test application and a private test Discord server with a non-customer Elite workspace. This staging site shares the production database, so no customer guild, customer workspace, or production Discord credential may be used for testing.
+4. **QA evidence:** First exercise direct denial for planned/live-disabled and Free/Pro/non-manager roles. Then, only on the approved test tenant/server, prove install, channel selection, a schedule change, a cancellation, one reminder, delivery failure/retry, disconnect, downgrade, outbox-provider isolation, and no private content or mentions in messages.
+5. **Release:** After all hosted evidence passes, correct the contradictory availability badge/copy, publish support/recovery guidance, enable only the approved test tenant for a monitored soft launch, and obtain Theo's separate release approval before any customer module is changed to live/enabled or any Elite availability claim is published.
+
+### Approval still required
+
+- Theo must approve creation/configuration of the external Discord application, Supabase secret/Vault changes, cron scheduling, the non-customer test server/workspace scope, and any subsequent production/customer activation. This document is a plan only; none of those actions has been performed.
+
+## Provider-test preparation handoff - 2026-07-30
+
+- **Theo-completed external setup:** An organisation-owned final `ScrimStats` Discord application now has the Supabase `discord-install` callback registered. Its bot is public; OAuth2 Code Grant and all privileged Gateway Intents are disabled. Theo also created a private non-customer Discord test server/channel and has an account with server-management access.
+- **QA test entitlement:** The non-customer `clash` workspace is temporarily `elite` / `active` by Theo's explicit approval. This is a non-Stripe override only: it has no Stripe customer/subscription, and its Discord module release state was not changed.
+- **Developer handoff:** Build and deploy the actual owner/admin integration controls and worker scheduling before any invitation or credential activation. The current `DiscordScheduleIntegration` remains intentionally non-interactive even for a live Elite module. Reconcile `docs/launch/EDGE_FUNCTION_MANIFEST.md` with the intended active Discord Functions. Use server-side secret/Vault configuration only; never request or record credential values in a work order or chat.
+- **Next QA gate:** After the developer records deployed revision, secret/cron configuration evidence without values, and reproducible test steps, QA will approve a test-tenant-only module `live`/enabled change, perform the full hosted matrix, and require an explicit Theo production/customer release decision.
+
+## Developer implementation update - 2026-07-30 (owner controls and test-worker preparation)
+
+- **Changed areas:** `src/hooks/useDiscordIntegration.ts`, `src/components/integrations/DiscordScheduleIntegration.tsx`, `src/pages/Integrations.tsx`, `docs/launch/EDGE_FUNCTION_MANIFEST.md`, `scripts/discord-elite-contract.test.mjs`, and `supabase/migrations/20260730173144_discord_test_worker_schedule.sql`.
+- **Owner/admin controls:** The live/enabled Elite UI now reads status through `discord-config`, begins OAuth through `discord-install`, loads server-filtered channels through `discord-channels`, saves only the four approved schedule prompt types through `discord-config`, and disconnects through the same server-enforced Function. No direct browser table/RPC mutation or provider credential exposure was added.
+- **Customer safety:** The controls remain unreachable unless the existing browser gate permits an Elite owner/admin with a live/enabled Discord module; all Function paths independently enforce the same entitlement. The generic module badge now uses the actual enabled state, avoiding an `Available` signal for disabled modules.
+- **Worker preparation:** The new migration creates an operator-only, `SECURITY DEFINER` schedule helper with an empty search path. It reads only existing Vault values at invocation, refuses to run without `discord_dispatch_secret`, and has no execute grant to `public`, `anon`, or `authenticated`. The migration does not create secrets or schedule any jobs when applied.
+- **Manifest:** Discord Functions are recorded as test-only delivery Functions rather than retired tombstones, matching the deployed-function inventory while preserving the no-customer-release boundary.
+- **Local validation:** focused Discord contracts 6/6; TypeScript passed; ESLint passed with zero warnings; full suite 185/185; production build and bundle budget passed; `git diff --check` passed. The build emitted the pre-existing stale Browserslist-data warning only.
+
+### Exact QA handoff (post-owner-controls implementation)
+
+1. After Theo separately approves deployment, confirm the deployed frontend revision includes the owner/admin controls and that all five Discord Functions remain on the reviewed guarded revisions. Keep every customer Discord module planned/disabled.
+2. Before any provider configuration, verify planned and live-disabled direct Function denial for Free/Pro owners, Elite members/viewers, and Elite owners/admins. Verify the UI never exposes controls in these states.
+3. After Theo separately approves the isolated test-only secret/Vault configuration, worker scheduling, and test-tenant module state, run `select public.configure_discord_test_worker_schedule()` only as an approved operator. Record job names and schedule state without recording any secret values.
+4. On the approved non-customer Elite test workspace/server, perform install, callback state expiry/replay/role-removal, channel filtering, selected-event configuration, schedule create/change/cancel, reminder, retry/failure, disconnect, downgrade, provider-outbox isolation, and message-minimisation checks.
+5. Confirm desktop and mobile control states, loading/error/empty states, and no Discord token, guild credential, review, scouting, player, or authorization information appears in browser-visible payloads or messages.
+
+**Remaining release gate:** No migration application, Function/frontend deployment, secret/Vault configuration, cron job, OAuth action, Discord message, module-state mutation, or provider verification was performed by this implementation update.
+
+## Hosted migration update - 2026-07-30
+
+- **Applied migration:** `20260730173144_discord_test_worker_schedule` is present in the hosted Supabase migration history. The local migration filename was aligned to that recorded version.
+- **Hosted verification:** `public.configure_discord_test_worker_schedule()` exists as `SECURITY DEFINER` with an empty search path; execution is denied to `anon` and `authenticated` and retained for `service_role`. No Discord reminder or dispatch cron job exists after migration application (`0`).
+- **Security review:** The Supabase security advisor reported no new warning for this helper. Pre-existing project-wide advisor findings remain outside this work order; none were changed or suppressed.
+- **Boundary preserved:** The migration added no Vault values, did not invoke the helper, schedule a job, send a Discord message, change OAuth configuration, or change any tenant feature state.

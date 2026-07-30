@@ -81,22 +81,30 @@ Champion icons are visibly unreliable, and the Founder wants the Fast Lane to ac
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Named evidence pack | Version-controlled cases and redaction check | Local | Outstanding |
-| Reproducible QA case | QA browser/network evidence | Browser | Outstanding |
-| Core handoff | Exact paths and no-source-change statement | Local | Outstanding |
+| Named evidence pack | [CHAMPION_AVATAR_REGRESSION_CASES.md](../../qa/CHAMPION_AVATAR_REGRESSION_CASES.md); source inventory and redaction boundary recorded | Local | Pass |
+| Reproducible QA case | Authenticated browser/network evidence for CA-01 through CA-04 | Browser | Outstanding |
+| Core handoff | Evidence pack names shared paths and records that Fast Lane changed no source implementation | Local | Pass |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** This is a discovery/fixture handoff only; it cannot resolve the customer-facing issue itself.
+- **Rationale:** The source-grounded evidence pack and Core boundary are implemented, but authenticated browser/network capture and QA reproduction remain outstanding.
 
-### Outstanding checks
+### Outstanding checks (initial assignment snapshot)
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Create and review evidence pack | Developer – Fast Lane | Version-controlled pack | Open |
 | Reproduce selected case | QA | Browser/network evidence | Open |
 | Accept Core handoff | PM / Core Features Developer | Exact implementation boundary | Open |
+
+### Outstanding checks (implementation update)
+
+| Check | Owner | Required evidence to close | Status |
+|---|---|---|---|
+| Browser/network capture for CA-01 through CA-04 | Developer - Fast Lane / QA | Authenticated isolated-workspace rendered state, request/status log, and console result | Open - requires isolated session |
+| Reproduce selected case | QA | Browser/network evidence from the pack | Open |
+| Accept Core handoff | PM / Core Features Developer | Review the evidence pack and confirm the shared implementation boundary | Open |
 
 ### Theo approval record
 
@@ -111,4 +119,7 @@ Champion icons are visibly unreliable, and the Founder wants the Fast Lane to ac
 
 ## Implementation and review evidence
 
-- **Highest evidence achieved:** Proposed
+- 2026-07-30 - Developer - Fast Lane created `docs/qa/CHAMPION_AVATAR_REGRESSION_CASES.md` with four named cases, exact current consumer paths, source-observed request/fallback behaviour, redaction rules, and the Core handoff boundary. No shared implementation, Collector mapping, data record, provider configuration, or workspace caller was changed.
+- 2026-07-30 - Focused evidence-pack structure and redaction checks passed. TypeScript, lint, build, and production/browser acceptance checks were not run because this change adds documentation only and the authenticated browser session is unavailable.
+- 2026-07-30 - Local browser check reached the public app successfully, but `/draft` redirected to `/sign-in`; no authenticated local test session or seeded representative workspace was available. Browser/network observations remain explicitly pending rather than inferred.
+- **Highest evidence achieved:** Implemented

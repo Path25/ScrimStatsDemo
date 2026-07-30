@@ -14,11 +14,11 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 
 | ID | Title | State | Owner | Work order |
 |---|---|---|---|---|
-| WO-2026-001 | Define and deliver a credible Elite proposition | Ready for QA | QA and Release Auditor | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) |
+| WO-2026-001 | Define and deliver a credible Elite proposition | In Progress | Core Features Developer | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) |
 | WO-2026-002 | Verify the Pro paid core end to end | Blocked | QA | [WO-2026-002](review/WO-2026-002-pro-paid-core-hosted-verification.md) |
-| WO-2026-003 | Protect premium copy and establish funnel measurement | Ready for QA | QA | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) |
+| WO-2026-003 | Protect premium copy and establish funnel measurement | Blocked | QA | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) |
 | WO-2026-004 | Strengthen work orders with release audit and role handoffs | Done | Project Manager | [WO-2026-004](done/WO-2026-004-work-order-release-audit-and-handoffs.md) |
-| WO-2026-005 | Verify and remediate recurring managed Postgres collation warnings | Blocked | Analyst | [WO-2026-005](proposed/WO-2026-005-managed-postgres-collation-warning-investigation.md) |
+| WO-2026-005 | Verify and remediate recurring managed Postgres collation warnings | Done (conditional; Theo accepted platform-managed risk) | Analyst | [WO-2026-005](proposed/WO-2026-005-managed-postgres-collation-warning-investigation.md) |
 | WO-2026-006 | Establish authoritative reporting connections and reliability telemetry | In Progress | PM | [WO-2026-006](in-progress/WO-2026-006-reporting-connections-and-reliability-telemetry.md) |
 | WO-2026-007 | Fix the Scouting client error and restore release attribution | Done (conditional) | Feature Development agent | [WO-2026-007](done/WO-2026-007-fix-scouting-client-error-and-release-attribution.md) |
 | WO-2026-008 | Reconcile paid workspace entitlements with Stripe subscriptions | Done | Analytics and Technical Reporting agent | [WO-2026-008](done/WO-2026-008-reconcile-paid-entitlements-with-stripe.md) |
@@ -30,11 +30,11 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-014 | Validate paid buyer problems and conversion proposition with target teams | Blocked | Marketing | [WO-2026-014](proposed/WO-2026-014-paid-buyer-validation-and-conversion-proposition.md) |
 | WO-2026-015 | Make Pro analytics legible and outcome-led | Done | Core Features Developer | [WO-2026-015](proposed/WO-2026-015-pro-analytics-legibility-and-value.md) |
 | WO-2026-016 | Restore reliable champion visual assets | Blocked | Core Features Developer | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) |
-| WO-2026-017 | Add tenant-safe workspace identity customization | In Progress | Core Features Developer | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
+| WO-2026-017 | Add tenant-safe workspace identity customization | Done | Core Features Developer | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
 | WO-2026-018 | Audit and improve workspace language and journey coherence | Backlog | PM | [WO-2026-018](proposed/WO-2026-018-workspace-language-and-journey-coherence.md) |
 | WO-2026-020 | Make Solo Queue tracker available on Free consistently | Backlog | Core Features Developer | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) |
 | WO-2026-021 | Restore existing-account workspace creation and confirmation recovery | Done | QA | [WO-2026-021](proposed/WO-2026-021-existing-account-workspace-recovery.md) |
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Blocked | Core Features Developer | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
 | WO-2026-023 | Let workspace owners create additional independent workspaces | Backlog | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
-| WO-2026-024 | Give players reliable read-only intelligence access | Backlog | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
+| WO-2026-024 | Give players reliable read-only intelligence access | Ready for Development | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Ready for Development | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |

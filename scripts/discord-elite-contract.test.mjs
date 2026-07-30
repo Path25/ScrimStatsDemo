@@ -59,3 +59,30 @@ test("Discord claims only its provider-scoped outbox events", () => {
   assert.match(migration, /for update skip locked/);
   assert.match(migration, /grant execute on function public\.claim_integration_events_for_provider\(text, integer\)\s+to service_role/);
 });
+
+test("Discord owner controls use server-enforced Functions and bounded prompt types", () => {
+  const hook = read("src/hooks/useDiscordIntegration.ts");
+  const panel = read("src/components/integrations/DiscordScheduleIntegration.tsx");
+  const manifest = read("docs/launch/EDGE_FUNCTION_MANIFEST.md");
+  assert.match(hook, /functions\.invoke<DiscordStatus>\("discord-config"/);
+  assert.match(hook, /functions\.invoke<\{ authorize_url\?: string \}>\("discord-install"/);
+  assert.match(hook, /"discord-channels"/);
+  assert.match(hook, /action: "disconnect"/);
+  assert.match(panel, /Connect Discord/);
+  assert.match(panel, /Save schedule prompts/);
+  assert.match(panel, /never relays scouting, review, player, or credential content/);
+  assert.match(panel, /discordEventTypes/);
+  assert.match(manifest, /## Test-only Discord delivery functions/);
+  assert.doesNotMatch(manifest, /Roadmap-preview Discord delivery/);
+});
+
+test("Discord worker scheduling remains Vault-backed and operator-only", () => {
+  const migration = read("supabase/migrations/20260730173144_discord_test_worker_schedule.sql");
+  assert.match(migration, /security definer/);
+  assert.match(migration, /set search_path = ''/);
+  assert.match(migration, /discord_dispatch_secret/);
+  assert.match(migration, /scrimstats-discord-reminders/);
+  assert.match(migration, /scrimstats-discord-dispatch/);
+  assert.match(migration, /revoke all on function public\.configure_discord_test_worker_schedule\(\) from public, anon, authenticated/);
+  assert.doesNotMatch(migration, /create_secret|update_secret/);
+});

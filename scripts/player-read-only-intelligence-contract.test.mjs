@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const migration = read("supabase/migrations/20260730205840_player_read_only_intelligence_access.sql");
-const consolidationMigration = read("supabase/migrations/20260730211820_consolidate_player_intelligence_read_policies.sql");
+const migration = read("supabase/migrations/20260730211300_player_read_only_intelligence_access.sql");
+const consolidationMigration = read("supabase/migrations/20260730211922_consolidate_player_intelligence_read_policies.sql");
 const scouting = read("src/pages/Scouting.tsx");
 const report = read("src/pages/ScoutingTeamReport.tsx");
 const capabilities = read("src/lib/workspace-capabilities.ts");

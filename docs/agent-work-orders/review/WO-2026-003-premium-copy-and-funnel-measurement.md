@@ -1,9 +1,18 @@
 # WO-2026-003 - Protect premium copy and establish funnel measurement
 
-- **Status:** Review
-- **Owner:** QA and Release Auditor
+- **Status:** Blocked
+- **Assigned owner:** QA
+- **Size:** L
+- **Risk:** High
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Copy integrity tests, funnel migration/triggers, scorecard RPC/surface, Metrics Dictionary, and production grant evidence.
+- **Dependencies:** WO-2026-010 grant evidence and the deployed founder scorecard; isolated test workspace only.
+- **Collision risk:** Do not alter funnel schema, grants, trigger functions, scorecard surface, or analytics definitions while QA exercises the ledger.
+- **QA scenario / test steps:** (1) In an isolated tenant, exercise registration/workspace creation, first schedule, first completed recorded game, activation, and an approved paid transition. (2) Retry each source action where idempotency applies. (3) Verify aggregate-only, service/operator-only scorecard access and ordinary browser-role denial. (4) Check copy-integrity output, trigger records, empty/unavailable/error states, and preserve no sensitive event payload.
 
 ## Problem and user impact
 
@@ -90,3 +99,47 @@ Remove customer-visible encoding defects, expand copy-integrity checks, define p
 - **Important:** Service-role write privileges contradict the claimed append-only ledger. Correct by migration only after Theo's explicit production approval.
 - **Accepted by Theo:** Hosted paid-upgrade / Stripe lifecycle verification is accepted for this work order on 2026-07-28 because Theo confirmed that the Stripe system had been completed and verified previously. This exception applies only to WO-2026-003; it does not resolve or change the separate Stripe-to-entitlement reconciliation HOLD in WO-2026-008.
 - **Unverified:** Registration, workspace creation, first schedule, first completed recorded game, activation, retries/idempotency in hosted use, browser responsive states for a scorecard surface, and any hosted deployment that exposes a founder scorecard safely.
+
+## QA daily review - 2026-07-30
+
+### Outcome: Blocked
+
+- **Reproducible evidence:** `node --test scripts/premium-copy-integrity.test.mjs scripts/funnel-instrumentation-contract.test.mjs` passed 3/3. Live read-only inspection still shows migration `20260729090523` applied; all five named funnel triggers enabled; zero retained funnel events; RLS enabled with zero policies; no table or scorecard-RPC access for `anon` or `authenticated`; and `service_role` limited to ledger `SELECT`/`INSERT` plus scorecard execution.
+- **Why blocked:** No dedicated non-customer authenticated test session was available to exercise the approved workflow, and this daily review did not create production-backed test data. With zero events, trigger operation, idempotency, activation, and scorecard measurement remain unproved.
+- **Advisor:** The funnel-table RLS-without-policy information item remains expected for its no-browser-grants design. The dated Security Advisor also retains the known project-wide SECURITY DEFINER and leaked-password-protection warnings; none was introduced or hidden by this work order.
+
+### Exact remaining checks Theo must approve or complete
+
+1. Provide a dedicated non-customer test workspace signed-in session and reconfirm that QA may create the minimum temporary schedule and completed-game records in the production-backed staging project.
+2. QA will verify registration/workspace creation where applicable, first schedule, first completed game, one repeat attempt for idempotency, activation, and aggregate scorecard output; it will record milestone names/counts only and remove/revoke only artefacts that have an approved recovery path.
+3. PM must retain any founder/operator browser scorecard exposure under WO-011. This work order must not expose raw funnel events to a browser role.
+
+## QA assigned-order refresh - 2026-07-29
+
+### 1. Release verdict: HOLD
+
+The privacy and append-only controls are now materially stronger, but the required isolated hosted journey has not generated a single funnel event. The scorecard therefore cannot yet be treated as measured operational evidence.
+
+### 2. What was verified
+
+- **Local contracts:** `scripts/premium-copy-integrity.test.mjs` and `scripts/funnel-instrumentation-contract.test.mjs` passed 3/3 combined.
+- **Hosted trigger/configuration:** All five named funnel triggers are enabled: account registration, workspace creation, first scheduled block, first recorded game, and first paid upgrade.
+- **Hosted data and privileges:** The funnel ledger currently contains zero events. `anon` and `authenticated` have no table privileges or scorecard execution. `service_role` retains only SELECT/INSERT on the ledger, no non-append-only table privileges, and can execute the scorecard. This includes the later WO-010 grant remediation.
+
+### 3. Blocking issues
+
+- No approved non-customer hosted journey has exercised registration/workspace/schedule/completed-game triggers, activation, or scorecard output. Zero rows are correctly reported as unavailable, not evidence that the funnel is working.
+
+### 4. Important risks
+
+- The previously recorded service-role append-only privilege defect is remediated by WO-010; this work order must retain a linked operational trigger exercise rather than infer one from grants and source inspection.
+
+### 5. Unverified but required checks
+
+- One authorised non-customer workflow: registration, workspace creation, first scheduled practice block, first completed recorded game, activation, retry idempotency, and resulting service-only scorecard milestones.
+- Any founder/operator scorecard browser surface remains separately governed by WO-011; do not expose raw ledger events.
+
+### 6. Suggested next validation steps
+
+1. Theo confirms the existing isolated non-customer funnel-test approval still applies to the production-backed staging project and supplies/opens the dedicated test account.
+2. QA performs the one controlled workflow and records only milestone names/counts, then reissues the verdict.

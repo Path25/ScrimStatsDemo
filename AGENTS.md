@@ -112,6 +112,14 @@ Before claiming work complete, run validation proportionate to risk:
 
 Do not delete historical evidence to resolve an issue. Preserve provenance and use recovery paths for access, roster, and scrim changes.
 
+\## Development lanes and work-order routing
+
+Every open work order must record its size (`S`, `M`, or `L`), risk (`Low`, `Medium`, or `High`), assigned owner, likely affected areas/files, dependencies, acceptance criteria, reproducible QA scenario, and one delivery status: `Backlog`, `Ready for Development`, `In Progress`, `Ready for QA`, `Blocked`, or `Done`.
+
+`Developer – Fast Lane` receives only `S`, low-risk, isolated work: visual polish, copy, contained UX improvements or defects, and small tests/docs. `Core Features Developer` receives all `M`/`L`, medium/high-risk, integration, shared-component, data-flow, Collector, auth, billing, Supabase, migration, security, or entitlement work.
+
+Do not assign both development lanes to overlapping features, shared files, or related refactors at the same time. A work order is `Ready for Development` only after acceptance criteria and QA scenario are complete. It is `Ready for QA` only after the developer records validation evidence and reproducible QA steps. The assignment board at `docs/agent-work-orders/DEVELOPER_ASSIGNMENT_BOARD.md` is the current dispatch view; the work order remains the source of truth.
+
 
 
 \## Approval boundaries

@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, Check } from "lucide-react";
-import { Navigate, useNavigate } from "@/lib/router";
+import { Link, Navigate, useNavigate } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export default function CreateWorkspace() {
   const [timezone, setTimezone] = useState(localTimezone);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [confirmationRequired, setConfirmationRequired] = useState(false);
 
   useEffect(() => {
     if (suggestedName) setName((current) => current || suggestedName);
@@ -36,12 +37,17 @@ export default function CreateWorkspace() {
     event.preventDefault();
     setPending(true);
     setError("");
+    setConfirmationRequired(false);
     const result = await supabase.rpc("create_self_service_workspace", {
       p_name: name.trim(),
       p_timezone: timezone,
     });
     if (result.error) {
       setPending(false);
+      if (result.error.message.includes("Confirm your email before creating a workspace")) {
+        setConfirmationRequired(true);
+        return;
+      }
       setError("Your workspace could not be created. Check the details and try again.");
       return;
     }
@@ -73,6 +79,12 @@ export default function CreateWorkspace() {
             {["Free plan active immediately", "Private workspace", "You can upgrade from Settings"].map((item) => <span key={item} className="flex items-center gap-3"><Check className="h-4 w-4 text-[var(--public-accent)]" aria-hidden="true" />{item}</span>)}
           </div>
           {error && <p role="alert" className="text-base text-destructive">{error}</p>}
+          {confirmationRequired && (
+            <div role="alert" className="rounded-lg border border-[var(--public-rule)] bg-[var(--public-background)] p-4 text-sm leading-6 text-[var(--public-muted)]">
+              Confirm the email address connected to this account before creating a workspace. If you cannot access the account, request a recovery link.
+              <Link to="/forgot-password" className="ml-1 text-[var(--public-foreground)] underline underline-offset-4">Request recovery link</Link>
+            </div>
+          )}
           <Button type="submit" disabled={pending} className="h-12 bg-[var(--public-action)] text-base font-semibold text-[#07110f] hover:bg-[var(--public-foreground)]">
             {pending ? "Creating workspace…" : "Open ScrimStats"}
             {!pending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}

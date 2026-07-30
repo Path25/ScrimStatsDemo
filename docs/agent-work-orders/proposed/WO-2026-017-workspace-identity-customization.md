@@ -1,10 +1,19 @@
 # WO-2026-017 - Add tenant-safe workspace identity customization
 
 - **ID reservation:** [WO-2026-017 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Feature Development agent
+- **Status:** Ready for Development
+- **Assigned owner:** Core Features Developer
+- **Size:** L
+- **Risk:** High
 - **Priority:** Medium
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Tenant Settings/administration, `TenantContext`, Dashboard layout/team mark, Supabase Storage bucket/policies, tenant settings schema/migration, and tests.
+- **Dependencies:** Reviewed Storage/RLS design and isolated two-tenant test accounts. Production migration/release approval remains separate.
+- **Collision risk:** Tenant Settings, Storage, RLS, and layout identity; do not overlap with other Settings, tenant schema, or Storage policy work.
+- **QA scenario / test steps:** (1) In two isolated tenants, use a manager and non-manager per tenant. (2) Upload an allowed image, replace it, remove it, and attempt unsupported/oversized/malicious files. (3) Verify logo display in sidebar/switcher, recovery/error states, and cross-tenant read/write denial. (4) Inspect Storage policy/migration grants and run authenticated hosted checks before release.
 
 ## Problem and user impact
 
@@ -59,7 +68,7 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 | Role | Involvement | Required input or handoff | Evidence / link |
 |---|---|---|---|
 | Project Manager | Involved | Confirm scope stays premium identity, not white-label packaging. | This work order |
-| Feature Developer | Involved | Implement UI, Storage boundary, and safe rendering. | Settings/TenantContext |
+| Core Features Developer | Involved | Implement UI, Storage boundary, and safe rendering. | Settings/TenantContext |
 | QA and Release Auditor | Involved | Verify RLS, tenant isolation, failure/recovery, and hosted behaviour. | Security audit |
 | Technical Reporting Analyst | Not applicable | No reporting requirement. | N/A |
 | Lead Marketer and Growth | Consulted | Ensure any visual use remains truthful and no new plan claim is made. | N/A |
@@ -83,7 +92,7 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Approve implementation scope | Theo | Written approval | Open |
+| Approve implementation scope | Theo | Theo implementation approval, 2026-07-30 | Closed |
 | Design Storage/RLS model | Feature Developer / QA | Reviewed migration/policy | Open |
 | Hosted security verification | QA and Release Auditor | Role/tenant browser evidence | Open |
 
@@ -94,9 +103,12 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 | Implementation | Yes | Pending | — | Storage/RLS is security-sensitive. |
 | Production migration/release | Yes | Pending | — | Separate approval required. |
 
+**Current implementation record:** Approved by Theo on 2026-07-30. This supersedes the earlier pending implementation placeholder above; production migration/release remains pending.
+
 ## Decision and approval record
 
 - 2026-07-29 - Founder requested workspace customisation, beginning with a custom team logo.
+- 2026-07-30 - Theo approved implementation. Assign to Core Features Developer because the work includes tenant Storage, RLS, settings, and shared workspace identity.
 
 ## Implementation and review evidence
 

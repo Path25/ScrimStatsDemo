@@ -1,10 +1,19 @@
 # WO-2026-012 - Define the paid buyer standard and Free-to-Pro conversion thesis
 
 - **ID reservation:** [WO-2026-012 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Project Manager
+- **Status:** Backlog
+- **Assigned owner:** PM
+- **Size:** M
+- **Risk:** Medium
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Buyer-standard decision record, plan positioning, conversion thesis, launch boundary, Metrics Dictionary, and follow-on work-order briefs.
+- **Dependencies:** Theo decision on buyer outcome and $200 gross-MRR measurement convention; no implementation authority is implied.
+- **Collision risk:** Do not let copy, pricing, entitlement, or marketing changes begin from this discovery work without a separately approved work order.
+- **QA scenario / test steps:** (1) Trace each proposed Pro claim to implemented evidence. (2) Check its buyer job, activation signal, and upgrade trigger against the Metrics Dictionary. (3) Have QA flag any claim relying only on plan labels, mock data, or unverified hosted behaviour. (4) Record decisions and unresolved evidence gaps.
 
 ## Problem and user impact
 

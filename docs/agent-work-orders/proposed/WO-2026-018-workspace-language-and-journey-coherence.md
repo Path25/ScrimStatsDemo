@@ -1,10 +1,19 @@
 # WO-2026-018 - Audit and improve workspace language and journey coherence
 
 - **ID reservation:** [WO-2026-018 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Project Manager
+- **Status:** Backlog
+- **Assigned owner:** PM
+- **Size:** M
+- **Risk:** Low
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Authenticated workspace journeys, Settings, Integrations, Overview, analytics gate, product-copy inventory, and follow-on work orders.
+- **Dependencies:** PM audit findings and Theo approval for any resulting customer-facing copy/UX change; entitlement claims require supporting evidence.
+- **Collision risk:** Do not make broad copy changes during WO-2026-001, WO-2026-009, or WO-2026-015; split isolated findings into separately assigned work orders.
+- **QA scenario / test steps:** (1) Walk coach/manager and player journeys from first sign-in through schedule, practice, review, analytics, integrations, and settings. (2) Classify each confusing phrase/control as copy, UX, product-scope, entitlement, or security issue. (3) Verify suggested wording does not weaken permissions or plan truthfulness. (4) Produce a numbered, evidence-linked change backlog for Theo review.
 
 ## Problem and user impact
 

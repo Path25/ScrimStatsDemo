@@ -1,10 +1,19 @@
 # WO-2026-015 - Make Pro analytics legible and outcome-led
 
 - **ID reservation:** [WO-2026-015 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Feature Development agent
+- **Status:** Ready for Development
+- **Assigned owner:** Core Features Developer
+- **Size:** M
+- **Risk:** Medium
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** `Analytics.tsx`, Team Analytics Workspace/panels, analytics filtering and empty/loading/unavailable states, Pro gate, analytics tests.
+- **Dependencies:** A representative isolated Pro workspace or approved fixture with recorded games for browser validation.
+- **Collision risk:** Analytics components and Pro gates; do not combine with WO-2026-018's broad workspace language changes or a separate analytics refactor.
+- **QA scenario / test steps:** (1) Use Free and Pro isolated workspaces, with the Pro workspace containing representative recorded games. (2) Open Team Analytics at desktop, tablet, and mobile widths. (3) Establish the headline takeaway, progressively expose filters, select a drill-down, and test empty/loading/unavailable/error states. (4) Confirm Free sees no invented metrics and Pro values retain their evidence/sample context.
 
 ## Problem and user impact
 
@@ -62,7 +71,7 @@ Pro conversion is the immediate commercial strategy. A feature that is technical
 | Role | Involvement | Required input or handoff | Evidence / link |
 |---|---|---|---|
 | Project Manager | Involved | Confirm the upgrade outcome and prevent scope expansion into new analytics data. | WO-012 |
-| Feature Developer | Involved | Implement hierarchy, progressive disclosure, and truthful preview. | This work order |
+| Core Features Developer | Involved | Implement hierarchy, progressive disclosure, and truthful preview. | This work order |
 | QA and Release Auditor | Involved | Test entitlement boundary, evidence states, responsiveness, and data provenance. | QA audit |
 | Technical Reporting Analyst | Involved | Confirm labels, denominators, and evidence counts remain accurate. | Metrics Dictionary |
 | Lead Marketer and Growth | Consulted | Review the upgrade proposition against supported paid-buyer value. | Message Ledger |
@@ -87,7 +96,7 @@ Pro conversion is the immediate commercial strategy. A feature that is technical
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Approve product hierarchy | Theo / Project Manager | Reviewed design brief | Open |
+| Approve product hierarchy | Theo / Project Manager | Theo implementation approval, 2026-07-30 | Closed |
 | Implement and validate | Feature Developer / QA | Local and authenticated browser evidence | Open |
 
 ### Theo approval record
@@ -97,9 +106,12 @@ Pro conversion is the immediate commercial strategy. A feature that is technical
 | Implementation | Yes | Pending | — | No plan or data-provider change included. |
 | Release | Yes | Pending | — | Requires authenticated Free/Pro evidence. |
 
+**Current implementation record:** Approved by Theo on 2026-07-30. This supersedes the earlier pending implementation placeholder above; release remains pending.
+
 ## Decision and approval record
 
 - 2026-07-29 - Founder requested review after identifying difficult-to-read Team Analytics and a need to strengthen Pro value.
+- 2026-07-30 - Theo approved implementation. Assign to Core Features Developer; implementation may not change plans, providers, production data, or release state.
 
 ## Implementation and review evidence
 

@@ -1,9 +1,18 @@
 # WO-2026-009 - Enforce Collector entitlement below the browser
 
-- **Status:** In progress
-- **Owner:** ScrimStats Feature Development agent
+- **Status:** Done
+- **Assigned owner:** Core Features Developer
+- **Size:** L
+- **Risk:** High
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Collector Edge Functions/shared helper, plan entitlements, billing UI, Settings, Integrations, Stripe lifecycle handling, migrations, and Collector contract tests.
+- **Dependencies:** Approved dedicated test workspaces/accounts and Stripe test-mode or signed lifecycle evidence; production changes require their separately recorded approval.
+- **Collision risk:** Do not overlap with WO-2026-001 or any other plan, Collector, Settings/Integrations, Stripe, or entitlement change.
+- **QA scenario / test steps:** (1) Create isolated Free, Pro, Elite, and second-tenant workspaces with owner/admin/member/viewer roles. (2) Directly invoke pairing, redemption, status/configuration, and ingest paths, including an already-paired device. (3) Rehearse approved downgrade, cancellation, and past-due timing. (4) Verify server denials/allowances, tenant isolation, browser truthfulness, and no customer data; retain request/response and hosted function evidence.
 
 ## Problem and user impact
 
@@ -207,3 +216,9 @@ Make Collector entitlement authoritative, coherent, and enforced below the brows
 - **Important — test-harness correction, not a product failure:** The first Pro device requests returned `401` because QA supplied the credential in the wrong header. Hosted source specifies `Authorization: Bearer <credential>` plus `x-collector-device-id`; the corrected call returned `200` for both expected device actions. The initial device was revoked before the retry.
 - **Unverified / accepted risk:** Per Theo's decision, cancellation/downgrade paid-period-end retention and the manager-only past-due warning/seven-day expiry remain unverified accepted risks. The run did not directly call the manager-authenticated `collector-pairing` or `collector-status` endpoints because the supplied browser session has no Windows bridge and QA will not extract its authentication token. Their staged browser journeys and deployed source/configuration are verified, but direct response-code evidence for those manager endpoints and an adversarial cross-tenant request remains unverified.
 - **Release recommendation:** **CONDITIONAL**, not READY. The highest-risk Free device-path billing bypass is now negatively tested and the Pro device path is positively tested, with cleanup confirmed. PM/Theo must explicitly accept the listed lifecycle and manager-endpoint/tenant-isolation evidence gaps before a production-release decision; otherwise retain HOLD and provide an approved authenticated test harness for those final direct calls.
+
+## Theo completion decision - 2026-07-30
+
+- Theo accepts the remaining unverified lifecycle, direct manager-endpoint, and adversarial tenant-isolation checks as release risks. Theo is manually observing the cancellation through its paid-period end; this is not recorded as QA-passed until evidence is returned.
+- **Outcome:** The work order is marked `Done` on Theo's explicit risk acceptance. The checked server-side Free denial, Pro device path, cleanup, and browser entitlement states remain the verified basis; the accepted items remain explicitly **unverified**, not passed.
+- **Handoff:** WO-2026-001 may now leave its sequencing block. Its own Discord deployment, release-state, provider, tenant/role, and complete hosted customer-path requirements remain independent and must not inherit a pass from this work order.

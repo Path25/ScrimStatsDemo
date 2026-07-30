@@ -1,10 +1,19 @@
 # WO-2026-014 - Validate paid buyer problems and conversion proposition with target teams
 
 - **ID reservation:** [WO-2026-014 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Lead Marketer and Growth
+- **Status:** Blocked
+- **Assigned owner:** Marketing
+- **Size:** M
+- **Risk:** High
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Message Ledger, research script, call notes, buyer-problem synthesis, and approved conversion proposition.
+- **Dependencies:** Theo and ProComps approval for outreach/contact, participant list, and approved claims; no external communication before approval.
+- **Collision risk:** Do not publish, contact prospects, or change public marketing while product evidence/plan positioning is being revised.
+- **QA scenario / test steps:** Blocked until contact approval. Then use the approved script with consent, retain only approved research notes, reconcile every stated capability with the Message Ledger, and have PM/QA review the synthesis for unsupported claims or invented metrics.
 
 ## Problem and user impact
 

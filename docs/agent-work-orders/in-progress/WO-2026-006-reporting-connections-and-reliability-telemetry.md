@@ -1,9 +1,18 @@
 # WO-2026-006 - Establish authoritative reporting connections and reliability telemetry
 
-- **Status:** In progress
-- **Owner:** Project Manager
+- **Status:** In Progress
+- **Assigned owner:** PM
+- **Size:** M
+- **Risk:** Medium
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Metrics Dictionary, reporting baselines, error reporting, Collector signals, Stripe/Vercel/Supabase source connections and operational docs.
+- **Dependencies:** Existing least-privilege application access; any billable telemetry, migration, configuration, or provider connection requires Theo approval.
+- **Collision risk:** Do not duplicate or redefine funnel/billing metrics while WO-2026-003, WO-2026-008, or WO-2026-010 evidence is being reconciled.
+- **QA scenario / test steps:** (1) Select a declared Europe/London reporting period. (2) Reconcile each reported value to a read-only source dashboard/query/export. (3) Confirm unavailable values name their missing source. (4) Verify no secrets, tenant identifiers, customer payment details, or unapproved event fields enter the baseline; record source, query date, and discrepancy.
 
 ## Problem and user impact
 

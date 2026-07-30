@@ -2,13 +2,18 @@
 
 This directory is the shared, repository-visible queue for work proposed by product, project-management, development, and review agents. One work order is one outcome; move the same file through the folders rather than copying it.
 
-## Lifecycle
+## Delivery status
 
-1. `proposed/` - problem is understood, but work has not been approved for implementation.
-2. `ready/` - Theo has approved the work for a Feature Developer. The work order's autonomy class still controls implementation and release boundaries.
-3. `in-progress/` - one named agent or developer owns active implementation. Record material decisions and validation evidence in the work order.
-4. `review/` - implementation is complete and awaiting the release audit, required approval, or release verification.
-5. `done/` - every acceptance criterion has traceable evidence, the release-audit verdict is recorded, and any required Theo approval has been recorded. State the highest evidence level achieved.
+Use one of these values in each work order: `Backlog`, `Ready for Development`, `In Progress`, `Ready for QA`, `Blocked`, or `Done`. The folder is an evidence/history location and may lag the operational status during a handoff.
+
+- `Ready for Development` requires complete acceptance criteria and a reproducible QA scenario.
+- `Ready for QA` requires the developer's validation evidence and reproducible QA steps.
+- `Blocked` must name the exact missing approval, access, dependency, or decision.
+- `Done` requires traceable evidence, a release-audit verdict, and every required Theo approval.
+
+## Developer lanes
+
+Use [DEVELOPER_ASSIGNMENT_BOARD.md](DEVELOPER_ASSIGNMENT_BOARD.md) before dispatching work. Developer – Fast Lane is limited to S, low-risk, isolated work. Core Features Developer owns all M/L, medium/high-risk, shared-component, integration, data-flow, Collector, auth, billing, Supabase, migration, security, and entitlement work. Do not dispatch overlapping work or shared-file refactors to both lanes at once.
 
 Use filenames in the form `WO-YYYY-NNN-short-slug.md`. Reserve every ID through [WORK_ORDER_INDEX.md](WORK_ORDER_INDEX.md) before creating a work order; never reuse or silently renumber an existing ID. Do not move a work order to `done/` because code exists or local tests pass alone. Keep production, billing, entitlement, security, customer-communication, and deployment approval requirements explicit.
 

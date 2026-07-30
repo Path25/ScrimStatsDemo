@@ -8,10 +8,19 @@ This work order reserves `WO-2026-010` in the [work-order index](../WORK_ORDER_I
 
 | Field | Value |
 | --- | --- |
-| Status | Review (conditional QA pass) |
-| Owner | QA and Release Auditor |
+| Status | Ready for QA |
+| Assigned owner | QA |
+| Size | M |
+| Risk | High |
 | Priority | High |
 | Autonomy class | Needs Theo's approval before implementation |
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Funnel grant migration, funnel contract test, `workspace_funnel_events`, triggers, scorecard RPC, Advisor record.
+- **Dependencies:** Applied narrow migration evidence and an authorised isolated server-side trigger source; no customer data.
+- **Collision risk:** Do not modify funnel grants, trigger functions, scorecard privileges, or RLS while QA validates the deployed contract.
+- **QA scenario / test steps:** (1) Inspect effective live grants, owner, membership, RLS, policies, and RPC execute grants. (2) Exercise an authorised non-customer source action that inserts a funnel event through the existing trigger. (3) Confirm trigger outcome and service-only scorecard execution. (4) Confirm anon/authenticated denial and record dated Advisor output.
 
 ## Problem and user impact
 
@@ -127,6 +136,20 @@ The finding came from the production QA review of the newly introduced funnel re
 | Implement the migration | Yes | Approved | 2026-07-29 — Theo approved WO-010 implementation. |
 | Apply the production migration | Yes | Approved and applied | 2026-07-29 — Theo approved application; migration `20260729090523_funnel_service_role_append_only_grants` applied successfully. |
 | Release/customer communication | No | Not applicable | No customer-facing change planned. |
+
+## QA daily review - 2026-07-30
+
+### Outcome: Pass with follow-up
+
+- **Reproducible evidence:** `node --test scripts/premium-copy-integrity.test.mjs scripts/funnel-instrumentation-contract.test.mjs` passed 3/3. Live read-only inspection confirms migration `20260729090523` remains applied; `workspace_funnel_events` has RLS enabled and no policies; `anon` and `authenticated` have no `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, or `TRIGGER` privilege; `service_role` has only `SELECT` and `INSERT`; and the scorecard RPC is executable only by `service_role`. All five funnel triggers remain enabled.
+- **Advisor:** The funnel table's RLS-without-policy informational finding remains expected for a service-only table with no browser grants. Current Security Advisor output still includes the pre-existing project-wide SECURITY DEFINER warnings and leaked-password-protection warning; this work order did not conceal or alter them.
+- **Follow-up not performed:** No authorised source-table action was executed during this read-only daily review. The trigger's runtime path has not been freshly exercised, and the ledger remains empty.
+
+### Exact remaining checks Theo must approve or complete
+
+1. Make the same dedicated non-customer, production-backed staging test session available and confirm QA may perform one controlled source action.
+2. QA must confirm exactly one expected milestone is recorded, the scorecard changes only in aggregate, a repeat is idempotent, and browser roles remain denied. This is shared with WO-003 and must not use customer data.
+3. PM should keep this item in `Ready for QA` until that operational follow-up is recorded, then decide whether to move it to `Done`; no customer release approval is implied by this security-only result.
 
 ## Evidence and decision record
 

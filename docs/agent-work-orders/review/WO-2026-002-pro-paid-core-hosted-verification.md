@@ -1,9 +1,18 @@
 # WO-2026-002 - Verify the Pro paid core end to end
 
-- **Status:** In progress
-- **Owner:** ScrimStats Feature Development agent
+- **Status:** Blocked
+- **Assigned owner:** QA
+- **Size:** L
+- **Risk:** High
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Paid-plan gates, BillingPanel, Settings, Integrations, Collector, checkout/webhook, and hosted release records.
+- **Dependencies:** A current Core Features Developer handoff that reconciles obsolete evidence with WO-2026-009, plus reproducible isolated test accounts and lifecycle fixtures.
+- **Collision risk:** Do not QA against a moving Collector/billing/entitlement change; coordinate the handoff with WO-2026-009.
+- **QA scenario / test steps:** Blocked until the developer records deployed revision, migration state, test-account setup, exact plan/role matrix, and expected server/browser responses. QA then runs Free/Pro/Elite and cross-tenant checks through checkout state, gates, direct Collector paths, and billing copy, recording hosted evidence for each criterion.
 
 ## Problem and user impact
 

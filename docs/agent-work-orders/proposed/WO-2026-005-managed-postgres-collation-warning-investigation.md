@@ -1,9 +1,18 @@
 # WO-2026-005 - Verify and remediate recurring managed Postgres collation warnings
 
-- **Status:** Proposed
-- **Owner:** Unassigned
+- **Status:** Blocked
+- **Assigned owner:** Analyst
+- **Size:** S
+- **Risk:** Medium
 - **Priority:** Medium
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Managed Postgres/Supabase advisor output, database version/collation metadata, migration history, and security/release documentation.
+- **Dependencies:** A current dated warning sample, affected environment/database version, and Theo decision if remediation is in scope after read-only investigation.
+- **Collision risk:** Do not combine this with unrelated migrations or attempt a database upgrade/collation rewrite during another database release.
+- **QA scenario / test steps:** Blocked until the exact warning is captured. Then record the source/time/environment, compare against database metadata and Supabase guidance, classify impact, and have QA independently verify any proposed remediation is forward-only and does not alter tenant/customer data.
 
 ## Problem and user impact
 

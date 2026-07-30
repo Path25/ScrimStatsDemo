@@ -1,10 +1,19 @@
 # WO-2026-016 - Restore reliable champion visual assets
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Feature Development agent
+- **Status:** Blocked
+- **Assigned owner:** Core Features Developer
+- **Size:** M
+- **Risk:** Medium
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** `ChampionAvatar`, champion catalogue hooks, image-cache/fallback handling, and affected draft/game/review surfaces.
+- **Dependencies:** WO-2026-019 must provide named reproduction cases, browser/network evidence, and version-controlled regression fixtures before Core implements the shared component fix.
+- **Collision risk:** Shared avatar/catalogue components; do not route to Fast Lane or run alongside a catalogue/version refactor.
+- **QA scenario / test steps:** (1) Reproduce with current, renamed/special, and unknown champion identifiers under a normal and failed-image network response. (2) Navigate each affected authenticated surface. (3) Confirm correct current icon or intentional accessible fallback without console errors. (4) Refresh/cache-clear and repeat on desktop/mobile; retain screenshot and network evidence.
 
 ## Problem and user impact
 
@@ -59,7 +68,7 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 | Role | Involvement | Required input or handoff | Evidence / link |
 |---|---|---|---|
 | Project Manager | Involved | Keep scope on reliability rather than a broad visual redesign. | This work order |
-| Feature Developer | Involved | Implement shared reliable asset strategy. | Champion consumers |
+| Core Features Developer | Involved | Implement shared reliable asset strategy. | Champion consumers |
 | QA and Release Auditor | Involved | Verify representative current/special/failure cases in browser. | Browser evidence |
 | Technical Reporting Analyst | Not applicable | No reporting definition changes. | N/A |
 | Lead Marketer and Growth | Not applicable | Internal workspace reliability only. | N/A |
@@ -83,8 +92,8 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Reproduce missing icons | Feature Developer / QA | Named failing cases | Open |
-| Implement shared fix | Feature Developer | Test/build evidence | Open |
+| Reproduce missing icons | Developer – Fast Lane / QA | WO-2026-019 evidence pack | Open |
+| Implement shared fix | Core Features Developer | Test/build evidence | Blocked by WO-2026-019 |
 | Browser verify affected surfaces | QA and Release Auditor | Authenticated browser evidence | Open |
 
 ### Theo approval record
@@ -94,9 +103,13 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 | Implementation | Yes | Pending | — | No provider/account activation is authorised. |
 | Release | Yes | Pending | — | Requires visual and failure-path verification. |
 
+**Current implementation record:** Approved by Theo on 2026-07-30. This supersedes the earlier pending implementation placeholder above; release remains pending.
+
 ## Decision and approval record
 
 - 2026-07-29 - Founder reported missing champion icons during workspace review.
+- 2026-07-30 - Theo approved implementation. This remains Core Features Developer work because `ChampionAvatar` and catalogue paths are shared across workspace surfaces.
+- 2026-07-30 - Theo directed a safe split: WO-2026-019 is assigned to Developer – Fast Lane for reproduction evidence and regression fixtures only. Core Features Developer owns the shared component/catalogue remediation after that handoff.
 
 ## Implementation and review evidence
 

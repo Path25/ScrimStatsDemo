@@ -1,10 +1,19 @@
 # WO-2026-013 - Select a safe desktop live-integration direction without Riot API access
 
 - **ID reservation:** [WO-2026-013 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Proposed
-- **Owner:** Feature Development agent
+- **Status:** Blocked
+- **Assigned owner:** Core Features Developer
+- **Size:** M
+- **Risk:** High
 - **Priority:** High
 - **Autonomy class:** Needs Theo's approval before implementation
+
+## Delivery routing and QA scenario
+
+- **Area / files likely affected:** Collector architecture, native packaging/release, Riot/Overwolf integration boundary, entitlement helper, and release documentation.
+- **Dependencies:** WO-2026-009 release evidence plus Theo selection of one safe direction; any SDK, credential, account, or provider activation requires explicit approval.
+- **Collision risk:** Do not overlap with WO-2026-009 Collector entitlement/lifecycle work or start an Overwolf/native refactor before a selected direction.
+- **QA scenario / test steps:** Blocked until a direction is selected. Then document threat model and support path, validate secrets stay off browser/disk as applicable, test installed/unavailable/failure behaviour in an isolated environment, and obtain hosted/release evidence appropriate to the selected provider.
 
 ## Problem and user impact
 

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataSurface } from "@/components/workspace/DataSurface";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceIdentityPanel } from "@/components/workspace/WorkspaceIdentityPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
 import { useTenant } from "@/contexts/TenantContext";
@@ -145,6 +146,7 @@ export default function Settings() {
               )}
             </div>
           </DataSurface>
+          <WorkspaceIdentityPanel />
           <NotificationPreferencesPanel />
         </div>
 

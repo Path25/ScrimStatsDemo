@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   BarChart3,
   AlertTriangle,
@@ -100,6 +100,8 @@ function TeamMark({
   name: string;
   size?: "default" | "small";
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [logo]);
   const initials =
     name
       .split(/\s+/)
@@ -111,7 +113,7 @@ function TeamMark({
 
   return (
     <div className={cn("workspace-team-mark grid shrink-0 place-items-center overflow-hidden", dimensions)}>
-      {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <span>{initials}</span>}
+      {logo && !imageFailed ? <img src={logo} alt="" className="h-full w-full object-cover" onError={() => setImageFailed(true)} /> : <span>{initials}</span>}
     </div>
   );
 }

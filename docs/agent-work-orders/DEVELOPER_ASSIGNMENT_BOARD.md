@@ -6,7 +6,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Size / risk | Dependencies | Collision risk / dispatch note |
 |---|---|---|---|---|
-| [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) | Core Features Developer | L / High | Reviewed Storage/RLS design and isolated two-tenant accounts | Tenant Settings, Storage, RLS, and layout identity; do not overlap with Settings or Storage-policy work. |
 | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) | Developer – Fast Lane | S / Low | Local or isolated test data | Evidence/fixture-only work; must not edit `ChampionAvatar` or catalogue implementation. |
 
 ## Ready for QA
@@ -14,7 +13,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
 | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Discord Functions v6/v6/v2/v6/v6 contain the server release-state guard | Direct planned/disabled denial, then approved isolated-provider workflow matrix. |
-| [WO-2026-015](proposed/WO-2026-015-pro-analytics-legibility-and-value.md) | QA and Release Auditor | Hosted entitlement migration and local contract evidence recorded | Direct Free denial, Pro allow, cross-tenant denial, then the authenticated responsive UI matrix. |
+| [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) | QA and Release Auditor | Hosted private Storage migration plus local validation completed | Owner/admin/member/cross-tenant Storage matrix, invalid-file recovery, and desktop/mobile workspace identity checks. |
 
 ## Sequenced or blocked
 
@@ -35,6 +34,7 @@ WO-2026-019 is the sole eligible Fast Lane item. It is S, low-risk, and explicit
 |---|---|---|---|
 | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) | Core Features Developer | Changes plan entitlement and existing module state; Theo approval required | Avoid overlapping any new entitlement migration; preserve the completed Collector contract. |
 | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) | Core Features Developer | Tenant/RPC/auth boundary needs Theo approval and reviewed design | Do not overlap with WO-2026-021, WO-2026-017, or tenant-membership/RPC migration work. |
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | High-risk role/RLS/RPC changes need Theo implementation approval | Do not overlap with Draft, Scouting, Analytics role/capability, or intelligence-policy work. |
 
 ## Vague or incomplete before assignment
 

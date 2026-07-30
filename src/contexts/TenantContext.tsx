@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
 import { collectorEntitled } from '@/lib/collector-entitlement';
+import { workspaceLogoBucket, workspaceLogoPathFromSettings } from '@/lib/workspace-logo';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
 
@@ -63,6 +64,17 @@ function toTenantConfig(row: { role: string; tenants: Tenant | Tenant[] | null }
   };
 }
 
+async function withSignedWorkspaceLogo(config: TenantConfig) {
+  const logoPath = workspaceLogoPathFromSettings(config.settings);
+  if (!logoPath) return config;
+
+  const { data, error } = await supabase.storage
+    .from(workspaceLogoBucket)
+    .createSignedUrl(logoPath, 60 * 60);
+
+  return !error && data?.signedUrl ? { ...config, logo: data.signedUrl } : config;
+}
+
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
   const [memberships, setMemberships] = useState<TenantConfig[]>([]);
@@ -93,9 +105,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const nextMemberships = (data || [])
+    const membershipConfigs = (data || [])
       .map((membership) => toTenantConfig(membership as unknown as { role: string; tenants: Tenant | Tenant[] | null }))
       .filter((membership): membership is TenantConfig => membership !== null);
+    const nextMemberships = await Promise.all(membershipConfigs.map(withSignedWorkspaceLogo));
     const storedTenantId = window.localStorage.getItem(activeTenantStorageKey);
     const selectedTenantId = nextMemberships.some((membership) => membership.id === storedTenantId)
       ? storedTenantId
@@ -112,6 +125,12 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!authLoading) void loadUserTenants();
   }, [authLoading, loadUserTenants]);
+
+  useEffect(() => {
+    if (!user) return;
+    const refreshTimer = window.setInterval(() => void loadUserTenants(), 45 * 60 * 1000);
+    return () => window.clearInterval(refreshTimer);
+  }, [loadUserTenants, user]);
 
   const chooseTenant = useCallback((tenantId: string) => {
     if (!memberships.some((membership) => membership.id === tenantId)) return;

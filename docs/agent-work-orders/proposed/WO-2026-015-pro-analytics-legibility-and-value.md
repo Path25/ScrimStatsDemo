@@ -1,7 +1,7 @@
 # WO-2026-015 - Make Pro analytics legible and outcome-led
 
 - **ID reservation:** [WO-2026-015 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
@@ -186,3 +186,36 @@ The outcome-led UI and truthful Free preview pass local contract review, but the
 ## Developer remediation - 2026-07-30
 
 The blocking paid-gate bypass is corrected by `20260730105701_analytics_server_entitlement_enforcement.sql`. The forward-only migration preserves the existing tenant-membership predicate and adds a server-side Pro/Elite plus enabled-analytics-module decision before `get_team_analytics_dataset` can read or return rows. The accompanying contract test covers the guard structure and public grant boundary. The SQL is applied to the hosted project; QA must now complete the authenticated direct-RPC and browser matrix above.
+
+## Independent QA re-review - 2026-07-30
+
+### Outcome: Pass with follow-up — work order remains Ready for QA
+
+The original incorrect-billing-access blocker is closed. The implementation is not release-ready yet because the required authenticated Pro browser and responsive acceptance checks have not been evidenced.
+
+### Evidence independently verified
+
+- `node --test scripts/team-analytics-contract.test.mjs`: passed 10/10 locally.
+- Hosted project `tvcgjehreaayfazlhvps` records migration `20260730105701_analytics_server_entitlement_enforcement`.
+- The live guard is `SECURITY INVOKER`, has a tenant-membership predicate, requires `pro` or `elite`, and requires enabled `analytics` module access. Neither `anon` nor `PUBLIC` can execute the guard or dataset RPC; `authenticated` can execute the dataset RPC only through that guard.
+- Read-only, role-simulated direct-RPC checks using approved non-customer accounts:
+  - Free tenant member calling its own dataset: denied with SQLSTATE `42501` and `Analytics access is unavailable for this workspace`.
+  - Entitled tenant member calling its own dataset: returned the normalised `team-analytics-v3` contract; the result contained no raw-provider-payload key.
+  - The same entitled member calling an unrelated tenant: denied with the same safe `42501` response.
+- Source review confirms the Free preview contains no sample metrics, `/analytics` retains the Pro route gate, the default workspace leads with the three staff questions, and lower-frequency controls are behind `Advanced filters`.
+
+### Remaining release checks — Theo must approve or complete
+
+1. Provide or sign in to an isolated **Pro** test workspace on the staged deployment. QA must verify its direct analytics RPC succeeds and its `/analytics` page renders the normalised, tenant-scoped result. The entitled direct-RPC proof above used Elite, so it does not substitute for the required Pro proof.
+2. In the isolated Free workspace, verify `/analytics` at desktop, tablet, and mobile widths: truthful preview, no team metrics, and safe Billing action.
+3. In the isolated Pro workspace, verify desktop, tablet, and mobile: default hierarchy; Advanced filters open/use/clear; drilldown; populated, empty, filtered-empty, partial-evidence, loading, and unavailable/error states.
+4. Record the staging deployment identifier/commit serving those checks. A source checkout and hosted database migration do not prove the staged browser bundle.
+5. After the four checks pass, Theo must explicitly approve release/promotion. This QA review does not approve deployment or release.
+
+### Validation limitation
+
+- The focused Node contract test was independently run. The wider package-script suite could not be rerun in this environment: the configured `npm` launcher is missing and the fallback package manager could not access its registry. This is an environment limitation, not a passing validation result.
+
+## Theo completion decision - 2026-07-30
+
+Theo completed manual staging checks while conducting other validation and approved WO-2026-015 to move to Done. This accepts the documented environment limitation for the wider local package-script suite. The hosted server-side Free denial, entitled access, and cross-tenant denial evidence remains recorded above; no production deployment is authorised by this work-order completion.

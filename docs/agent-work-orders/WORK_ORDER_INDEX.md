@@ -1,6 +1,6 @@
 # Work order index
 
-This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-025`; the next available 2026 ID is `WO-2026-026`.
+This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-026`; the next available 2026 ID is `WO-2026-027`.
 
 ## Reservation protocol
 
@@ -14,7 +14,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 
 | ID | Title | State | Owner | Work order |
 |---|---|---|---|---|
-| WO-2026-001 | Define and deliver a credible Elite proposition | In Progress | Core Features Developer | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) |
+| WO-2026-001 | Define and deliver a credible Elite proposition | Ready for QA | QA and Release Auditor | [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) |
 | WO-2026-002 | Verify the Pro paid core end to end | Blocked | QA | [WO-2026-002](review/WO-2026-002-pro-paid-core-hosted-verification.md) |
 | WO-2026-003 | Protect premium copy and establish funnel measurement | Blocked | QA | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) |
 | WO-2026-004 | Strengthen work orders with release audit and role handoffs | Done | Project Manager | [WO-2026-004](done/WO-2026-004-work-order-release-audit-and-handoffs.md) |
@@ -36,6 +36,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-021 | Restore existing-account workspace creation and confirmation recovery | Done | QA | [WO-2026-021](proposed/WO-2026-021-existing-account-workspace-recovery.md) |
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Blocked | Core Features Developer | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
 | WO-2026-023 | Let workspace owners create additional independent workspaces | Backlog | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
-| WO-2026-024 | Give players reliable read-only intelligence access | Ready for Development | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
+| WO-2026-024 | Give players reliable read-only intelligence access | Ready for QA | QA and Release Auditor | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
 | WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Backlog | Core Features Developer | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Ready for Development | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |
+| WO-2026-026 | Define a safe new-workspace activation follow-up | In Progress | PM | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) |

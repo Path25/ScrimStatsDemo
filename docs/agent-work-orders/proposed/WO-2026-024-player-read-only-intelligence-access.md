@@ -393,3 +393,80 @@ The evidence `Revise` control is repaired, but the same authenticated Member rep
 - Theo approved the staging push/deployment. Commit `642a83e5ac87eadbf6e0e9ee50a6fff85c68ca4c` was pushed successfully to `origin/codex/Staging`, the documented Git-triggered staging branch; local `HEAD` and `origin/codex/Staging` matched immediately after push.
 - Provider completion remains unverified in this developer session: the available Vercel connection returned no projects, and a read-only request to `https://staging.scrimstats.gg/` returned Vercel Login rather than an accessible application shell. This is neither a successful build nor authenticated workflow evidence.
 - Keep **In Progress** until the staging deployment is confirmed. Then assign the work to **QA and Release Auditor** for the exact member/viewer fixture matrix above. Release remains **HOLD**.
+
+## Independent QA hosted browser re-review - 2026-07-31 (Leaguepedia repair deployed)
+
+### 1. Release verdict: HOLD
+
+The two previously reported member-facing mutation controls are repaired in staging and the Member read/isolation checks now pass. Release remains on HOLD because the required Viewer, responsive, and direct server-mutation matrix is incomplete.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `MEMBER` can read the active Tenant-A Scouting report, evidence, tendency, and unpublished Draft plan.
+- The evidence `Revise` action, Leaguepedia provider-name field, `Import history` button, and all other visible report authoring controls are absent for that Member.
+- While still in Tenant-A Member context, a direct route to the known Tenant-B report (`/scouting/c0e5dc3f-69b9-4367-bc56-ca6e38bfbb04`) returned the truthful `Opponent report unavailable` state and exposed no Tenant-B content.
+- Switching this account to Tenant-B showed it is an `ADMIN` there and that authoring controls are available, demonstrating the UI role split. No authoring action was submitted.
+- The user session was restored to Tenant-A Member after testing.
+
+### 3. Blocking issues
+
+- No current browser defect was reproduced. The release hold is evidence-completeness, not a newly reproduced failure.
+
+### 4. Important risks
+
+- The logged-in account has Tenant-A Member and Tenant-B Admin memberships; it is not the required Tenant-A Viewer fixture. An admin-visible control is not proof that owner/admin authoring still succeeds, and an absent Member control is not proof of server-side mutation denial.
+
+### 5. Unverified but required checks
+
+- Tenant-A Viewer desktop and mobile route checks for Analytics, Scouting/list/report, and Draft.
+- Member and Viewer direct representative write attempts with recorded server denials, and direct tenant-B Analytics/Draft RPC/read checks.
+- Owner/admin authoring success and responsive-state coverage after the current deployment.
+
+### 6. Suggested fixes or next validation steps
+
+1. **QA / Theo:** provide the existing Tenant-A Viewer session or a safe sign-in/recovery path. No data change is needed.
+2. **QA:** complete the listed Viewer, responsive, direct-denial, and owner/admin matrix; then issue the final release verdict.
+3. **Theo:** approve a production release only after QA records a READY verdict. No further implementation is currently returned to Developer.
+
+## Independent QA owner-role audit - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The supplied session was Tenant-A `OWNER` rather than the requested Viewer. It exposed a new release-blocking regression: the owner is denied the live Scouting report. This invalidates the work order's requirement that owner/admin authoring remain intact.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `OWNER` successfully loads `/analytics` with the honest zero-game state and `/draft` with the existing unpublished plan plus authoring controls (`New plan`, `Create main line`, scenario/restriction controls).
+- On `/scouting/11ffd00f-80c2-4642-990a-2e994593919e`, the same owner consistently receives `Scouting is unavailable` / `Your current workspace role cannot read this intelligence workspace.` The denial reproduced after a full route reload.
+- No authoring action or data change was submitted. The workspace was restored to `/overview` after testing.
+
+### 3. Blocking issues
+
+- **Owner Scouting capability regression:** `getWorkspaceCapabilities("owner")` returns an object without `viewIntelligence`, so `RoleContext.canViewIntelligence` is falsy for owners. `ScoutingTeamReport` consequently renders its role-denied state before loading the report. This prevents owners from viewing or authoring their own live Scouting intelligence.
+
+### 4. Important risks
+
+- The `OWNER` object also omits `viewPublishedIntelligence`. This may affect other current or future read gates. Preserve role capability completeness by deriving owner from the read-only baseline or explicitly returning every capability field.
+- Tenant-A Viewer, responsive coverage, and direct server-side denial/RPC checks remain unverified, but must wait until the owner regression is repaired and redeployed.
+
+### 5. Unverified but required checks
+
+- Owner Scouting authoring success after repair; then Tenant-A Viewer desktop/mobile route matrix, Member/Viewer direct mutation denials, and tenant-B Analytics/Draft RPC/read checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** correct `src/lib/workspace-capabilities.ts` so owner includes `viewIntelligence: true` and `viewPublishedIntelligence: true` (prefer spreading the `readOnly` baseline before adding management capabilities). Add a focused owner capability/Scouting route contract.
+2. Redeploy staging and hand off the exact commit plus Owner and Viewer fixture steps.
+3. **QA:** rerun Owner Scouting, then the remaining Viewer/security matrix. Theo's final production-release approval remains required after a READY verdict.
+
+## Developer owner-capability repair - 2026-07-31
+
+- Theo approved the scoped fix for the reproduced Tenant-A Owner Scouting denial.
+- `getWorkspaceCapabilities("owner")` now spreads the complete `readOnly` baseline before applying owner management capabilities. Owners therefore retain both `viewIntelligence: true` and `viewPublishedIntelligence: true` alongside their existing authoring permissions; no role, RLS, migration, fixture, billing, or customer-data change was made.
+- The focused player-intelligence contract now asserts that the owner branch inherits the complete read baseline and retains intelligence management. Final local validation: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/leaguepedia-draft-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (29 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed.
+- **Status remains In Progress:** after Theo approves the staging push/deployment, QA and Release Auditor should sign in as the existing Tenant-A Owner, open `/scouting/11ffd00f-80c2-4642-990a-2e994593919e`, and confirm the report and owner authoring controls render. Then continue the already-required Tenant-A Viewer desktop/mobile and direct server-denial/tenant-isolation matrix. Release remains **HOLD** until QA records a READY verdict and Theo separately approves release.
+
+## Developer owner-repair staging deployment trigger - 2026-07-31
+
+- Theo approved the staging push/deployment. Commit `4d8a6202bbf16ebd2f22c1b3dddf405d05f241c8` was pushed successfully to `origin/codex/Staging`; local `HEAD` and `origin/codex/Staging` matched immediately after push.
+- This is Git-trigger evidence only. Provider completion and the authenticated Owner Scouting report check remain unverified here and must be completed by QA and Release Auditor before changing the release HOLD.

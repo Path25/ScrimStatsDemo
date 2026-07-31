@@ -153,6 +153,14 @@ The finding came from the production QA review of the newly introduced funnel re
 
 ## Evidence and decision record
 
+## QA daily review - 2026-07-31
+
+### Outcome: Pass with follow-up
+
+- No new developer handoff or production change was recorded after the 2026-07-30 review. The applied append-only migration, live grants/RLS boundary, scorecard execution boundary, trigger inventory, contract result, and recorded Advisor caveats remain the latest evidence.
+- **Required check remains unperformed:** one Theo-approved, non-customer source-trigger exercise with an idempotency retry and aggregate-only scorecard confirmation. No production data or trigger was exercised by this daily review.
+- **PM routing:** keep `Ready for QA`; return no implementation work to Developer. Theo must approve the isolated source action before QA can close the operational follow-up.
+
 - **2026-07-28 — QA & Release Auditor:** Production review found RLS enabled and no browser-role access for `public.workspace_funnel_events`, while `service_role` retained non-append-only table privileges. The finding is hosted-verified; the remediation remains proposed.
 - **2026-07-28 — Project Manager:** Reserved this work order as a high-priority, narrow security and reporting-integrity change. No migration has been created or applied.
 - **2026-07-29 — Theo:** Approved WO-010 for implementation.

@@ -1,7 +1,7 @@
 # WO-2026-001 - Define and deliver a credible Elite proposition
 
 - **Status:** Ready for QA
-- **Assigned owner:** Core Features Developer
+- **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
 - **Priority:** High
@@ -896,3 +896,11 @@ The isolated Discord happy path now passes. The release remains conditional beca
 ### 6. Exact approval needed to complete QA
 
 Theo must explicitly approve a reversible, isolated negative-path session: temporarily deny the bot Send Messages permission in the private test channel, create one disposable test event, observe retry evidence, restore the permission, then disconnect/reconnect the isolated installation. A separate explicit production-data approval is required before temporarily changing the test tenant's entitlement/module state. No customer tenant, customer Discord server, or customer message is in scope.
+
+## QA daily review - 2026-07-31
+
+### Outcome: Blocked
+
+- The work order remains in `Ready for QA` with credible local, hosted, and isolated happy-path evidence. No new developer handoff or approved negative-path session is recorded since the 2026-07-30 audit.
+- The outstanding retry, disconnect/reconnect, entitlement/module revocation, Free/Pro/non-manager denial, and tenant-isolation checks require Theo's previously specified reversible isolated test approval and access to the private Discord test channel. They were not inferred from provider receipts or prior happy-path messages.
+- **PM routing:** retain with QA; do not mark Done or make a customer/Elite availability claim. No Developer action is presently required.

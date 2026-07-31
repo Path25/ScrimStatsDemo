@@ -19,7 +19,8 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA found member-visible Leaguepedia import and evidence-attachment mutation controls. Repair commit `642a83e` is pushed to the staging branch; provider completion and authenticated QA retest remain. | Shared Scouting report role gate and role contract; do not overlap Draft/Scouting refactors. |
+| [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) | PM | Manual-first activation procedure and Message Ledger drafted; no send authorised. | Do not modify email, Auth, invitation, notification-worker, billing, or provisioning flows. |
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | Owner intelligence-capability repair and local validation are complete; staging deployment and authenticated owner retest remain. | Shared role-capability contract and Scouting report gate; do not overlap Draft/Scouting refactors. |
 
 ## QA blocked — Theo or PM input required
 
@@ -54,7 +55,6 @@ WO-2026-019 is the sole eligible Fast Lane item. It is S, low-risk, and explicit
 
 ## Vague or incomplete before assignment
 
-- **WO-2026-005:** needs a current warning sample, affected database/version evidence, and a decision whether investigation is read-only or remediation is in scope.
 - **WO-2026-012:** needs the agreed paid-buyer standard and Free-to-Pro thesis; it is PM discovery, not development.
 - **WO-2026-014:** needs Theo and ProComps approval for any external contact; it is Marketing discovery, not development.
 - **WO-2026-018:** needs its audit findings before copy/UX changes can be split into isolated Fast Lane work orders.

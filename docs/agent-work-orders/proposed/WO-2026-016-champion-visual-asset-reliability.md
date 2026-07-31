@@ -163,3 +163,11 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 - **Theo:** Next decision owner. Explicitly approve deployment of that named candidate to staging only. This does not approve production release.
 - **Core Features Developer after approval:** Deploy only the approved candidate to staging and record its identifier and time for QA. Do not deploy without Theo's approval.
 - **QA and Release Auditor:** After a recorded staging deployment, run CA-01 through CA-04 across Draft, Solo Queue, and Scouting on desktop/mobile, including cache-clear and one forced image failure. QA owns the evidence verdict, not the deployment.
+
+## Developer candidate handoff - 2026-07-31
+
+- **Candidate source revision:** `13ffdea` (`WO-017`). It contains the WO-016 `ChampionAvatar`, current catalogue resolver, utility, and focused test implementation. The commit also contains documentation updates outside this work order; it contains no deployment or hosted mutation.
+- **Exact focused test command:** `node --experimental-strip-types --test scripts/champion-avatar.test.ts scripts/competitive-platform-contract.test.mjs scripts/draft-workspace-contract.test.mjs`.
+- **Observed result:** 23 passing tests: 3 champion-avatar tests, 10 competitive-platform contract tests, and 10 Draft workspace contract tests. The earlier 17-test statement does not match this current command/output and is superseded by this reproducible count.
+- **Other local validation:** `node node_modules/eslint/bin/eslint.js . --max-warnings 0`, `node node_modules/typescript/bin/tsc --noEmit`, and `node node_modules/vite/bin/vite.js build` followed by `node scripts/bundle-budget.mjs` all passed. The build emitted only the existing Browserslist data-age notice.
+- **Fixtures for QA:** Use the existing isolated authenticated workspace records: Draft champion pool with `Ambessa`, `Nunu & Willump`, and `K'Sante`; the equivalent existing SoloQ and Scouting records; and the documented `None`/unknown and one deliberately failed image request cases. Do not create customer-facing or production data solely for this matrix.

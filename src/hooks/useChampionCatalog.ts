@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ChampionImageCandidate } from "@/lib/champion-avatar";
 
-export interface ChampionCatalogEntry {
-  id: string;
+export interface ChampionCatalogEntry extends ChampionImageCandidate {
   key: string;
-  name: string;
 }
 
 interface DataDragonChampionPayload {
-  data: Record<string, { id: string; key: string; name: string }>;
+  data: Record<string, { id: string; key: string; name: string; image?: { full?: string } }>;
 }
 
 async function loadChampionCatalog(): Promise<ChampionCatalogEntry[]> {
@@ -33,7 +32,14 @@ async function loadChampionCatalog(): Promise<ChampionCatalogEntry[]> {
 
   const payload = (await championsResponse.json()) as DataDragonChampionPayload;
   return Object.values(payload.data)
-    .map(({ id, key, name }) => ({ id, key, name }))
+    .flatMap(({ id, key, name, image }) => image?.full
+      ? [{
+        id,
+        key,
+        name,
+        imageUrl: `https://ddragon.leagueoflegends.com/cdn/${currentVersion}/img/champion/${image.full}`,
+      }]
+      : [])
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 

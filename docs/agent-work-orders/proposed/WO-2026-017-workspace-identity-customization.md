@@ -79,14 +79,14 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Tenant-safe logo storage | Migration and local Storage-policy contract; hosted two-tenant checks | Local automated / hosted | Implemented locally; hosted checks outstanding |
-| Manager identity workflow | Local component contract; authenticated browser checks | Local automated / hosted | Implemented locally; hosted checks outstanding |
-| Reliable fallback | Local rendering and failure-path contract; browser evidence | Local automated / hosted | Implemented locally; hosted checks outstanding |
+| Tenant-safe logo storage | Applied migrations, hosted policy inspection, and QA's rolled-back two-tenant database-policy checks | Local / hosted configuration | Pass at the policy layer; Storage API path remains accepted risk |
+| Manager identity workflow | Core implementation/tests plus Theo's manual staged-flow validation | Local / founder browser validation | Conditional; independent QA browser/API matrix not recorded |
+| Reliable fallback | Source/local contracts and Theo's manual staged-flow validation | Local / founder browser validation | Conditional; full failure-path/responsive matrix not recorded |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** The private bucket, tenant-path policies, owner/admin controls, signed reads, and initials fallback are implemented and locally validated. The migration is applied and its bucket/policy configuration is hosted-verified; authenticated tenant-isolation and browser verification remain outstanding.
+- **Verdict:** CONDITIONAL
+- **Rationale:** Core completed the recoverable versioned-path implementation and its three approved Storage migrations; QA independently reviewed the policy boundary and the two-tenant database-policy checks. Theo then manually validated the staged flow and explicitly accepted the remaining Storage API/browser matrix gap to close this work order. That gap is unverified, not passed, and does not authorise a new Storage/RLS or production-release action.
 
 ### Outstanding checks
 
@@ -94,7 +94,7 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 |---|---|---|---|
 | Approve implementation scope | Theo | Theo implementation approval, 2026-07-30 | Closed |
 | Local static validation | Core Features Developer | TypeScript, ESLint, full test suite, and production build | Passed 2026-07-30 |
-| Hosted security verification | QA and Release Auditor | Role/tenant browser evidence | Open |
+| Storage API, signed-URL, browser, and responsive two-tenant matrix | QA and Release Auditor | Isolated temporary-artifact matrix | Accepted by Theo on 2026-07-30; not passed |
 
 ### Theo approval record
 
@@ -104,6 +104,13 @@ Lightweight workspace identity makes a team operations product feel adopted rath
 | Production migration/release | Yes | Pending | — | Separate approval required. |
 
 **Current implementation record:** Approved by Theo on 2026-07-30. This supersedes the earlier pending implementation placeholder above; production migration/release remains pending.
+
+## PM ownership resolution - 2026-07-31
+
+- **Core Features Developer:** Complete. Implemented the UI, recoverable versioned-object workflow, tests, and the approved Storage/RLS migrations. No code or migration task remains under WO-017.
+- **QA and Release Auditor:** Complete for this order. QA found and verified correction of the fixed-path recovery and nested-path policy defects, then recorded the remaining Storage API/browser matrix as an evidence gap. QA does not need to wait for another developer handoff.
+- **Theo:** Completed the final decision by manually validating the staged flow and accepting the unexecuted independent Storage API/browser matrix as a release risk on 2026-07-30.
+- **Next action:** None under WO-017. Do not reopen it for routine validation. If a logo upload, replacement, removal, signed-URL, cross-tenant, or responsive defect is reported, create a new work order with a fresh isolated-artifact QA matrix; do not change Storage/RLS opportunistically.
 
 ## Decision and approval record
 

@@ -1,7 +1,7 @@
 # WO-2026-019 - Create champion-avatar reproduction evidence and regression fixtures
 
 - **ID reservation:** [WO-2026-019 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** Done
 - **Assigned owner:** Developer – Fast Lane
 - **Size:** S
 - **Risk:** Low
@@ -87,8 +87,8 @@ Champion icons are visibly unreliable, and the Founder wants the Fast Lane to ac
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** The source-grounded evidence pack and Core boundary are implemented, but authenticated browser/network capture and QA reproduction remain outstanding.
+- **Verdict:** CONDITIONAL
+- **Rationale:** Fast Lane completed the non-sensitive evidence pack without touching shared source. QA's authenticated staging review reproduced the real fixed-version failure and accepted the handoff as sufficient for Core to begin WO-2026-016. CA-03/CA-04 and cross-surface checks remain required, but are post-remediation validation under WO-2026-016 rather than remaining Fast Lane work.
 
 ### Outstanding checks (initial assignment snapshot)
 
@@ -106,6 +106,12 @@ Champion icons are visibly unreliable, and the Founder wants the Fast Lane to ac
 | Reproduce selected case | QA | Browser/network evidence from the pack | Open |
 | Accept Core handoff | PM / Core Features Developer | Review the evidence pack and confirm the shared implementation boundary | Open |
 
+### Closeout - 2026-07-31
+
+The two earlier outstanding-check snapshots are historical. QA's authenticated staging review confirmed the evidence pack is sufficient to hand the defect to Core: current catalogue champions `Ambessa` and `K'Sante` fall back under the fixed 14.1.1 Data Dragon path, while `Ahri` and `Nunu & Willump` render from that historical path. No further Fast Lane implementation is authorised or needed under this work order.
+
+The following checks transfer to WO-2026-016 after the shared remediation: CA-03 unknown/missing fallback, CA-04 forced image failure, and the Draft/Solo Queue/Scouting cross-surface matrix. They must remain release blockers for the parent work order.
+
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
@@ -116,10 +122,12 @@ Champion icons are visibly unreliable, and the Founder wants the Fast Lane to ac
 ## Decision and approval record
 
 - 2026-07-30 - Theo directed the Fast Lane evidence/fixture split from WO-2026-016. The shared implementation remains Core-owned.
+- 2026-07-31 - PM reconciled QA's authenticated staging outcome. WO-2026-019 is complete as the evidence/fixture handoff; Core Features Developer owns the verified shared-component defect in WO-2026-016.
 
 ## Implementation and review evidence
 
 - 2026-07-30 - Developer - Fast Lane created `docs/qa/CHAMPION_AVATAR_REGRESSION_CASES.md` with four named cases, exact current consumer paths, source-observed request/fallback behaviour, redaction rules, and the Core handoff boundary. No shared implementation, Collector mapping, data record, provider configuration, or workspace caller was changed.
 - 2026-07-30 - Focused evidence-pack structure and redaction checks passed. TypeScript, lint, build, and production/browser acceptance checks were not run because this change adds documentation only and the authenticated browser session is unavailable.
 - 2026-07-30 - Local browser check reached the public app successfully, but `/draft` redirected to `/sign-in`; no authenticated local test session or seeded representative workspace was available. Browser/network observations remain explicitly pending rather than inferred.
-- **Highest evidence achieved:** Implemented
+- 2026-07-31 - QA authenticated staging review recorded a real current-catalogue failure: `Ambessa` and `K'Sante` appeared as initial fallbacks because `ChampionAvatar` is pinned to historical Data Dragon version 14.1.1. `Ahri` and `Nunu & Willump` rendered successfully from that historical path; no console errors were captured in the checked Draft journey.
+- **Highest evidence achieved:** Browser verified for the scoped reproduction/handoff; no product fix is implemented.

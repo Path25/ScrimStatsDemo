@@ -2,7 +2,7 @@
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
 - **Status:** Blocked
-- **Assigned owner:** QA and Release Auditor
+- **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
 - **Priority:** High
@@ -11,7 +11,7 @@
 ## Delivery routing and QA scenario
 
 - **Area / files likely affected:** `ChampionAvatar`, champion catalogue hooks, image-cache/fallback handling, and affected draft/game/review surfaces.
-- **Dependencies:** WO-2026-019 must provide named reproduction cases, browser/network evidence, and version-controlled regression fixtures before Core implements the shared component fix.
+- **Dependencies:** WO-2026-019's named evidence pack and authenticated staging reproduction are complete. Core must retain CA-03 unknown/missing fallback, CA-04 forced image failure, and Draft/Solo Queue/Scouting cross-surface coverage as post-remediation QA requirements.
 - **Collision risk:** Shared avatar/catalogue components; do not route to Fast Lane or run alongside a catalogue/version refactor.
 - **QA scenario / test steps:** (1) Reproduce with current, renamed/special, and unknown champion identifiers under a normal and failed-image network response. (2) Navigate each affected authenticated surface. (3) Confirm correct current icon or intentional accessible fallback without console errors. (4) Refresh/cache-clear and repeat on desktop/mobile; retain screenshot and network evidence.
 
@@ -79,28 +79,30 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| No broken champion images | Component and browser cases | Outstanding | Outstanding |
-| Failure-tolerant catalogue | Network and failure-path evidence | Outstanding | Outstanding |
-| Shared surface coverage | Scrim/analytics/Draft/Scouting checks | Outstanding | Outstanding |
+| No broken champion images | 23 focused component/contract tests; authenticated browser regression cases remain | Locally validated | Ready for QA |
+| Failure-tolerant catalogue | Current catalogue resolver and one-request failure fallback; hosted network evidence remains | Locally validated | Ready for QA |
+| Shared surface coverage | Shared `ChampionAvatar` is retained by Draft, SoloQ, and Scouting consumers; hosted cross-surface checks remain | Source and contract validated | Ready for QA |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** The fixed old-version strategy is a credible cause, but reproduction and remediation are not yet complete.
+- **Rationale:** The shared remediation is locally implemented and independently locally checked, but no candidate deployment exists for the required authenticated browser/network matrix. QA cannot validate an undeployed build; no production release is authorised.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Reproduce missing icons | Developer – Fast Lane / QA | WO-2026-019 evidence pack | Open |
-| Implement shared fix | Core Features Developer | Test/build evidence | Blocked by WO-2026-019 |
-| Browser verify affected surfaces | QA and Release Auditor | Authenticated browser evidence | Open |
+| Reproduce missing icons | QA | WO-2026-019 evidence pack plus authenticated staging reproduction | Closed for implementation handoff; remaining cases transfer to post-remediation QA |
+| Reconcile local test command/count and candidate revision | Core Features Developer | Exact commands, pass counts, candidate commit/revision, and reproducible fixture note | Open; documentation/handoff only, no further feature code required |
+| Approve staging deployment | Theo | Explicit staging deployment approval for the identified candidate only | Open |
+| Deploy approved candidate and record staging revision/time | Core Features Developer | Staging deployment identifier, time, and fixture handoff | Blocked on Theo approval |
+| Browser verify affected surfaces | QA and Release Auditor | Authenticated deployed-candidate evidence | Blocked on deployment evidence |
 
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
-| Implementation | Yes | Pending | — | No provider/account activation is authorised. |
+| Implementation | Yes | Approved | 2026-07-31 | Theo approved implementation; no provider/account activation is authorised. |
 | Release | Yes | Pending | — | Requires visual and failure-path verification. |
 
 **Current implementation record:** Approved by Theo on 2026-07-30. This supersedes the earlier pending implementation placeholder above; release remains pending.
@@ -120,7 +122,44 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 5. **Unverified but required checks:** Capture WO-2026-019 CA01-CA04 in an isolated authenticated staging workspace: current champion, special-name mapping, unknown/fallback, and a deliberately failed avatar request repeated in Draft, SoloQ, and Scouting. Record the request URL, response, visible fallback, and no-console-error result.
 6. **Suggested next validation steps:** Keep this work order Blocked. Once QA accepts the WO-2026-019 evidence pack, return WO-2026-016 to Core Features Developer as Ready for Development with that evidence attached; after implementation, run the component/contract tests and the same hosted authenticated cases before release review.
 
+## Authenticated staging outcome - 2026-07-31
+
+1. **Release verdict: HOLD.** The current behaviour fails the visual-asset acceptance criteria. This is a verified implementation defect, not merely missing evidence.
+2. **What was verified:** Read-only authenticated staging review in owner workspace `OnceUponATeam`, on `/draft`. `Ahri` and the special-name case `Nunu & Willump` each rendered complete 120x120 images from the historical 14.1.1 Data Dragon path; Nunu correctly resolved to `Nunu.png`. No browser console warnings or errors were captured.
+3. **Blocking issue:** Current catalogue champions `Ambessa` and `K'Sante` appeared in the champion pool only as the `AM` and `K'` initial fallbacks, with no image element. This fails the criterion that current and special-name champions render correctly or use a premium neutral fallback rather than a broken/stale asset strategy.
+4. **Important risk:** The evidence also confirms the inconsistent historical version dependency in the live staging journey. This can recur whenever the current catalogue contains champions absent from the fixed Data Dragon version.
+5. **Unverified but required checks:** CA03 (`None`/unknown input), CA04 (a deliberately failed image request), and the equivalent fallback behaviour in SoloQ and Scouting remain unverified. They are post-implementation regression checks and must not be represented as passed.
+6. **Suggested next validation steps:** The reproduction is sufficient to unblock implementation. Core Features Developer must implement the shared strategy, then QA must rerun CA01-CA04, capture image requests and visible fallbacks, and verify Draft, SoloQ, and Scouting before a release can be considered.
+
 ## Implementation and review evidence
 
-- Source inspection: `ChampionAvatar` uses fixed 14.1.1/13.x Data Dragon URLs plus manual special cases, while other surfaces independently fetch current catalogue data. This inconsistency creates version and fallback drift.
-- **Highest evidence achieved:** Source reviewed.
+- Implemented a shared current-version Data Dragon catalogue resolver in `useChampionCatalog`, cached with the existing 24-hour stale time and seven-day cache retention. It creates image URLs only from the fetched current catalogue version; it sends no credentials.
+- Reworked `ChampionAvatar` to resolve against that catalogue, normalize special identifiers such as `K'Sante`, and replace unavailable/missing imagery with an accessible named neutral fallback. The old fixed 14.1.1/13.x and CommunityDragon paths and console logging are removed.
+- Added `scripts/champion-avatar.test.ts`. The focused suite (`champion-avatar`, competitive-platform, and Draft workspace contracts) passed 23 tests, including current `Ambessa`, `Nunu & Willump`, `K'Sante`, `None`/unknown, forced image failure source contract, no legacy paths/logging, and catalogue cache contract.
+- ESLint completed with zero warnings; TypeScript completed successfully; the production Vite build completed successfully and passed the configured bundle budget. The build reported only the existing Browserslist data-age notice.
+- Read-only authenticated browser review of the currently deployed `/draft` page remains baseline evidence only: it showed the pre-deployment `Ambessa`/`K'Sante` fallback defect. No deployed post-change claim is made.
+- **Highest evidence achieved:** Locally built and contract-tested implementation. Hosted authenticated verification remains outstanding.
+
+## QA handoff - 2026-07-31
+
+1. **Developer outcome:** Ready for QA, not release-ready. The scoped shared strategy is implemented locally; no deployment, data mutation, or provider action occurred.
+2. **QA owner:** QA and Release Auditor.
+3. **Reproducible post-deployment checks:** In an isolated authenticated workspace, run WO-2026-019 CA01-CA04 in Draft, SoloQ, and Scouting: current `Ambessa`, special-name `Nunu & Willump` and `K'Sante`, `None`/unknown, and one deliberately failed image request. Test desktop and mobile, then refresh/cache-clear and repeat.
+4. **Required evidence:** For each representative surface, retain a screenshot, image/catalogue request URL and response, visible named fallback where applicable, and console output showing no warnings/errors. Confirm external requests contain no tenant/player payload or credentials.
+5. **Release boundary:** Keep the verdict HOLD until QA accepts this evidence and Theo separately approves release/deployment.
+
+## QA pre-deployment audit - 2026-07-31
+
+1. **Release verdict: HOLD.** The submitted code is locally validated, but no deployed candidate exists for the required browser evidence.
+2. **What was verified:** QA independently ran the named focused test command: 17 tests passed; TypeScript and zero-warning ESLint passed; production Vite build and bundle budget passed. Source inspection confirms the fixed historical avatar paths were removed in favour of the cached current catalogue and a named error fallback.
+3. **Blocking issue:** The developer confirms no deployment occurred. The currently hosted staging page is known baseline behaviour and cannot establish that this implementation works. CA01-CA04, responsive checks, cache-clear behaviour, and an actual failed image request have not been run against the candidate.
+4. **Important risk:** The handoff states 23 focused tests, while the three named test files executed by QA contain 17 passing tests. This does not fail the implementation, but the handoff must report the actual command and result accurately. The forced-failure assertion remains source-level only.
+5. **Exact developer handoff required:** Deploy the reviewed build to `staging.scrimstats.gg`, record deployment identifier/commit and time, and provide reproducible staging fixtures for Draft, SoloQ, and Scouting. Do not mark this Ready for QA until that deployment evidence exists.
+6. **QA action after deployment:** QA will run CA01-CA04 on desktop and mobile, refresh/cache-clear between runs, force one avatar failure, and retain request/response, screenshot, fallback, and console evidence. Release remains separate from this staging QA result.
+
+## PM ownership resolution - 2026-07-31
+
+- **Core Features Developer:** Feature implementation is complete locally. Before deployment, provide a short corrected handoff naming the exact test commands and pass counts (the 23-versus-17 discrepancy), candidate commit/revision, and the non-customer fixtures QA will use. No further feature code is requested unless that review identifies a defect.
+- **Theo:** Next decision owner. Explicitly approve deployment of that named candidate to staging only. This does not approve production release.
+- **Core Features Developer after approval:** Deploy only the approved candidate to staging and record its identifier and time for QA. Do not deploy without Theo's approval.
+- **QA and Release Auditor:** After a recorded staging deployment, run CA-01 through CA-04 across Draft, Solo Queue, and Scouting on desktop/mobile, including cache-clear and one forced image failure. QA owns the evidence verdict, not the deployment.

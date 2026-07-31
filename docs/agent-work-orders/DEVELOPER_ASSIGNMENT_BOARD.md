@@ -6,7 +6,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Size / risk | Dependencies | Collision risk / dispatch note |
 |---|---|---|---|---|
-| [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) | Developer – Fast Lane | S / Low | Local or isolated test data | Evidence/fixture-only work; must not edit `ChampionAvatar` or catalogue implementation. |
 
 ## Ready for QA
 
@@ -25,7 +24,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 |---|---|---|---|
 | [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) | QA and Release Auditor | The connected Stripe evidence is live-mode; no isolated payment route, cost cap, or cancellation boundary has been selected. | Theo must approve either a test-mode route or one capped live internal purchase/cancellation, then provide the isolated account/workspace and redacted event/log access. WO-002 is superseded; WO-009 Collector evidence does not close checkout verification. |
 | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | No approved isolated funnel journey has produced an event; the ledger and scorecard remain empty. | Theo must approve the minimal temporary non-customer schedule/completed-game workflow; PM must keep any browser scorecard exposure under WO-011. |
-| [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) | QA and Release Auditor | Cron suspended; correction migration applied; live service role has SELECT/INSERT only and source provenance matches the original hosted migration. | Provide an isolated Stripe test-mode monthly/annual fixture or test-key route, then reconcile aggregate, repeat invocation, and collect the second verified London-day snapshot. |
+| [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) | Theo, then Core Features Developer | Candidate is locally validated only; QA independently recorded 17 named focused tests, while the developer reports 23 across its stated focused suite. No deployment exists. | Core supplies exact command/count and candidate revision; Theo approves staging deployment; Core records deployment ID/time and fixtures. QA then runs CA01-CA04 and the cross-surface responsive matrix. |
 
 ## Sequenced or blocked
 
@@ -35,13 +34,11 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | Work order | Proposed lane / owner | Why it is not ready | Collision risk |
 |---|---|---|---|
 | [WO-2026-013](proposed/WO-2026-013-desktop-live-integration-direction.md) | Core Features Developer | WO-2026-009 is complete under Theo's accepted-risk decision; a desktop direction still needs selecting | Collector/native integration strategy; preserve the completed Collector entitlement boundary. |
-| [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) | QA and Release Auditor | Blocked pending WO-2026-019 authenticated browser/network evidence | QA owns evidence review; Core Features Developer owns any subsequent shared `ChampionAvatar` remediation. |
-
 | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | Core Features Developer | Split inbound `/scrim` feature; wait for WO-2026-001 correction and QA handoff | Shared Discord helpers/UI/outbox/manifest; do not run concurrently with WO-2026-001. |
 
 ## Fast Lane
 
-WO-2026-019 is the sole eligible Fast Lane item. It is S, low-risk, and explicitly prohibited from editing the shared avatar/catalogue implementation. Its handoff unblocks the Core-owned WO-2026-016 fix.
+No Fast Lane work order is currently ready. WO-2026-019 is complete as an evidence handoff; its verified shared-component defect is assigned to Core under WO-2026-016.
 
 ## Backlog pending Theo implementation approval
 

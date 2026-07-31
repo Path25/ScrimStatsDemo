@@ -1,8 +1,8 @@
 # WO-2026-022 - Record daily Stripe MRR snapshots for measured churn reporting
 
 - **ID reservation:** [WO-2026-022 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
-- **Assigned owner:** Core Features Developer
+- **Status:** Done
+- **Assigned owner:** QA and Release Auditor
 - **Size:** M
 - **Risk:** Medium
 - **Priority:** High
@@ -169,6 +169,29 @@ WO-022 is not releasable. The live table is not append-only for `service_role`, 
 - The named cron job is intentionally suspended and the table has zero rows. The remaining block is the approved isolated Stripe test-mode provider scenario and later second verified London-day snapshot.
 
 ## Implementation and review evidence
+
+### QA re-review - 2026-07-31
+
+1. **Release verdict: HOLD.** The hosted security and append-only boundary passes, but the reporting workflow has not produced a safe provider-verified snapshot.
+2. **What was verified:** The production project is healthy; hosted migrations `20260731151435` and `20260731155346` are present; `stripe-mrr-snapshot` version 1 is active; its custom worker-secret path is deployed; the focused local contract suite passed all five tests. Live database evidence confirms RLS is enabled, `anon` and `authenticated` lack SELECT, `service_role` has SELECT/INSERT only and lacks UPDATE/DELETE/TRUNCATE, the only table policies target `service_role`, no cron job is registered, and the snapshot table has zero rows.
+3. **Blocking issues:** No approved isolated Stripe test-mode run has reconciled one monthly plus one annual subscription to a stored aggregate, demonstrated duplicate-run handling, or produced the first verified snapshot. Therefore no MRR value or movement is measured by this workflow.
+4. **Important risk:** The active worker uses one `STRIPE_SECRET_KEY` and writes to the production snapshot table. Pointing that deployment at Stripe test mode for QA would put test-mode aggregates into the production MRR ledger and consume the idempotency key for that London date. This is not an acceptable substitute for isolation.
+5. **Unverified but required checks:** An isolated worker/table environment must run the test-mode fixture, compare the independently calculated monthly/annual aggregate to the stored row, repeat the same invocation for the 409/idempotency response, and demonstrate browser-role table/RPC denial. A separately approved production source then needs two consecutive verified London-day snapshots before MRR movement can be reported.
+6. **Required action from Theo / PM:** Choose and explicitly approve one isolation route before QA invokes Stripe: (a) a Supabase database branch with a dedicated test-mode worker configuration, or (b) a separately provisioned non-production Supabase project. Do not reuse the production table or change the production worker's Stripe secret to test mode. PM should assign Core Features Developer to provision the selected isolated route and provide its non-secret endpoint/test procedure to QA.
+
+### Isolation attempt - 2026-07-31
+
+- Theo approved a separate branch derived from the production project for the isolated Stripe test-mode scenario.
+- QA requested the provider-supported branch at the quoted $0.01344/hour rate. Supabase rejected creation because database branching is available only on the Pro plan or above.
+- No database, secret, worker, cron, Stripe, or production-data change was made. The remaining safe route is a separately provisioned non-production Supabase project, or an explicit plan upgrade followed by a new branch request.
+
+### Theo accepted-risk closure - 2026-07-31
+
+1. **Release verdict: CONDITIONAL.** Theo accepted deferral of the isolated Stripe test-mode scenario because a safe isolated Supabase environment is unavailable. This closes implementation delivery only; it does not convert MRR movement into measured reporting.
+2. **Accepted risk:** The first provider reconciliation will use the first live production snapshot rather than an isolated test-mode fixture. Until it is independently checked, the stored aggregate and duplicate-run behaviour are unverified.
+3. **Required monitor:** After an approved operator re-enables the suspended `scrimstats-stripe-mrr-snapshot` cron, notify Theo after the first completed London-day run. The alert must include only business date, currency, active paid-subscription count, normalized monthly amount, row count, worker HTTP/result status, and whether a repeat invocation returned `snapshot_already_exists`; it must not include customer, subscription, email, payment, or secret data.
+4. **Required manual review:** Theo or QA must reconcile that first stored aggregate to an independent live Stripe aggregate and record the comparison. Repeat after the next completed London-day snapshot. Only after two consecutive reconciled snapshots may reports call MRR movement or churn movement measured.
+5. **Operational boundary:** The cron remains suspended. No production schedule, Vault secret, worker configuration, Stripe setting, or snapshot invocation is authorised by this closure. Those are separate production actions and require an explicit operator change and appropriate approval.
 
 - 2026-07-30 - Proposed from read-only reporting evidence. No code, migration, configuration, schedule, or production data changed.
 - 2026-07-31 - Source-only implementation added `stripe_mrr_daily_snapshots`, the server-only `stripe-mrr-snapshot` worker, dormant service-role cron configuration, and focused aggregate/RLS contract tests. The worker accepts active paid monthly/annual recurring prices only, derives the latest completed `Europe/London` date, and rejects duplicate snapshots without update/delete paths.

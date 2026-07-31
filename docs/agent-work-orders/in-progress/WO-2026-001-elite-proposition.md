@@ -1,6 +1,6 @@
 # WO-2026-001 - Define and deliver a credible Elite proposition
 
-- **Status:** Ready for QA
+- **Status:** Done (Theo accepted remaining negative-path risk)
 - **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
@@ -904,3 +904,32 @@ Theo must explicitly approve a reversible, isolated negative-path session: tempo
 - The work order remains in `Ready for QA` with credible local, hosted, and isolated happy-path evidence. No new developer handoff or approved negative-path session is recorded since the 2026-07-30 audit.
 - The outstanding retry, disconnect/reconnect, entitlement/module revocation, Free/Pro/non-manager denial, and tenant-isolation checks require Theo's previously specified reversible isolated test approval and access to the private Discord test channel. They were not inferred from provider receipts or prior happy-path messages.
 - **PM routing:** retain with QA; do not mark Done or make a customer/Elite availability claim. No Developer action is presently required.
+
+## QA closure - 2026-07-31
+
+### 1. Release verdict: CONDITIONAL
+
+**Work-order status: Done, by Theo's explicit accepted-risk decision.** The isolated Discord outbound happy path has been independently evidenced and Theo manually tested the final rendered message. This closes the completed work order; it is not evidence that every customer release safeguard has passed.
+
+### 2. What was verified
+
+- Deployed `discord-dispatch` version 11 delivered isolated non-customer schedule events with provider receipts, one localised timestamp, no malformed characters, no mentions, and suppressed rich embeds.
+- Focused presentation, dispatcher, and public-layout contracts passed alongside lint, TypeScript, production build, and bundle-budget checks recorded above.
+- Theo manually tested the final end-user Discord presentation and accepted it as complete.
+
+### 3. Blocking issues
+
+- None for closure under the accepted-risk decision.
+
+### 4. Important risks
+
+- This approval does not prove recovery after a provider failure, safe behaviour after disconnect or entitlement/module revocation, direct denial for Free/Pro/non-manager users, or cross-tenant channel/outbox isolation.
+- Do not treat this work order as authority to advertise general Elite Discord availability or to enable a customer workspace without a separate release decision and the relevant safeguards.
+
+### 5. Unverified but required checks
+
+- The isolated retry/backoff, disconnect/reconnect, entitlement/module-revocation, Free/Pro/non-manager denial, and cross-tenant isolation matrix remains unexecuted.
+
+### 6. Suggested next steps
+
+- If Discord is expanded beyond the accepted soft-launch test scope, create or reopen a narrowly scoped validation work order for the outstanding negative-path matrix before any customer-facing availability claim.

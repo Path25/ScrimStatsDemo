@@ -12,21 +12,19 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-| [WO-2026-010](review/WO-2026-010-funnel-service-role-append-only-grants.md) | QA and Release Auditor | Append-only service-role grant migration is applied; live grants/RLS/scorecard boundary verified | One approved non-customer source-trigger exercise, idempotency retry, and aggregate scorecard check shared with WO-003. |
-| [WO-2026-001](in-progress/WO-2026-001-elite-proposition.md) | QA and Release Auditor | Embed suppression is active as Supabase Edge Function version 11; a Theo-approved isolated event has provider receipt; local contracts, lint, typecheck, build, and bundle budget pass | Capture the isolated Discord message: visible link, no preview card, one localised timestamp, no mojibake/mentions; retain `/scrim` with WO-2026-025. |
+| [WO-2026-029](proposed/WO-2026-029-repair-multi-workspace-draft-rls.md) | QA and Release Auditor | Migration `20260731124310` applied; source history reconciled; owner success, active SELECT policy, non-member denial, and unchanged-write-policy inspection verified. | QA may issue its release recommendation; runtime write evidence remains intentionally out of scope without an approved non-customer fixture. |
 
 ## In Progress
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
 | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) | PM | Manual-first activation procedure and Message Ledger drafted; no send authorised. | Do not modify email, Auth, invitation, notification-worker, billing, or provisioning flows. |
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | Owner intelligence-capability repair and local validation are complete; staging deployment and authenticated owner retest remain. | Shared role-capability contract and Scouting report gate; do not overlap Draft/Scouting refactors. |
 
 ## QA blocked — Theo or PM input required
 
 | Work order | Owner | Current blocker | Required routing |
 |---|---|---|---|
-| [WO-2026-002](review/WO-2026-002-pro-paid-core-hosted-verification.md) | QA | Its July handoff is obsolete relative to completed/accepted-risk WO-009 lifecycle work and has no current deployed test matrix. | PM must reconcile, narrow, split, or supersede the work order; Developer must provide a current deployed revision/test-account handoff if it remains active. |
+| [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) | QA and Release Auditor | The connected Stripe evidence is live-mode; no isolated payment route, cost cap, or cancellation boundary has been selected. | Theo must approve either a test-mode route or one capped live internal purchase/cancellation, then provide the isolated account/workspace and redacted event/log access. WO-002 is superseded; WO-009 Collector evidence does not close checkout verification. |
 | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | No approved isolated funnel journey has produced an event; the ledger and scorecard remain empty. | Theo must approve the minimal temporary non-customer schedule/completed-game workflow; PM must keep any browser scorecard exposure under WO-011. |
 
 ## Sequenced or blocked

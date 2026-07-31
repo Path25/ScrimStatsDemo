@@ -8,7 +8,7 @@ This work order reserves `WO-2026-010` in the [work-order index](../WORK_ORDER_I
 
 | Field | Value |
 | --- | --- |
-| Status | Ready for QA |
+| Status | Done |
 | Assigned owner | QA |
 | Size | M |
 | Risk | High |
@@ -160,6 +160,40 @@ The finding came from the production QA review of the newly introduced funnel re
 - No new developer handoff or production change was recorded after the 2026-07-30 review. The applied append-only migration, live grants/RLS boundary, scorecard execution boundary, trigger inventory, contract result, and recorded Advisor caveats remain the latest evidence.
 - **Required check remains unperformed:** one Theo-approved, non-customer source-trigger exercise with an idempotency retry and aggregate-only scorecard confirmation. No production data or trigger was exercised by this daily review.
 - **PM routing:** keep `Ready for QA`; return no implementation work to Developer. Theo must approve the isolated source action before QA can close the operational follow-up.
+
+## Independent QA closure - 2026-07-31
+
+### 1. Release verdict: READY
+
+The append-only funnel-ledger grant remediation is live and all WO-010 acceptance criteria are now verified. This is a database/security release verdict only; it does not make a customer-facing funnel screen or broader commercial reporting release-ready.
+
+### 2. What was verified
+
+- **Least privilege live:** `workspace_funnel_events` retains RLS with no policies; `service_role` has exactly `SELECT` and `INSERT`; `anon` and `authenticated` have no table grants. The scorecard RPC has no `anon` or `authenticated` execute grant.
+- **Authorised runtime source path:** Using the named non-customer `WO-024 QA Tenant A` fixture, QA set the authenticated owner context and performed two marked `scheduled` `scrims` inserts under the real staff RLS policy. The fixture had no Discord installation, subscription, or outbox before the exercise, so no provider-facing action was possible.
+- **Idempotency and cleanup:** Both source writes triggered the existing `record_first_scheduled_block_trigger`, while the append-only unique milestone contract recorded exactly one `first_scheduled_block` at `2026-07-31T11:22:51.412772Z`. Both temporary source scrim rows were immediately deleted under the same authorised owner context; zero marked test scrims remain. The single aggregate-only ledger milestone intentionally remains.
+- **Service-only aggregate:** Under `SET LOCAL ROLE service_role`, `get_founder_funnel_scorecard(now() - interval '1 hour')` returned only `first_scheduled_block: 1`; no tenant, actor, or customer detail is returned by that path.
+- **Regression contract:** `node --test scripts/funnel-instrumentation-contract.test.mjs` passed 2/2 on 2026-07-31.
+- **Advisor review:** Security Advisor continues to report the expected service-only `workspace_funnel_events` RLS-without-policy informational item, broader pre-existing `SECURITY DEFINER` warnings, and disabled leaked-password protection. Nothing was hidden or changed to close this work order.
+
+### 3. Blocking issues
+
+- None.
+
+### 4. Important risks
+
+- The live ledger now contains one deliberate, non-customer QA milestone. It is immutable by design and correctly survives source-record cleanup.
+- The Advisor warnings are project-wide and outside this narrow grant remediation. They require their own security review; they are not evidence that the append-only grant contract failed.
+
+### 5. Unverified but required checks
+
+- No further checks are required for WO-010's append-only grant boundary.
+- WO-003 remains separate and blocked until its broader approved non-customer funnel journey requirements are satisfied; this one scheduled-block exercise must not be misrepresented as a full Free-to-Pro conversion or first-recorded-game journey.
+
+### 6. Suggested next steps
+
+- PM may mark WO-010 complete and remove it from QA dispatch.
+- Keep the existing `workspace_activated` and `first_recorded_game` validation, any scorecard UI exposure, and Advisor remediation in their separately scoped work orders.
 
 - **2026-07-28 — QA & Release Auditor:** Production review found RLS enabled and no browser-role access for `public.workspace_funnel_events`, while `service_role` retained non-append-only table privileges. The finding is hosted-verified; the remediation remains proposed.
 - **2026-07-28 — Project Manager:** Reserved this work order as a high-priority, narrow security and reporting-integrity change. No migration has been created or applied.

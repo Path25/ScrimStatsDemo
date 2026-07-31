@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
+import { discordEntitled } from "../_shared/collector.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,26 +15,36 @@ type IntegrationEvent = {
   attempt_count: number;
 };
 
+const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
+const DISCORD_SUPPRESS_EMBEDS = 1 << 2;
+
+function discordTime(payload: Record<string, unknown>) {
+  const scheduledTime = typeof payload.scheduled_time === "string"
+    ? payload.scheduled_time
+    : typeof payload.match_date === "string"
+      ? payload.match_date
+      : null;
+  const instant = scheduledTime ? Date.parse(scheduledTime) : Number.NaN;
+  return Number.isFinite(instant) ? `<t:${Math.floor(instant / 1_000)}:F>` : "Time to be confirmed";
+}
+
 function eventMessage(event: IntegrationEvent, appUrl: string) {
   const opponent = typeof event.payload.opponent_name === "string" ? event.payload.opponent_name : "opponent";
-  const date = typeof event.payload.match_date === "string" ? event.payload.match_date : "date pending";
-  const time = typeof event.payload.scheduled_time === "string" ? ` at ${event.payload.scheduled_time}` : "";
   const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}` : `${appUrl}/scrims`;
   const title =
     event.event_type === "schedule_created"
       ? "Practice block scheduled"
       : event.event_type === "schedule_cancelled"
         ? "Practice block cancelled"
+        : event.event_type === "schedule_changed"
+          ? "Practice block updated"
         : event.event_type === "practice_reminder"
           ? "Practice block coming up"
-          : event.event_type === "availability_reminder"
-            ? "Confirm roster availability"
-            : event.event_type === "collector_reminder"
-              ? "Collector readiness check"
-              : "Practice block updated";
+          : "Practice block updated";
   return {
-    content: `**${title}**\nvs ${opponent} · ${date}${time}\n${link}`,
+    content: `**${title}**\nvs ${opponent}\n${discordTime(event.payload)}\n${link}`,
     allowed_mentions: { parse: [] },
+    flags: DISCORD_SUPPRESS_EMBEDS,
   };
 }
 
@@ -48,23 +59,46 @@ Deno.serve(async (request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? (() => {
+    try {
+      return JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}").default ?? null;
+    } catch {
+      return null;
+    }
+  })();
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   const appUrl = (Deno.env.get("SCRIMSTATS_APP_URL") || "").replace(/\/$/, "");
   if (!supabaseUrl || !serviceKey || !botToken || !appUrl) {
+    console.error("Discord delivery is not configured", {
+      missing: [
+        !supabaseUrl && "SUPABASE_URL",
+        !serviceKey && "SUPABASE_SERVICE_ROLE_KEY_or_SUPABASE_SECRET_KEYS.default",
+        !botToken && "DISCORD_BOT_TOKEN",
+        !appUrl && "SCRIMSTATS_APP_URL",
+      ].filter(Boolean),
+    });
     return Response.json({ error: "Discord delivery is not configured" }, { status: 503, headers: corsHeaders });
   }
 
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: events, error } = await admin.rpc("claim_integration_events", {
+  const { data: events, error } = await admin.rpc("claim_integration_events_for_provider", {
+    p_provider: "discord",
     p_limit: 25,
   });
   if (error) return Response.json({ error: "Unable to read the delivery outbox" }, { status: 500, headers: corsHeaders });
 
   let delivered = 0;
   for (const event of (events || []) as IntegrationEvent[]) {
+    if (!supportedEventTypes.has(event.event_type)) {
+      await admin.from("integration_events").update({ status: "cancelled", last_error: "Event is outside the approved Discord schedule scope" }).eq("id", event.id);
+      continue;
+    }
+    if (!(await discordEntitled(event.tenant_id))) {
+      await admin.from("integration_events").update({ status: "cancelled", last_error: "Discord automation is unavailable for this workspace" }).eq("id", event.id);
+      continue;
+    }
     const { data: subscriptions } = await admin
       .from("discord_channel_subscriptions")
       .select("channel_id, discord_installations!inner(status)")

@@ -11,6 +11,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { WorkspaceGate } from "@/components/auth/WorkspaceGate";
+import { AnalyticsPlanPreview } from "@/components/analytics/AnalyticsPlanPreview";
 import { PlanGate } from "@/components/billing/PlanGate";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Toaster } from "@/components/ui/sonner";
@@ -104,7 +105,7 @@ function AppWorkspace() {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/actions" element={<CoachingActions />} />
             <Route path="/collector" element={<PlanGate minimum="pro" feature="collector capture"><CollectorWorkspace /></PlanGate>} />
-            <Route path="/analytics" element={<PlanGate minimum="pro" feature="team analytics"><Analytics /></PlanGate>} />
+            <Route path="/analytics" element={<PlanGate minimum="pro" feature="team analytics" preview={<AnalyticsPlanPreview />}><Analytics /></PlanGate>} />
             <Route path="/soloq" element={<PlanGate minimum="pro" feature="Solo Queue tracking"><SoloQTracker /></PlanGate>} />
             <Route path="/scouting" element={<PlanGate minimum="pro" feature="opponent scouting"><Scouting /></PlanGate>} />
             <Route path="/scouting/:opponentId" element={<PlanGate minimum="pro" feature="opponent scouting"><ScoutingTeamReport /></PlanGate>} />

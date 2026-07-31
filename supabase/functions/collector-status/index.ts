@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { authenticatedUser, collectorCorsHeaders, json, managerMembership, serviceClient } from '../_shared/collector.ts';
+import { authenticatedUser, collectorCorsHeaders, collectorEntitled, json, managerMembership, serviceClient } from '../_shared/collector.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: collectorCorsHeaders });
@@ -11,6 +11,9 @@ serve(async (req) => {
   const scrimId = query.get('scrim_id') ?? body.scrim_id;
   if (!tenantId || !await managerMembership(user.id, tenantId)) return json({ error: 'Not allowed.' }, 403);
   const db = serviceClient();
+  if (!await collectorEntitled(tenantId, db)) {
+    return json({ error: 'Game Capture is available with Pro or Elite.', code: 'collector_plan_required' }, 403);
+  }
   const { data: devices } = await db.from('collector_devices').select('id, label, status, app_version, last_seen_at, created_at')
     .eq('tenant_id', tenantId).order('last_seen_at', { ascending: false, nullsFirst: false });
   let sessions: unknown[] = [];

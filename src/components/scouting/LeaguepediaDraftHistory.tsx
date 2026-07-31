@@ -22,12 +22,14 @@ export function LeaguepediaDraftHistory({
   opponentTeamId,
   opponentName,
   briefs,
+  canEdit,
 }: {
   opponentTeamId: string;
   opponentName: string;
   briefs: Brief[];
+  canEdit: boolean;
 }) {
-  const history = useLeaguepediaDraftHistory(opponentTeamId);
+  const history = useLeaguepediaDraftHistory(opponentTeamId, true, canEdit);
   const draftBriefs = briefs.filter((brief) => brief.status === "draft");
   const [providerName, setProviderName] = useState(opponentName);
   const [briefId, setBriefId] = useState(draftBriefs[0]?.id || "");
@@ -66,26 +68,28 @@ export function LeaguepediaDraftHistory({
               source game ID, import time, patch, and revision are retained with every game.
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-[minmax(14rem,1fr)_auto]">
-            <div>
-              <Label htmlFor="leaguepedia-team">Exact Leaguepedia team name</Label>
-              <Input
-                id="leaguepedia-team"
-                value={providerName}
-                onChange={(event) => setProviderName(event.target.value)}
-                maxLength={160}
-                className="mt-1.5"
-              />
+          {canEdit && (
+            <div className="grid gap-2 sm:grid-cols-[minmax(14rem,1fr)_auto]">
+              <div>
+                <Label htmlFor="leaguepedia-team">Exact Leaguepedia team name</Label>
+                <Input
+                  id="leaguepedia-team"
+                  value={providerName}
+                  onChange={(event) => setProviderName(event.target.value)}
+                  maxLength={160}
+                  className="mt-1.5"
+                />
+              </div>
+              <Button
+                className="self-end"
+                disabled={!providerName.trim() || history.importing}
+                onClick={() => void history.importHistory(providerName)}
+              >
+                <RefreshCw className={`h-4 w-4 ${history.importing ? "animate-spin" : ""}`} />
+                {history.importing ? "Importing" : "Import history"}
+              </Button>
             </div>
-            <Button
-              className="self-end"
-              disabled={!providerName.trim() || history.importing}
-              onClick={() => void history.importHistory(providerName)}
-            >
-              <RefreshCw className={`h-4 w-4 ${history.importing ? "animate-spin" : ""}`} />
-              {history.importing ? "Importing" : "Import history"}
-            </Button>
-          </div>
+          )}
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--workspace-subtle)]">
           <span>Source: Leaguepedia / League of Legends Esports Wiki</span>
@@ -103,39 +107,50 @@ export function LeaguepediaDraftHistory({
       ) : history.error ? (
         <WorkspaceState icon={ScrollText} title="Draft history unavailable" description="Imported draft history could not be loaded for this workspace." className="m-5" />
       ) : !history.data?.games.length ? (
-        <WorkspaceState icon={ScrollText} title="No imported draft games yet." description="Use the exact team name used by Leaguepedia, then import. No placeholder drafts are shown." className="m-5" />
+        <WorkspaceState
+          icon={ScrollText}
+          title="No imported draft games yet."
+          description={canEdit
+            ? "Use the exact team name used by Leaguepedia, then import. No placeholder drafts are shown."
+            : "No attributed draft history is available for this opponent yet."}
+          className="m-5"
+        />
       ) : (
         <>
-          <div className="flex flex-col gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 md:flex-row md:items-end md:justify-between">
-            <div className="min-w-0 flex-1">
-              <Label htmlFor="draft-brief">Attach selected games to a draft brief</Label>
-              <select
-                id="draft-brief"
-                value={briefId}
-                onChange={(event) => setBriefId(event.target.value)}
-                className="mt-1.5 h-10 w-full max-w-md border border-input bg-background px-3 text-sm"
+          {canEdit && (
+            <div className="flex flex-col gap-4 border-b border-[var(--workspace-rule)] px-5 py-4 md:flex-row md:items-end md:justify-between">
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="draft-brief">Attach selected games to a draft brief</Label>
+                <select
+                  id="draft-brief"
+                  value={briefId}
+                  onChange={(event) => setBriefId(event.target.value)}
+                  className="mt-1.5 h-10 w-full max-w-md border border-input bg-background px-3 text-sm"
+                >
+                  {!draftBriefs.length && <option value="">No editable brief available</option>}
+                  {draftBriefs.map((brief) => <option key={brief.id} value={brief.id}>{brief.title}</option>)}
+                </select>
+              </div>
+              <Button
+                variant="outline"
+                disabled={!briefId || history.savingSelection}
+                onClick={() => void history.setBriefDrafts({ briefId, gameIds: selected })}
               >
-                {!draftBriefs.length && <option value="">No editable brief available</option>}
-                {draftBriefs.map((brief) => <option key={brief.id} value={brief.id}>{brief.title}</option>)}
-              </select>
+                <Check className="h-4 w-4" /> Save evidence selection
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              disabled={!briefId || history.savingSelection}
-              onClick={() => void history.setBriefDrafts({ briefId, gameIds: selected })}
-            >
-              <Check className="h-4 w-4" /> Save evidence selection
-            </Button>
-          </div>
+          )}
           <div className="divide-y divide-[var(--workspace-rule)]">
             {history.data.games.map((game) => (
-              <article key={game.id} className="grid gap-4 px-5 py-5 lg:grid-cols-[auto_12rem_1fr_auto] lg:items-start">
-                <Checkbox
-                  checked={selected.includes(game.id)}
-                  onCheckedChange={() => toggle(game.id)}
-                  disabled={!briefId}
-                  aria-label={`Attach ${game.blue_team} versus ${game.red_team}`}
-                />
+              <article key={game.id} className={`grid gap-4 px-5 py-5 lg:items-start ${canEdit ? "lg:grid-cols-[auto_12rem_1fr_auto]" : "lg:grid-cols-[12rem_1fr_auto]"}`}>
+                {canEdit && (
+                  <Checkbox
+                    checked={selected.includes(game.id)}
+                    onCheckedChange={() => toggle(game.id)}
+                    disabled={!briefId}
+                    aria-label={`Attach ${game.blue_team} versus ${game.red_team}`}
+                  />
+                )}
                 <div>
                   <p className="text-sm font-medium">{game.blue_team} vs {game.red_team}</p>
                   <p className="mt-1 ss-mono text-xs text-[var(--workspace-subtle)]">

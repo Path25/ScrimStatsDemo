@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { authenticatedUser, collectorCorsHeaders, json, managerMembership, randomSecret, serviceClient, sha256 } from '../_shared/collector.ts';
+import { authenticatedUser, collectorCorsHeaders, collectorEntitled, json, managerMembership, randomSecret, serviceClient, sha256 } from '../_shared/collector.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: collectorCorsHeaders });
@@ -10,6 +10,9 @@ serve(async (req) => {
   const role = await managerMembership(user.id, body.tenant_id);
   if (!role) return json({ error: 'A team manager must connect this computer.' }, 403);
   const db = serviceClient();
+  if (!await collectorEntitled(body.tenant_id, db)) {
+    return json({ error: 'Game Capture is available with Pro or Elite.', code: 'collector_plan_required' }, 403);
+  }
 
   if (body.action === 'create') {
     const { data: captureSetting } = await db

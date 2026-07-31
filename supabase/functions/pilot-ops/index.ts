@@ -1,23 +1,46 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { pilotWorkspaceEmail } from "../_shared/email.ts";
 
-const headers = { "content-type": "application/json", "cache-control": "no-store" };
-const respond = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers });
+const approvedOrigins = new Set(["https://scrimstats.gg", "https://www.scrimstats.gg", "https://staging.scrimstats.gg", "http://localhost:8080", "http://127.0.0.1:8080"]);
+const corsFor = (request: Request) => {
+  const origin = request.headers.get("origin") || "";
+  return approvedOrigins.has(origin) ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version", "access-control-allow-methods": "POST, OPTIONS", vary: "Origin" } : {};
+};
+const respond = (status: number, body: unknown, cors: HeadersInit) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...cors } });
+const funnelMilestones = ["account_registered", "workspace_created", "first_scheduled_block", "first_recorded_game", "workspace_activated", "first_paid_upgrade"] as const;
+const funnelPeriods = { last_30_days: 30, last_90_days: 90 } as const;
+const funnelInstrumentationStartedAt = "2026-07-28T15:46:02.000Z";
 
 Deno.serve(async (request) => {
-  if (request.method !== "POST") return respond(405, { error: "method_not_allowed" });
+  const cors = corsFor(request);
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (request.method !== "POST") return respond(405, { error: "method_not_allowed" }, cors);
   const url = Deno.env.get("SUPABASE_URL")!; const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return respond(401, { error: "authentication_required" });
+  if (!token) return respond(401, { error: "authentication_required" }, cors);
   const { data: authData } = await admin.auth.getUser(token);
   const user = authData.user;
-  if (!user) return respond(401, { error: "authentication_required" });
+  if (!user) return respond(401, { error: "authentication_required" }, cors);
   const { data: operator } = await admin.from("platform_operators").select("user_id, display_name, is_active").eq("user_id", user.id).eq("is_active", true).maybeSingle();
-  if (!operator) return respond(403, { error: "operator_access_required" });
+  if (!operator) return respond(403, { error: "operator_access_required" }, cors);
   const body = await request.json().catch(() => ({})); const action = String(body.action || "list");
 
   try {
+    if (action === "funnel_scorecard") {
+      const periodKey = String(body.period || "last_30_days") as keyof typeof funnelPeriods;
+      if (!(periodKey in funnelPeriods)) return respond(400, { error: "unsupported_funnel_period" }, cors);
+      const periodEnd = new Date();
+      const periodStart = new Date(periodEnd.getTime() - funnelPeriods[periodKey] * 24 * 60 * 60 * 1000);
+      const result = await admin.rpc("get_founder_funnel_scorecard", { p_since: periodStart.toISOString() });
+      if (result.error) throw result.error;
+      const counts = new Map((result.data || []).map((item: { event_key: string; milestone_count: number | string }) => [item.event_key, Math.max(0, Number(item.milestone_count) || 0)]));
+      return respond(200, {
+        instrumentation_started_at: funnelInstrumentationStartedAt,
+        period: { key: periodKey, starts_at: periodStart.toISOString(), ends_at: periodEnd.toISOString() },
+        milestones: funnelMilestones.map((key) => ({ key, count: counts.get(key) || 0 })),
+      }, cors);
+    }
     if (action === "list") {
       const [requests, tenants, invitations, deliveries, checklists, cases] = await Promise.all([
         admin.from("access_requests").select("id, contact_name, email, team_name, message, source, status, created_at, updated_at").order("created_at", { ascending: false }).limit(100),
@@ -29,7 +52,7 @@ Deno.serve(async (request) => {
       ]);
       const failure = [requests, tenants, invitations, deliveries, checklists, cases].find((result) => result.error)?.error;
       if (failure) throw failure;
-      return respond(200, { operator, requests: requests.data, tenants: tenants.data, invitations: invitations.data, deliveries: deliveries.data, checklists: checklists.data, supportCases: cases.data });
+      return respond(200, { operator, requests: requests.data, tenants: tenants.data, invitations: invitations.data, deliveries: deliveries.data, checklists: checklists.data, supportCases: cases.data }, cors);
     }
     if (action === "update_request") {
       if (!["new", "contacted", "approved", "declined", "failed"].includes(body.status)) return respond(400, { error: "invalid_status" });
@@ -43,7 +66,7 @@ Deno.serve(async (request) => {
     } else if (action === "provision") {
       const name = String(body.name || "").trim(); const ownerEmail = String(body.owner_email || "").trim().toLowerCase();
       const slug = String(body.slug || name).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      if (!name || !ownerEmail || !slug) return respond(400, { error: "name_owner_and_slug_required" });
+      if (!name || !ownerEmail || !slug) return respond(400, { error: "name_owner_and_slug_required" }, cors);
       const result = await admin.rpc("provision_pilot_workspace", { p_name: name, p_slug: slug, p_owner_email: ownerEmail, p_request_id: body.request_id || null });
       if (result.error) throw result.error;
       const provisioned = result.data as { tenant_id: string; invitation_id?: string; token?: string; owner_user_id?: string };
@@ -57,11 +80,11 @@ Deno.serve(async (request) => {
       }
       await admin.from("operator_audit_events").insert({ operator_id: user.id, tenant_id: provisioned.tenant_id, action: "workspace_provisioned", target_type: "tenant", target_id: provisioned.tenant_id, detail: { owner_email: ownerEmail, request_id: body.request_id || null } });
       return respond(200, { success: true, tenant_id: provisioned.tenant_id });
-    } else return respond(400, { error: "unsupported_action" });
+    } else return respond(400, { error: "unsupported_action" }, cors);
     await admin.from("operator_audit_events").insert({ operator_id: user.id, tenant_id: body.tenant_id || null, action, target_type: action.includes("request") ? "access_request" : action.includes("support") ? "support_case" : "onboarding_item", target_id: String(body.id || ""), detail: { status: body.status } });
-    return respond(200, { success: true });
+    return respond(200, { success: true }, cors);
   } catch (error) {
     const correlationId = crypto.randomUUID(); console.error(JSON.stringify({ event: "pilot_ops_failure", action, operator_id: user.id, correlation_id: correlationId, error: error instanceof Error ? error.message : String(error) }));
-    return respond(500, { error: "operation_failed", reference: correlationId });
+    return respond(500, { error: "operation_failed", reference: correlationId }, cors);
   }
 });

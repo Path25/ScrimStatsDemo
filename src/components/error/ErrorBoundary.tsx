@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const reference = reportClientError(error, { componentStack: errorInfo.componentStack?.slice(0, 1000) });
+    const reference = reportClientError(error);
     this.setState({ reference });
     this.props.onError?.(error, errorInfo);
   }

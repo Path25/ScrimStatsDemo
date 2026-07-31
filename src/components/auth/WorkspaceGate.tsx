@@ -15,8 +15,9 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
 
   if (!user) return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
   if (requiresWorkspaceSelection) return <Navigate to="/workspaces" replace />;
+  if (hasNoTenant) return <Navigate to="/create-workspace" replace />;
 
-  if (hasNoTenant || error || !tenant) {
+  if (error || !tenant) {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-6 text-center">
         <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl">

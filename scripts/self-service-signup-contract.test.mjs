@@ -7,6 +7,8 @@ const app = read("src/App.tsx");
 const landing = read("src/pages/Landing.tsx");
 const signup = read("src/pages/SignUp.tsx");
 const workspace = read("src/pages/CreateWorkspace.tsx");
+const workspaceGate = read("src/components/auth/WorkspaceGate.tsx");
+const forgotPassword = read("src/pages/ForgotPassword.tsx");
 const migration = read("supabase/migrations/20260727111002_self_service_signup.sql");
 const supabaseConfig = read("supabase/config.toml");
 
@@ -18,16 +20,29 @@ test("public launch entry points lead to self-service signup", () => {
   assert.doesNotMatch(landing, /Request access/i);
 });
 
-test("signup creates an Auth account and supports confirmed and immediate sessions", () => {
+test("signup creates an Auth account and offers non-enumerating recovery next steps", () => {
   assert.match(signup, /supabase\.auth\.signUp/);
   assert.match(signup, /emailRedirectTo: `\$\{window\.location\.origin\}\/create-workspace`/);
   assert.match(signup, /pending_team_name/);
   assert.match(signup, /data\.session/);
-  assert.match(signup, /We could not send your confirmation email/);
+  assert.match(signup, /Check your inbox to confirm a new account/);
+  assert.match(signup, /to="\/sign-in">Sign in/);
+  assert.match(signup, /to="\/forgot-password">Request recovery link/);
+  assert.doesNotMatch(signup, /Open the confirmation email sent to/);
+  assert.match(forgotPassword, /if the account exists/);
+  assert.match(forgotPassword, /If the address is associated with an account, look for a recovery email/);
   assert.match(signup, /Accept the Terms and Privacy Policy/);
   assert.doesNotMatch(signup, /service_role|SUPABASE_SECRET_KEY|request-access/);
   assert.match(supabaseConfig, /enable_confirmations = true/);
   assert.match(supabaseConfig, /https:\/\/scrimstats\.gg\/\*\*/);
+});
+
+test("membership-free accounts can create a workspace while failures remain unavailable", () => {
+  assert.match(workspaceGate, /if \(hasNoTenant\) return <Navigate to="\/create-workspace" replace \/>;/);
+  assert.match(workspaceGate, /if \(error \|\| !tenant\)/);
+  assert.doesNotMatch(workspaceGate, /hasNoTenant \|\| error \|\| !tenant/);
+  assert.match(workspace, /Confirm your email before creating a workspace/);
+  assert.match(workspace, /to="\/forgot-password"/);
 });
 
 test("workspace provisioning is verified, single-use, Free, and owner-scoped", () => {

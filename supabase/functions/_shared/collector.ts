@@ -11,9 +11,20 @@ export const json = (body: unknown, status = 200) => new Response(JSON.stringify
   headers: { ...collectorCorsHeaders, 'Content-Type': 'application/json' },
 });
 
+function serviceRoleKey() {
+  const legacyKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (legacyKey) return legacyKey;
+
+  try {
+    return JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}').default ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const serviceClient = () => createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  serviceRoleKey()!,
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
@@ -63,6 +74,44 @@ export async function managerMembership(userId: string, tenantId: string) {
   const { data } = await serviceClient().from('tenant_users')
     .select('role').eq('user_id', userId).eq('tenant_id', tenantId).maybeSingle();
   return data?.role && ['owner', 'admin'].includes(data.role) ? data.role : null;
+}
+
+// Collector access is a paid workspace entitlement. Keep this server-side so a
+// Free manager cannot bypass the browser gate by invoking a function directly.
+export async function collectorEntitled(tenantId: string, db = serviceClient()) {
+  const { data, error } = await db.from('tenants')
+    .select('subscription_tier, subscription_status, subscription_period_end, subscription_past_due_started_at')
+    .eq('id', tenantId)
+    .maybeSingle();
+  if (error || !data || !['pro', 'elite'].includes(data.subscription_tier)) return false;
+  if (['active', 'trialing'].includes(data.subscription_status ?? '')) return true;
+  const now = Date.now();
+  if (data.subscription_status === 'past_due') {
+    const started = Date.parse(data.subscription_past_due_started_at ?? '');
+    return Number.isFinite(started) && started + 7 * 24 * 60 * 60_000 > now;
+  }
+  const periodEnd = Date.parse(data.subscription_period_end ?? '');
+  return Number.isFinite(periodEnd) && periodEnd > now;
+}
+
+// Discord must be enabled as a released workspace module as well as being an
+// Elite entitlement. This is kept below the browser so a direct Function call
+// cannot activate an integration that the product still presents as planned.
+export async function discordEntitled(tenantId: string) {
+  const db = serviceClient();
+  const [{ data: tenant, error: tenantError }, { data: feature, error: featureError }] = await Promise.all([
+    db.from('tenants').select('subscription_tier').eq('id', tenantId).maybeSingle(),
+    db.from('tenant_feature_access')
+      .select('release_state, is_enabled')
+      .eq('tenant_id', tenantId)
+      .eq('module_key', 'discord')
+      .maybeSingle(),
+  ]);
+  return !tenantError
+    && !featureError
+    && tenant?.subscription_tier === 'elite'
+    && feature?.release_state === 'live'
+    && feature.is_enabled === true;
 }
 
 export async function deviceFromRequest(req: Request) {

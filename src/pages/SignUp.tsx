@@ -104,9 +104,12 @@ export default function SignUp() {
               <div className="mt-7"><SectionLabel>Confirm your email</SectionLabel></div>
               <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.03em]">Your workspace is one step away.</h2>
               <PublicBodyCopy className="mt-5 max-w-md">
-                Open the confirmation email sent to {email.trim().toLowerCase()}. The link will return you to ScrimStats to create your team workspace.
+                Check your inbox to confirm a new account. If you already have a ScrimStats account, sign in instead. If you cannot access it, request a recovery link.
               </PublicBodyCopy>
-              <Button asChild variant="outline" className="mt-8 h-12"><Link to="/sign-in">Return to sign in</Link></Button>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild variant="outline" className="h-12"><Link to="/sign-in">Sign in</Link></Button>
+                <Button asChild variant="ghost" className="h-12"><Link to="/forgot-password">Request recovery link</Link></Button>
+              </div>
             </div>
           ) : (
             <div className="w-full max-w-xl rounded-xl border border-[var(--public-rule-strong)] bg-[var(--public-panel)] p-6 sm:p-8">

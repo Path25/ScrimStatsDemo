@@ -66,18 +66,37 @@ Deno.serve(async (request) => {
         tenantId = lookup.data?.id || null;
       }
       if (!tenantId) throw new Error("Subscription is not linked to a workspace");
+      const { data: existingTenant, error: existingTenantError } = await service
+        .from("tenants")
+        .select("subscription_tier, subscription_status, subscription_past_due_started_at")
+        .eq("id", tenantId)
+        .single();
+      if (existingTenantError || !existingTenant) throw new Error("Workspace is unavailable");
       const priceId = subscription.items.data[0]?.price.id || null;
       const active = ["active", "trialing", "past_due"].includes(subscription.status);
-      const tier = active && priceId === prices.elite ? "elite" : active && priceId === prices.pro ? "pro" : "free";
+      const periodEndAt = periodEnd(subscription);
+      const retainExistingPaidTier = subscription.status === "canceled"
+        && periodEndAt
+        && Date.parse(periodEndAt) > Date.now()
+        && ["pro", "elite"].includes(existingTenant.subscription_tier);
+      const tier = retainExistingPaidTier
+        ? existingTenant.subscription_tier
+        : active && priceId === prices.elite ? "elite" : active && priceId === prices.pro ? "pro" : "free";
       if (active && tier === "free") throw new Error("Subscription price is not recognized");
+      const pastDueStartedAt = subscription.status === "past_due"
+        ? existingTenant.subscription_status === "past_due" && existingTenant.subscription_past_due_started_at
+          ? existingTenant.subscription_past_due_started_at
+          : new Date(event.created * 1000).toISOString()
+        : null;
       const { error } = await service.from("tenants").update({
         stripe_customer_id: customerId,
         stripe_subscription_id: subscription.status === "canceled" ? null : subscription.id,
         stripe_price_id: priceId,
         subscription_tier: tier,
         subscription_status: subscription.status,
-        subscription_period_end: periodEnd(subscription),
+        subscription_period_end: periodEndAt,
         subscription_cancel_at_period_end: subscription.cancel_at_period_end,
+        subscription_past_due_started_at: pastDueStartedAt,
         billing_updated_at: new Date().toISOString(),
       }).eq("id", tenantId);
       if (error) throw error;

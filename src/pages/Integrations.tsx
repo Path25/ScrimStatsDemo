@@ -17,7 +17,7 @@ export default function Integrations() {
   const { modules } = useWorkspaceModules();
   const { canManageIntegrations } = useRole();
   const { tenant } = useTenant();
-  const hasDesktopAccess = planIncludes(tenant?.subscriptionTier || "free", "pro");
+  const hasDesktopAccess = Boolean(tenant?.collectorEntitled);
   const hasEliteAccess = tenant?.subscriptionTier === "elite";
 
   return (
@@ -27,7 +27,7 @@ export default function Integrations() {
         title="Integrations"
         description="Connect the services your team uses while keeping records and permissions in one workspace."
       />
-      <CaptureProfileControl canManage={canManageIntegrations && hasDesktopAccess} />
+      <CaptureProfileControl canManage={canManageIntegrations && hasDesktopAccess} hasCollectorAccess={hasDesktopAccess} />
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <KeyRound className="h-5 w-5 text-[var(--workspace-accent)]" />
@@ -42,7 +42,7 @@ export default function Integrations() {
               <MonitorCheck className="h-5 w-5 text-[var(--workspace-accent)]" />
               <h2 className="font-semibold">Game Capture</h2>
             </div>
-            <ModuleStateBadge state={modules.collector.state} />
+            <ModuleStateBadge state={modules.collector.state} enabled={hasDesktopAccess && modules.collector.enabled} unavailableLabel="Pro feature" />
           </div>
           {hasDesktopAccess ? (
             <DataSurface className="p-5">
@@ -80,7 +80,7 @@ export default function Integrations() {
               <Bot className="h-5 w-5 text-[#8994ff]" />
               <h2 className="font-semibold">Discord schedule assistant</h2>
             </div>
-            <ModuleStateBadge state={modules.discord.state} />
+            <ModuleStateBadge state={modules.discord.state} enabled={hasEliteAccess && modules.discord.enabled} />
           </div>
           {canManageIntegrations && hasEliteAccess && modules.discord.state === "live" ? <DiscordScheduleIntegration /> : <IntegrationPlanPreview
             locked={!hasEliteAccess}
@@ -100,13 +100,13 @@ export default function Integrations() {
               </div>
             </div>
             <div className="divide-y divide-[var(--workspace-rule)]">
-              <IntegrationRow icon={CalendarClock} title="Practice reminders" description="Upcoming blocks, changes, and cancellations." />
-              <IntegrationRow icon={Link2} title="Availability prompts" description="A direct route back to the authenticated team calendar." />
-              <IntegrationRow icon={MonitorCheck} title="Collector readiness" description="A pre-block reminder when capture is not ready." />
+              <IntegrationRow icon={CalendarClock} title="Practice reminders" description="A reminder for an upcoming practice block." />
+              <IntegrationRow icon={Link2} title="Schedule changes" description="Created, changed, and cancelled blocks link back to ScrimStats." />
+              <IntegrationRow icon={ShieldCheck} title="Selected channels" description="Only a connected team's selected channels receive prompts." />
             </div>
             <div className="border-t border-[var(--workspace-rule)] px-5 py-4">
               <p className="ss-mono text-xs uppercase tracking-[0.12em] text-[var(--workspace-awaiting)]">
-                Coming soon · Discord installation
+                Unavailable until delivery is verified
               </p>
             </div>
           </DataSurface></IntegrationPlanPreview>}

@@ -11,6 +11,7 @@ interface RoleContextType {
     isPlayer: boolean;
     canManageTeam: boolean;
     canEditIntelligence: boolean;
+    canViewIntelligence: boolean;
     canManageIntegrations: boolean;
     // Helper to check if user has at least this level of access
     hasAccess: (role: UserRole) => boolean;
@@ -41,6 +42,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
             isPlayer: activeRole === 'member' || activeRole === 'viewer',
             canManageTeam: capabilities.manageMemberships,
             canEditIntelligence: capabilities.manageIntelligence,
+            canViewIntelligence: capabilities.viewIntelligence,
             canManageIntegrations: capabilities.manageIntegrations,
             hasAccess: (requiredRole: UserRole) => hierarchyLevel >= ROLE_HIERARCHY[requiredRole]
         };

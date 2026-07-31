@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   authenticatedUser,
   collectorCorsHeaders,
+  discordEntitled,
   json,
   managerMembership,
   serviceClient,
@@ -22,6 +23,7 @@ serve(async (request) => {
   if (!tenantId || !(await managerMembership(user.id, tenantId))) {
     return json({ error: "Owner or admin access is required." }, 403);
   }
+  if (!(await discordEntitled(tenantId))) return json({ error: "Discord automation is unavailable for this workspace." }, 403);
 
   const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
   if (!botToken) return json({ error: "Discord channels are not configured." }, 503);

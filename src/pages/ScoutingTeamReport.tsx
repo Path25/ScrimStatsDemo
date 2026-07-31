@@ -56,9 +56,9 @@ type SoloQPlayer = {
 
 export default function ScoutingTeamReport() {
   const { opponentId } = useParams();
-  const { canEditIntelligence } = useRole();
+  const { canEditIntelligence, canViewIntelligence } = useRole();
   const { modules } = useWorkspaceModules();
-  const scouting = useScoutingWorkspace(opponentId, modules.scouting.enabled && canEditIntelligence);
+  const scouting = useScoutingWorkspace(opponentId, modules.scouting.enabled && canViewIntelligence);
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -166,13 +166,12 @@ export default function ScoutingTeamReport() {
     );
   }
 
-  if (!canEditIntelligence) {
+  if (!canViewIntelligence) {
     return (
       <WorkspaceState
         icon={ShieldCheck}
-        title="Private staff workspace"
-        description="Living opponent evidence is restricted to owners and admins. Open Draft to read published snapshots shared with the team."
-        action={<Button asChild variant="outline"><Link to="/draft?view=published">Open published plans</Link></Button>}
+        title="Scouting is unavailable"
+        description="Your current workspace role cannot read this intelligence workspace."
       />
     );
   }
@@ -283,14 +282,16 @@ export default function ScoutingTeamReport() {
                         <SourceBadge source={item.source_kind === "collector" ? "collector" : "manual"} compact />
                         <span className="ss-mono text-xs uppercase text-[var(--workspace-subtle)]">{item.evidence_type.replace("_", " ")}</span>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => reviseEvidence(item)}
-                      >
-                        <Pencil className="h-4 w-4" /> Revise
-                      </Button>
+                      {canEditIntelligence && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => reviseEvidence(item)}
+                        >
+                          <Pencil className="h-4 w-4" /> Revise
+                        </Button>
+                      )}
                     </div>
                     <p className="mt-3 text-sm leading-6 text-[var(--workspace-muted)]">{item.observation}</p>
                     <div className="mt-4 flex flex-wrap gap-4 text-xs text-[var(--workspace-subtle)]">
@@ -431,14 +432,14 @@ export default function ScoutingTeamReport() {
                           {player.role || "unassigned"}
                         </p>
                       </div>
-                      <Button
+                      {canEditIntelligence && <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => void scouting.setPlayerActive({ id: player.id, isActive: true })}
                       >
                         <RotateCcw className="h-4 w-4" /> Restore
-                      </Button>
+                      </Button>}
                     </div>
                   ))}
                 </div>
@@ -477,7 +478,7 @@ export default function ScoutingTeamReport() {
           <DataSurface className="p-5">
             <div className="flex gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 text-[var(--workspace-accent)]" />
-              <p className="text-sm leading-6 text-[var(--workspace-muted)]">Staff edit the living report. Team members receive read-only published Draft plans.</p>
+              <p className="text-sm leading-6 text-[var(--workspace-muted)]">Staff edit the living report. Team members receive the same workspace intelligence in read-only form.</p>
             </div>
           </DataSurface>
         </div>
@@ -487,6 +488,7 @@ export default function ScoutingTeamReport() {
         opponentTeamId={team.id}
         opponentName={team.name}
         briefs={briefs}
+        canEdit={canEditIntelligence}
       />
 
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && reset()}>

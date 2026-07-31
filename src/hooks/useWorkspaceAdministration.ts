@@ -5,6 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  workspaceLogoBucket,
+  workspaceLogoPath,
+  workspaceLogoPathFromSettings,
+  workspaceLogoSettingKey,
+  validateWorkspaceLogo,
+} from "@/lib/workspace-logo";
 
 type TenantRole = Database["public"]["Enums"]["tenant_role"];
 
@@ -154,6 +161,73 @@ export function useWorkspaceAdministration() {
     onError: (error) => toast.error(message(error, "Password could not be updated")),
   });
 
+  const workspaceLogoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!tenant) throw new Error("Choose a workspace before uploading a logo.");
+      const validationError = validateWorkspaceLogo(file);
+      if (validationError) throw new Error(validationError);
+
+      const path = workspaceLogoPath(tenant.id);
+      const previousPath = workspaceLogoPathFromSettings(tenant.settings);
+      const { error: uploadError } = await supabase.storage
+        .from(workspaceLogoBucket)
+        .upload(path, file, { upsert: false, cacheControl: "3600", contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const settings = { ...tenant.settings, [workspaceLogoSettingKey]: path };
+      delete settings.logo_url;
+      const { error: settingsError } = await supabase
+        .from("tenants")
+        .update({ settings })
+        .eq("id", tenant.id);
+      if (settingsError) {
+        const { error: cleanupError } = await supabase.storage.from(workspaceLogoBucket).remove([path]);
+        if (cleanupError) {
+          throw new Error("The logo was not saved and its temporary upload could not be cleaned up. Please contact support.");
+        }
+        throw settingsError;
+      }
+
+      if (!previousPath || previousPath === path) return { cleanupError: null };
+      const { error: cleanupError } = await supabase.storage.from(workspaceLogoBucket).remove([previousPath]);
+      return { cleanupError };
+    },
+    onSuccess: async ({ cleanupError }) => {
+      await refreshTenant();
+      if (cleanupError) {
+        toast.warning("Workspace logo saved, but the previous image could not be removed. Please contact support.");
+        return;
+      }
+      toast.success("Workspace logo saved.");
+    },
+    onError: (error) => toast.error(message(error, "Workspace logo could not be saved.")),
+  });
+
+  const removeWorkspaceLogoMutation = useMutation({
+    mutationFn: async () => {
+      if (!tenant) throw new Error("Choose a workspace before removing a logo.");
+      const path = workspaceLogoPathFromSettings(tenant.settings);
+      const settings = { ...tenant.settings };
+      delete settings[workspaceLogoSettingKey];
+      delete settings.logo_url;
+      const { error: settingsError } = await supabase
+        .from("tenants")
+        .update({ settings })
+        .eq("id", tenant.id);
+      if (settingsError) throw settingsError;
+
+      if (!path) return { cleanupError: null };
+      const { error: cleanupError } = await supabase.storage.from(workspaceLogoBucket).remove([path]);
+      return { cleanupError };
+    },
+    onSuccess: async ({ cleanupError }) => {
+      await refreshTenant();
+      toast.success("Workspace logo removed.");
+      if (cleanupError) toast.error("The logo is no longer displayed, but its stored asset could not be removed. Please retry.");
+    },
+    onError: (error) => toast.error(message(error, "Workspace logo could not be removed.")),
+  });
+
   return {
     data: query.data,
     isLoading: query.isLoading,
@@ -164,12 +238,16 @@ export function useWorkspaceAdministration() {
     resendInvitation: resendInvitationMutation.mutate,
     savePreferences: preferencesMutation.mutate,
     changePassword: passwordMutation.mutate,
+    saveWorkspaceLogo: workspaceLogoMutation.mutate,
+    removeWorkspaceLogo: removeWorkspaceLogoMutation.mutate,
     isSaving:
       roleMutation.isPending ||
       removeMutation.isPending ||
       invitationMutation.isPending ||
       resendInvitationMutation.isPending ||
       preferencesMutation.isPending ||
-      passwordMutation.isPending,
+      passwordMutation.isPending ||
+      workspaceLogoMutation.isPending ||
+      removeWorkspaceLogoMutation.isPending,
   };
 }

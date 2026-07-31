@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 
-export function useLeaguepediaDraftHistory(opponentTeamId?: string, enabled = true) {
+export function useLeaguepediaDraftHistory(opponentTeamId?: string, enabled = true, canMutate = true) {
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const key = ["leaguepedia-draft-history", tenant?.id, opponentTeamId];
@@ -42,6 +42,7 @@ export function useLeaguepediaDraftHistory(opponentTeamId?: string, enabled = tr
 
   const importHistory = useMutation({
     mutationFn: async (leaguepediaName: string) => {
+      if (!canMutate) throw new Error("Your workspace role is read-only.");
       if (!opponentTeamId) throw new Error("Opponent context is required.");
       const { data, error } = await supabase.functions.invoke("leaguepedia-draft-import", {
         body: { opponentTeamId, leaguepediaName: leaguepediaName.trim() },
@@ -62,6 +63,7 @@ export function useLeaguepediaDraftHistory(opponentTeamId?: string, enabled = tr
 
   const setBriefDrafts = useMutation({
     mutationFn: async ({ briefId, gameIds }: { briefId: string; gameIds: string[] }) => {
+      if (!canMutate) throw new Error("Your workspace role is read-only.");
       const { error } = await supabase.rpc("set_preparation_brief_external_drafts", {
         p_brief_id: briefId,
         p_external_draft_ids: gameIds,

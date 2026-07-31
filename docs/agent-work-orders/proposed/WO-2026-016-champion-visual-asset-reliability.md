@@ -2,7 +2,7 @@
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
 - **Status:** Blocked
-- **Assigned owner:** Core Features Developer
+- **Assigned owner:** QA and Release Auditor
 - **Size:** M
 - **Risk:** Medium
 - **Priority:** High
@@ -110,6 +110,15 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 - 2026-07-29 - Founder reported missing champion icons during workspace review.
 - 2026-07-30 - Theo approved implementation. This remains Core Features Developer work because `ChampionAvatar` and catalogue paths are shared across workspace surfaces.
 - 2026-07-30 - Theo directed a safe split: WO-2026-019 is assigned to Developer – Fast Lane for reproduction evidence and regression fixtures only. Core Features Developer owns the shared component/catalogue remediation after that handoff.
+
+## QA reassignment and review - 2026-07-31
+
+1. **Release verdict: HOLD.** QA now owns the evidence review and handoff. Core Features Developer remains the owner of any subsequent shared-component implementation.
+2. **What was verified:** Source inspection confirms that `ChampionAvatar` uses fixed historical Data Dragon versions while catalogue consumers resolve current versions. The shared component is used in Draft, SoloQ, and Scouting. WO-2026-019 provides an explicit four-case regression plan.
+3. **Blocking issues:** No authenticated browser and network evidence exists for CA01-CA04 in WO-2026-019, including the required forced image-request failure and cross-surface fallback check. No implementation is available to test.
+4. **Important risks:** A shared remediation can affect several customer-facing operational surfaces. Replacing the URL strategy without the failure-path evidence could trade broken images for stale, uncached, or inconsistent avatars.
+5. **Unverified but required checks:** Capture WO-2026-019 CA01-CA04 in an isolated authenticated staging workspace: current champion, special-name mapping, unknown/fallback, and a deliberately failed avatar request repeated in Draft, SoloQ, and Scouting. Record the request URL, response, visible fallback, and no-console-error result.
+6. **Suggested next validation steps:** Keep this work order Blocked. Once QA accepts the WO-2026-019 evidence pack, return WO-2026-016 to Core Features Developer as Ready for Development with that evidence attached; after implementation, run the component/contract tests and the same hosted authenticated cases before release review.
 
 ## Implementation and review evidence
 

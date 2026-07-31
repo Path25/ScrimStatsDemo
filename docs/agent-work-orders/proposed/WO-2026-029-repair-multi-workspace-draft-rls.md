@@ -1,6 +1,6 @@
 # WO-2026-029 — Repair multi-workspace Draft RLS cardinality failure
 
-**Status:** Ready for QA  
+**Status:** Done  
 **Size / risk:** M / High  
 **Assigned owner:** QA and Release Auditor  
 **Autonomy:** Theo must approve implementation and hosted migration application separately.
@@ -135,6 +135,36 @@ The live read-path repair passes the owner success and tenant-isolation checks. 
 ### 6. Suggested next steps
 
 - QA may issue its release recommendation without reopening the customer workflow. Runtime write-policy evidence remains a separate non-customer-fixture decision.
+
+## Independent QA closure - 2026-07-31
+
+### 1. Release verdict: READY
+
+WO-029 is ready and complete. The deployed read-policy repair restores the multi-workspace Draft journey without widening tenant access, and its source migration now matches the live migration history.
+
+### 2. What was verified
+
+- Live history records `20260731124310_repair_multi_workspace_draft_rls`, matching the committed migration file exactly.
+- The live `game_drafts` SELECT policy is `TO authenticated`, preserves the Draft-to-Scrim tenant relationship, and calls `user_belongs_to_tenant(scrim.tenant_id)`; RLS remains enabled.
+- Owner success, non-member direct-read denial, non-member RPC no-payload behaviour, and anonymous denial were independently verified in the prior QA re-review. Theo also manually verified the owner browser refresh.
+- The two existing write policies remain in place; no write policy, grant, RPC, customer row, entitlement, or application deployment was changed.
+- `node --test scripts/draft-workspace-contract.test.mjs` passed 10/10 after provenance reconciliation. Security Advisor has no `game_drafts`-specific finding.
+
+### 3. Blocking issues
+
+- None.
+
+### 4. Important risks
+
+- INSERT and UPDATE retain their legacy scalar-subquery predicates. They are intentionally outside this SELECT-only repair; any future write-path issue needs separate diagnosis and approval.
+
+### 5. Unverified but required checks
+
+- None for the WO-029 read-policy release. A runtime write attempt was intentionally not made because it is outside scope and would require a separately approved non-customer fixture.
+
+### 6. Suggested next steps
+
+- PM may close WO-029. Monitor customer support for any separate Draft write-path symptom; do not expand this completed migration opportunistically.
 
 ## Decision record
 

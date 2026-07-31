@@ -11,8 +11,8 @@
 ## Delivery routing
 
 - **Area / files likely affected:** New reporting-only Stripe Edge Function, additive Supabase migration, `supabase/config.toml`, focused tests, and the Metrics Dictionary.
-- **Dependencies:** Theo implementation approval; WO-2026-009 must reach Ready for QA before work begins; separate Theo release approval for migration, secret, cron, deployment, and first production snapshot.
-- **Collision risk:** Billing-adjacent migrations, Stripe server use, Vault, and `pg_cron` overlap with WO-2026-009. Do not run concurrently.
+- **Dependencies:** Theo's 2026-07-30 implementation approval; separate Theo release approval for migration, secret, cron, deployment, and first production snapshot. An isolated Stripe test-mode aggregate is required before release verification.
+- **Collision risk:** WO-2026-009 is complete under Theo's accepted-risk decision, so its sequencing lock is lifted. Avoid concurrent work with any newly opened billing, Stripe, Vault, `pg_cron`, or entitlement migration.
 
 ## Problem and user impact
 
@@ -92,21 +92,22 @@ Daily churn and MRR movement are commercial priorities. The completed cancellati
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Service-only schema | Not implemented. | N/A | Outstanding |
-| Idempotent worker | Not implemented. | N/A | Outstanding |
-| Isolated aggregate reconciliation | Not run. | N/A | Outstanding |
+| Service-only schema | Hosted original migration `20260731151435`, corrective migration `revoke_mrr_snapshot_mutation_privileges`, RLS/grant query, and no snapshot-table-specific Advisor finding. | Hosted least-privilege boundary verified | Passed |
+| Idempotent worker | Edge Function `stripe-mrr-snapshot` version 1 active; unauthenticated POST returned 401. | Hosted deployment and access denial verified | Passed |
+| Isolated aggregate reconciliation | No approved isolated test-mode fixture or test-key route was supplied. | N/A | Outstanding |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Implementation is approved but is sequenced behind overlapping WO-2026-009 billing/Supabase work. Production release remains separately approval-gated.
+- **Rationale:** The hosted schema and service-only append-only boundary are verified. The cron is intentionally suspended until isolated Stripe QA completes. Stripe aggregate reconciliation, repeat execution, and a second verified daily snapshot remain QA work; MRR movement is still unavailable.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| WO-2026-009 collision clears | PM / Core Features Developer | WO-2026-009 reaches Ready for QA. | Open |
-| Implementation and tests | Core Features Developer | Code, migration, RLS/advisor review, and handoff. | Open |
+| WO-2026-009 collision clears | PM | WO-2026-009 completed under recorded accepted-risk decision. | Closed |
+| Implementation and tests | Core Features Developer | Code, migration, RLS/advisor review, and handoff. | Closed |
+| Append-only correction and provenance recovery | Core Features Developer | Forward migration, no service-role mutation privileges, cron suspension, and matching original migration version. | Closed |
 | Hosted test-mode verification | QA | Reproducible test evidence. | Open |
 | Production release approval | Theo | Explicit approval for release boundary. | Open |
 
@@ -115,14 +116,66 @@ Daily churn and MRR movement are commercial priorities. The completed cancellati
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
 | Implementation | Yes | Approved | 2026-07-30 | Theo approved the daily Stripe MRR snapshot follow-up. |
-| Release | Yes | Pending | 2026-07-30 | Migration, secrets, scheduling, deployment, and first production snapshot require separate approval. |
+| Release | Yes | Approved | 2026-07-31 | Theo approved migration application, worker deployment, Vault-backed scheduling, and the first production snapshot boundary. |
 
 ## Decision and approval record
 
 - 2026-07-30 - Daily reporting measured a completed cancellation but no historical MRR snapshot.
 - 2026-07-30 - Theo approved implementation; it is sequenced behind WO-2026-009 to prevent billing/Supabase collisions.
+- 2026-07-31 - PM confirmed WO-2026-009 is complete under Theo's accepted-risk decision. The sequencing block is lifted; WO-2026-022 moves to Ready for Development. This does not approve a migration, secret/configuration change, schedule, deployment, or first production snapshot.
+- 2026-07-31 - Theo approved the hosted WO-2026-022 release boundary. The migration, Edge Function deployment, Vault-backed schedule configuration, and first production snapshot boundary are approved; isolated test-mode aggregate verification remains required.
+- 2026-07-31 - Theo approved the forward-only least-privilege correction, temporary cron suspension, and local migration-provenance reconciliation after the independent QA audit.
+
+## Independent QA audit - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+WO-022 is not releasable. The live table is not append-only for `service_role`, and the deployed migration version does not match the repository migration file. No Stripe aggregate, idempotency result, or second verified snapshot is available.
+
+### 2. What was verified
+
+- The table exists, RLS is enabled, browser roles have no `SELECT` privilege, and the active Edge Function is `stripe-mrr-snapshot` version 1 with custom worker-secret authentication.
+- The active cron job is `scrimstats-stripe-mrr-snapshot` at `30 0 * * *`, but it has no recorded runs and the snapshot table is empty.
+- The live SELECT and INSERT policies are limited to `service_role`; no snapshot-table-specific Security Advisor finding was returned.
+- The source contract establishes the intended monthly/annual normalisation and passed developer-recorded local validation. It does not substitute for a Stripe-provider reconciliation.
+
+### 3. Blocking issues
+
+- **Append-only boundary failed:** `service_role` has effective `UPDATE`, `DELETE`, and `TRUNCATE` privileges on `public.stripe_mrr_daily_snapshots`, in addition to `SELECT` and `INSERT`. This conflicts with the work order's immutable reporting-ledger contract.
+- **Migration provenance mismatch:** production records `20260731151435_daily_stripe_mrr_snapshots`; the repository file is `20260731140000_daily_stripe_mrr_snapshots.sql`. Do not infer that future schema tooling will safely reconcile this state.
+- **No provider evidence:** no approved isolated Stripe test-mode route has produced a monthly-plus-annual aggregate, repeat/idempotency result, or stored snapshot comparison.
+
+### 4. Important risks
+
+- The active cron can create a live Stripe aggregate before the append-only correction and isolated reconciliation are complete. A current snapshot must not be reported as measured MRR movement until two consecutive independently verified day-end snapshots exist.
+- The current deployment does not prove that its `STRIPE_SECRET_KEY` points to the intended isolated/test Stripe account; QA did not read or expose any secret value.
+
+### 5. Unverified but required checks
+
+- Effective service-role mutation denial after remediation; browser-role table/RPC denial; deployed worker secret verification; cron invocation; first aggregate row; duplicate-run response; and an independent test-mode Stripe monthly/annual reconciliation.
+- A second consecutive verified London-day snapshot before any MRR-change or churn-movement reporting.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** prepare a forward-only corrective migration that revokes all table privileges from `service_role` and grants only `SELECT, INSERT` on `public.stripe_mrr_daily_snapshots`. Add a live-grant contract assertion for no `UPDATE`, `DELETE`, or `TRUNCATE` effective privilege.
+2. **Core Features Developer / PM:** reconcile repository migration provenance with the live `20260731151435` entry. Do not rewrite Supabase migration history or apply a duplicate table migration. Record the reviewed recovery approach.
+3. **Theo:** explicitly approve applying that new production-backed corrective migration. Separately decide whether the active cron should be suspended until the repair and isolated Stripe test-mode reconciliation complete.
+4. **QA:** after the repair, test against approved isolated Stripe test-mode subscriptions (one monthly, one annual), reconcile the aggregate, repeat the invocation, and wait for a second verified London-day snapshot.
+
+### QA-audit remediation - 2026-07-31
+
+- The service-role mutation finding is resolved by hosted forward migration `revoke_mrr_snapshot_mutation_privileges`: effective UPDATE, DELETE, and TRUNCATE are all false while SELECT and INSERT remain true.
+- The source/live provenance finding is resolved without hosted-history changes: the repository migration is now `20260731151435_daily_stripe_mrr_snapshots.sql`, matching the original hosted record.
+- The named cron job is intentionally suspended and the table has zero rows. The remaining block is the approved isolated Stripe test-mode provider scenario and later second verified London-day snapshot.
 
 ## Implementation and review evidence
 
 - 2026-07-30 - Proposed from read-only reporting evidence. No code, migration, configuration, schedule, or production data changed.
-- **Highest evidence achieved:** Proposed
+- 2026-07-31 - Source-only implementation added `stripe_mrr_daily_snapshots`, the server-only `stripe-mrr-snapshot` worker, dormant service-role cron configuration, and focused aggregate/RLS contract tests. The worker accepts active paid monthly/annual recurring prices only, derives the latest completed `Europe/London` date, and rejects duplicate snapshots without update/delete paths.
+- 2026-07-31 - Local validation passed: five focused contract tests, ESLint with zero warnings, TypeScript, production build, and scoped diff check. The production build emitted the pre-existing Browserslist data-age notice only.
+- 2026-07-31 - No hosted migration, Vault secret, Edge Function deployment, cron schedule, or snapshot has been created. Migration execution/RLS advisor review and isolated Stripe test-mode reconciliation remain outstanding.
+- 2026-07-31 - Hosted original migration record is `20260731151435_daily_stripe_mrr_snapshots`; local source now uses the same version. This source-only provenance recovery did not rewrite hosted migration history or reapply the table migration.
+- 2026-07-31 - Independent QA correctly found effective service-role UPDATE/DELETE/TRUNCATE privileges. With Theo's approval, `revoke_mrr_snapshot_mutation_privileges` was applied forward-only and the named cron job was unscheduled before it created a row.
+- 2026-07-31 - Post-correction hosted query confirmed service-role SELECT/INSERT true; UPDATE/DELETE/TRUNCATE false; cron absent; and zero snapshot rows. Security and performance advisors returned no finding naming `stripe_mrr_daily_snapshots`.
+- 2026-07-31 - Not run: isolated Stripe test-mode monthly/annual aggregate reconciliation, duplicate invocation, authenticated browser RLS denial, and second verified daily snapshot. No MRR movement or customer-facing availability claim is authorised.
+- **Highest evidence achieved:** Hosted deployment and security boundary verified

@@ -97,6 +97,9 @@ verify_jwt = true
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.stripe-mrr-snapshot]
+verify_jwt = false
+
 [functions.notification-worker]
 verify_jwt = false
 

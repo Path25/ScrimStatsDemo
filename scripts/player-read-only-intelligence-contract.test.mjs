@@ -57,6 +57,14 @@ test("Scouting loads read-only views and keeps every mutation control staff-only
   assert.match(report, /same workspace intelligence in read-only form/);
 });
 
+test("owners inherit the complete intelligence read baseline before gaining management capabilities", () => {
+  assert.match(
+    capabilities,
+    /if \(role === "owner"\) \{\s*return \{\s*\.\.\.readOnly,[\s\S]*manageIntelligence: true,[\s\S]*manageMemberships: true,/,
+  );
+  assert.match(report, /if \(!canViewIntelligence\)/);
+});
+
 test("analytics retains its independent server-side entitlement guard", () => {
   assert.match(analytics, /assert_team_analytics_access/);
   assert.match(analytics, /security invoker/);

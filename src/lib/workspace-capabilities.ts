@@ -27,13 +27,13 @@ const readOnly: WorkspaceCapabilities = {
 export function getWorkspaceCapabilities(role: string | null | undefined): WorkspaceCapabilities {
   if (role === "owner") {
     return {
+      ...readOnly,
       manageCalendar: true,
       manageRoster: true,
       manageScrims: true,
       manageIntelligence: true,
       manageIntegrations: true,
       manageMemberships: true,
-      viewPublishedIntelligence: true,
     };
   }
 

@@ -1,7 +1,7 @@
 # WO-2026-016 - Restore reliable champion visual assets
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
@@ -93,9 +93,9 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Reproduce missing icons | QA | WO-2026-019 evidence pack plus authenticated staging reproduction | Closed for implementation handoff; remaining cases transfer to post-remediation QA |
-| Reconcile local test command/count and candidate revision | Core Features Developer | Exact commands, pass counts, candidate commit/revision, and reproducible fixture note | Open; documentation/handoff only, no further feature code required |
-| Approve staging deployment | Theo | Explicit staging deployment approval for the identified candidate only | Open |
-| Deploy approved candidate and record staging revision/time | Core Features Developer | Staging deployment identifier, time, and fixture handoff | Blocked on Theo approval |
+| Reconcile local test command/count and candidate revision | Core Features Developer | Exact commands, pass counts, candidate commit/revision, and reproducible fixture note | Closed: recorded in Developer candidate handoff |
+| Approve staging deployment | Theo | Explicit staging deployment approval for the identified candidate only | Closed: approved 2026-07-31 |
+| Deploy approved candidate and record staging revision/time | Core Features Developer | Staging deployment identifier, time, and fixture handoff | Closed: branch head pushed and fresh authenticated staging response recorded |
 | Browser verify affected surfaces | QA and Release Auditor | Authenticated deployed-candidate evidence | Blocked on deployment evidence |
 
 ### Theo approval record
@@ -171,3 +171,11 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 - **Observed result:** 23 passing tests: 3 champion-avatar tests, 10 competitive-platform contract tests, and 10 Draft workspace contract tests. The earlier 17-test statement does not match this current command/output and is superseded by this reproducible count.
 - **Other local validation:** `node node_modules/eslint/bin/eslint.js . --max-warnings 0`, `node node_modules/typescript/bin/tsc --noEmit`, and `node node_modules/vite/bin/vite.js build` followed by `node scripts/bundle-budget.mjs` all passed. The build emitted only the existing Browserslist data-age notice.
 - **Fixtures for QA:** Use the existing isolated authenticated workspace records: Draft champion pool with `Ambessa`, `Nunu & Willump`, and `K'Sante`; the equivalent existing SoloQ and Scouting records; and the documented `None`/unknown and one deliberately failed image request cases. Do not create customer-facing or production data solely for this matrix.
+
+## Staging deployment record - 2026-07-31
+
+- **Approval:** Theo explicitly approved this staging deployment. This approval does not include a production release.
+- **Remote branch revision:** `codex/Staging` was pushed through `52e17ae` (`Record WO-016 QA candidate handoff`); the WO-016 source implementation is in its ancestry at `13ffdea`.
+- **Hosted evidence:** Authenticated Vercel fetch of `https://staging.scrimstats.gg/draft` returned HTTP 200 with fresh static HTML. Vercel reported `Last-Modified: Fri, 31 Jul 2026 20:02:53 GMT`, `x-vercel-cache: MISS`, and request reference `lhr1:iad1::dr7ml-1785528173535-4bb0ce3a5e2d`.
+- **Deployment identifier limitation:** The configured Vercel API connection lists no accessible project and therefore cannot expose Vercel's deployment ID. The remote revision, deployment time, protected staging URL, and Vercel request reference above are the available reproducible deployment evidence.
+- **QA handoff:** QA and Release Auditor may now run CA01-CA04 on the deployed candidate. Retain desktop/mobile, cache-clear, request/response, screenshot, named fallback, and console evidence. Release remains HOLD.

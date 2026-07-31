@@ -337,6 +337,35 @@ The previously-blocking deployed read path is repaired, but the authenticated me
 2. **Developer:** redeploy staging and provide commit/deployment evidence plus reproducible fixture steps.
 3. **QA:** retest the repaired control and complete the remaining hosted role matrix. Theo's final release approval remains required after QA passes.
 
+## Independent QA hosted browser re-review - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The evidence `Revise` control is repaired, but the same authenticated Member report still exposes an external-history import workflow which can mutate tenant data. The role is not yet read-only.
+
+### 2. What was verified
+
+- Tenant-A `MEMBER` can read the live Scouting report, its evidence/tendency, and the unpublished Draft plan.
+- The previously reported `Revise` control is absent from the current staging report.
+
+### 3. Blocking issues
+
+- **Member external-import mutation exposed:** the report still renders an editable `Exact Leaguepedia team name` input and enabled `Import history` button. Local source confirms this calls `useLeaguepediaDraftHistory().importHistory`, which invokes the `leaguepedia-draft-import` Edge Function with the opponent ID and entered provider name. Its successful path imports attributed draft records, so it is a data/provider mutation—not a read-only view. The component is mounted without a `canEditIntelligence` guard in `ScoutingTeamReport.tsx`.
+
+### 4. Important risks
+
+- The import invokes an external provider as well as creating/updating tenant evidence. It must not be offered to member/viewer roles regardless of whether a later server-side layer rejects it.
+
+### 5. Unverified but required checks
+
+- After this control is fixed: Viewer desktop/mobile journey, direct member/viewer mutation denial, tenant-B reads/RPCs, and owner/admin authoring regression.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** make the Leaguepedia component's import input/button and any evidence-attachment mutations unavailable to member/viewer roles; ideally pass an explicit `canEdit` capability into the component and disable its mutation hooks/entry points when false.
+2. Add member/viewer role coverage for absent import and evidence-attachment controls, redeploy staging, then provide the normal QA handoff.
+3. **QA:** retest after deployment. Theo's final release approval remains required only after the full matrix passes.
+
 ## Developer deployment handoff - 2026-07-31
 
 - Theo reports that `codex/Staging` was pushed and deployed after the hosted browser audit. Local and `origin/codex/Staging` both resolve to commit `920b0c5`.
@@ -350,3 +379,17 @@ The previously-blocking deployed read path is repaired, but the authenticated me
 - This is a browser-role UX repair only: migration SQL, RLS policies, Auth, fixtures, billing, and customer data remain unchanged.
 - Final local validation 2026-07-31: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/draft-workspace-contract.test.mjs scripts/team-analytics-contract.test.mjs` (22 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed. A fresh staging deployment and authenticated QA retest are still required before returning to QA.
 - Staging deployment handoff 2026-07-31: commit `ea33ae4` (`Hide scouting evidence revisions from members`) was pushed to `origin/codex/Staging`, the documented Git-triggered staging branch. `https://staging.scrimstats.gg/` responded with the ScrimStats public shell after the push. This is availability evidence only; no authenticated member/viewer route was exercised in this developer session.
+
+## Developer Leaguepedia read-only repair - 2026-07-31
+
+- Theo approved the scoped repair after QA found that a member report exposed the Leaguepedia provider-name input, `Import history`, and draft-evidence attachment controls.
+- `ScoutingTeamReport` now passes `canEditIntelligence` explicitly to `LeaguepediaDraftHistory`. When false, the component preserves tenant-scoped imported-history reading but renders no provider-name input, import action, draft-brief selector, evidence-selection save action, or per-game attachment checkbox. Its empty state also avoids instructing a read-only user to import.
+- `useLeaguepediaDraftHistory` receives the explicit mutation capability and rejects either import or brief-attachment mutation before a client call when false. This is defence in depth only: source inspection and the existing Leaguepedia contract confirm `leaguepedia-draft-import` requires a verified Supabase JWT and owner/admin membership before its service-client writes. No migration, RLS policy, fixture, billing, or customer data changed.
+- Final local validation 2026-07-31: `node --test scripts/player-read-only-intelligence-contract.test.mjs scripts/leaguepedia-draft-contract.test.mjs` (9 passing); ESLint zero warnings; `tsc --noEmit`; Vite production build; bundle budget passed. The focused role contract now asserts explicit capability propagation and that all Leaguepedia import/attachment controls remain within a `canEdit` guard.
+- **Status remains In Progress:** this source repair has not been deployed. After Theo approves the staging push/deployment, QA should sign in as the Tenant-A member and viewer, open the existing opponent fixture report, confirm imported games remain readable and that `Exact Leaguepedia team name`, `Import history`, `Attach selected games to a draft brief`, `Save evidence selection`, and attachment checkboxes are absent. Then complete the existing mobile, direct mutation-denial, tenant-B isolation, and owner/admin regression matrix. Release remains **HOLD** pending that independent evidence and Theo's separate release approval.
+
+## Developer staging deployment trigger - 2026-07-31
+
+- Theo approved the staging push/deployment. Commit `642a83e5ac87eadbf6e0e9ee50a6fff85c68ca4c` was pushed successfully to `origin/codex/Staging`, the documented Git-triggered staging branch; local `HEAD` and `origin/codex/Staging` matched immediately after push.
+- Provider completion remains unverified in this developer session: the available Vercel connection returned no projects, and a read-only request to `https://staging.scrimstats.gg/` returned Vercel Login rather than an accessible application shell. This is neither a successful build nor authenticated workflow evidence.
+- Keep **In Progress** until the staging deployment is confirmed. Then assign the work to **QA and Release Auditor** for the exact member/viewer fixture matrix above. Release remains **HOLD**.

@@ -19,7 +19,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
-| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA found the deployed member evidence `Revise` mutation control. Guard it for member/viewer read-only access, validate, then provide a new staging handoff. | Shared Scouting report role gate and role contract; do not overlap Draft/Scouting refactors. |
+| [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) | Core Features Developer | QA found member-visible Leaguepedia import and evidence-attachment mutation controls. Repair commit `642a83e` is pushed to the staging branch; provider completion and authenticated QA retest remain. | Shared Scouting report role gate and role contract; do not overlap Draft/Scouting refactors. |
 
 ## QA blocked — Theo or PM input required
 

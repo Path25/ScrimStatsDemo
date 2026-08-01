@@ -27,7 +27,7 @@ If any condition is false or cannot be verified, do not send. This procedure nev
 
 ## Approved draft
 
-**Subject:** A simple first setup for {{workspace_name}}
+**Subject:** Need a hand setting up {{workspace_name}}?
 
 Hi {{first_name}},
 
@@ -35,11 +35,26 @@ If you have not had time to set up {{workspace_name}} yet, the quickest way to s
 
 Once you have a recorded game, ScrimStats can keep the review and follow-up work connected to that practice.
 
-If you would like a hand setting up the first workflow, reply here and we will help.
+If you would like a hand setting up the first workflow, reply here or reach me on Discord: {{approved_discord_contact_or_invite}}.
+
+Please include {{workspace_name}} in your message so I can help in the right place.
 
 {{approved_workspace_link}}
 
 ScrimStats by ProComps
+
+### Rendered-email design basis
+
+For this manual send, use the same established ScrimStats email frame as the invitation and pilot-workspace emails:
+
+- dark `#060b0f` page, `#0b1319` card, teal `#20d7c0` top rule and CTA;
+- ScrimStats by ProComps logo; compact monospace eyebrow `WORKSPACE SUPPORT`;
+- title: `Get your first block on the board.`;
+- body: the approved copy above, with a teal `Open {{workspace_name}}` CTA to `{{approved_workspace_link}}`;
+- optional detail row: `DISCORD SUPPORT` / `{{approved_discord_contact_or_invite}}`;
+- existing responsive 600px email layout and ProComps footer.
+
+Use only a verified Discord username, direct-message link, or approved community invite. The contact route is personal support access; it must not imply that the workspace has ScrimStats Discord delivery, `/scrim`, Elite access, or any other product integration.
 
 ## Follow-up measurement
 

@@ -17,6 +17,7 @@
 - `create-checkout`
 - `customer-portal`
 - `stripe-webhook` (Stripe-signature authenticated)
+- `stripe-mrr-snapshot` (Vault-backed worker-secret authenticated; reporting aggregate only)
 
 ## Test-only Discord delivery functions
 

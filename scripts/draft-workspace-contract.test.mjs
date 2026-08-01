@@ -11,6 +11,7 @@ const migration = read("supabase/migrations/20260726153000_draft_workspace_compl
 const revisionMigration = read("supabase/migrations/20260726160000_draft_revisions_and_editing.sql");
 const cloneMigration = read("supabase/migrations/20260726161000_draft_playbook_clone_branches.sql");
 const splitMigration = read("supabase/migrations/20260726163000_draft_evidence_split_metadata.sql");
+const multiWorkspaceRlsRepairMigration = read("supabase/migrations/20260731124310_repair_multi_workspace_draft_rls.sql");
 const board = read("src/components/draft/DraftSequenceBoard.tsx");
 const allMigrations = `${migration}\n${revisionMigration}\n${cloneMigration}\n${splitMigration}`;
 
@@ -50,6 +51,14 @@ test("Draft writes use tenant-scoped transactional RPCs", () => {
   assert.match(migration, /grant execute[\s\S]+to authenticated/);
 });
 
+test("multi-workspace Draft reads use tenant membership without changing write policies", () => {
+  assert.match(multiWorkspaceRlsRepairMigration, /drop policy if exists "Users can view drafts for their tenant games" on public\.game_drafts/i);
+  assert.match(multiWorkspaceRlsRepairMigration, /create policy "Users can view drafts for their tenant games"\s+on public\.game_drafts\s+for select\s+to authenticated/i);
+  assert.match(multiWorkspaceRlsRepairMigration, /game\.id = game_drafts\.scrim_game_id[\s\S]*public\.user_belongs_to_tenant\(scrim\.tenant_id\)/i);
+  assert.doesNotMatch(multiWorkspaceRlsRepairMigration, /select\s+tenant_id\s+from\s+public\.tenant_users/i);
+  assert.doesNotMatch(multiWorkspaceRlsRepairMigration, /for\s+(insert|update|delete|all)\b/i);
+});
+
 test("sequence, branches, restrictions, snapshots, and audit are server enforced", () => {
   assert.match(migration, /draft_sequence_slot/);
   assert.match(migration, /sequence_number < p_branch_sequence/);
@@ -84,6 +93,8 @@ test("champion-first drafting supports drag, drop, touch, and keyboard placement
   assert.match(board, /onDrop=/);
   assert.match(board, /select a champion and then choose any pick or ban slot/i);
   assert.match(board, /ChampionAvatar/);
+  assert.match(board, /dedupeChampionImageCandidates\(catalog\.data \|\| \[\]\)/);
+  assert.match(board, /staging-avatar-qa-fixture/);
   assert.match(page, /onPlaceChampion=/);
 });
 

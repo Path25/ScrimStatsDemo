@@ -107,6 +107,7 @@ The immediate commercial strategy is Free-to-Pro conversion, not a EUR100/month 
 ## Decision and approval record
 
 - 2026-07-29 - ProComps meeting requested at least two target-team conversations and five reachable contacts. This work order records research preparation only; no outreach approval is implied.
+- 2026-07-31 - Theo directed that this work order remain on hold until further product development is complete. Do not prepare outreach, contact teams, schedule calls, or publish related claims until Theo reopens the work order.
 
 ## Implementation and review evidence
 

@@ -1,7 +1,7 @@
 # WO-2026-024 - Give players reliable read-only intelligence access
 
 - **ID reservation:** [WO-2026-024 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Done
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -458,6 +458,202 @@ The supplied session was Tenant-A `OWNER` rather than the requested Viewer. It e
 1. **Core Features Developer:** correct `src/lib/workspace-capabilities.ts` so owner includes `viewIntelligence: true` and `viewPublishedIntelligence: true` (prefer spreading the `readOnly` baseline before adding management capabilities). Add a focused owner capability/Scouting route contract.
 2. Redeploy staging and hand off the exact commit plus Owner and Viewer fixture steps.
 3. **QA:** rerun Owner Scouting, then the remaining Viewer/security matrix. Theo's final production-release approval remains required after a READY verdict.
+
+## Independent QA owner-role retest - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The Owner Scouting regression is repaired in staging. The release remains on HOLD solely because the Viewer, responsive, direct-denial, and actual authoring-success checks are still incomplete.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `OWNER` can open `/scouting/11ffd00f-80c2-4642-990a-2e994593919e` after a full page reload and read the live fixture report.
+- The Owner sees the expected staff-only authoring controls: `Add tendency`, `Add evidence`, `Revise`, opponent `Add`, Draft `New`, and Leaguepedia import input/action.
+- The previous Owner `Scouting is unavailable` capability denial is not reproduced. No authoring action was submitted, and the browser was returned to `/scouting` after the check.
+
+### 3. Blocking issues
+
+- No current Owner read/access defect is reproduced. The release hold is remaining required evidence, not a live failure.
+
+### 4. Important risks
+
+- Visible Owner controls do not prove a successful authoring mutation, and no direct Member/Viewer mutation attempt has independently proved server-side denial.
+
+### 5. Unverified but required checks
+
+- Tenant-A Viewer desktop/mobile Analytics, Scouting/list/report, and Draft journeys.
+- Member/Viewer direct representative write denials and Tenant-B Analytics/Draft read/RPC denials.
+- One controlled non-customer Owner authoring success and responsive coverage.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / QA:** provide the existing Tenant-A Viewer session or safe recovery/sign-in path; no data change is needed for its read-only matrix.
+2. **Theo:** if authoring-success must be independently demonstrated, explicitly approve one reversible non-customer fixture edit plus restoration. Otherwise record an accepted-risk decision for that single check.
+3. **QA:** complete the remaining matrix, then request Theo's final production release approval only if the result is READY.
+
+## Independent QA Viewer-session attempt - 2026-07-31
+
+### Outcome: Blocked
+
+- Theo provided a session described as Tenant-A Viewer. The authenticated staging header consistently identified it as `WO-024 QA Tenant A` / `MEMBER` (`fridayxiiiempire@gmail.com`), including after workspace loading completed.
+- The Member Draft view loaded as expected, but it is duplicate evidence and cannot be recorded as Viewer validation. No mutation was submitted; the browser was restored to `/overview`.
+- **Exact next input:** sign in as the existing Tenant-A user whose header shows `VIEWER`, then leave that session on `/overview` or `/scouting`. No workspace/data change is required.
+
+## Independent QA Viewer-role audit - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The required Viewer read-only and direct Scouting-report isolation checks pass in staging. The work order remains on HOLD only for controlled server-side denial, responsive, and reversible Owner-authoring evidence.
+
+### 2. What was verified
+
+- Authenticated identity: `WO-024 QA Tenant A` / `VIEWER` (`pathdigitaldesigns@gmail.com`).
+- Viewer `/analytics` loaded with the truthful zero-game state; `/scouting` listed the active Tenant-A opponent; the live report exposed its evidence, tendency, and unpublished Draft plan; `/draft` exposed the same unpublished plan.
+- Neither the Viewer report nor Draft surface exposed authoring controls, writable inputs, Leaguepedia import, evidence attachment, or revision actions.
+- A direct Viewer request to the known Tenant-B report (`/scouting/c0e5dc3f-69b9-4367-bc56-ca6e38bfbb04`) returned the truthful `Opponent report unavailable` state with no Tenant-B content.
+- No mutation was submitted. The Viewer browser session was restored to `/overview`.
+
+### 3. Blocking issues
+
+- No browser role defect is currently reproduced. The release hold is incomplete required evidence, not a new implementation failure.
+
+### 4. Important risks
+
+- Browser control absence does not prove direct database/RPC mutation denial, and desktop validation does not establish responsive behaviour.
+
+### 5. Unverified but required checks
+
+- Controlled representative Member and Viewer direct write attempts with recorded server denials; direct Tenant-B Analytics/Draft RPC/read denials.
+- Mobile/responsive journey for both read-only roles.
+- One reversible non-customer Owner Scouting authoring success, then restoration.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** explicitly approve a reversible fixture mutation test if the final authoring-success and direct server-denial evidence is required. The test must use only WO-024 non-customer records and restore them immediately.
+2. **QA:** execute that approved matrix and capture mobile evidence; otherwise record each as accepted risk before requesting the final verdict.
+3. **Theo:** give separate production-release approval only after QA reports READY.
+
+## Independent QA approved RLS and authoring exercise - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The approved write-denial and Owner-authoring checks pass with no persistent fixture change. The final tenant-isolation RPC check is blocked because the purported two-tenant fixture assigns every Tenant-A test user a real membership in Tenant B; it cannot distinguish authorised multi-workspace access from a cross-tenant leak.
+
+### 2. What was verified
+
+- Under rollback-only `authenticated` RLS context, representative direct updates to the Tenant-A opponent returned **0 rows** for the Tenant-A Member and Viewer identities.
+- The same rollback-only update as Tenant-A Owner returned **1 row** and observed the temporary marker. A post-rollback read confirmed the original fixture description remains unchanged and the marker is not persisted.
+- No customer row, billing record, credential, provider setting, or external service was touched.
+
+### 3. Blocking issues
+
+- **Invalid cross-tenant test fixture:** Tenant-A Owner, Admin, Member, and Viewer are respectively also Tenant-B Owner, Viewer, Admin, and Member. The Tenant-A Viewer therefore legitimately received Tenant-B Draft RPC data when directly calling `get_draft_workspace(Tenant B)`. This is not currently evidence of an unauthorised leak, but it makes the required cross-tenant RPC denial test impossible with every supplied fixture identity.
+
+### 4. Important risks
+
+- The existing browser route check is still useful UI evidence because the active workspace was Tenant A, but it does not prove the server-side RPC boundary for an identity that has no Tenant-B membership.
+- Mobile/responsive journeys remain unverified.
+
+### 5. Unverified but required checks
+
+- Direct Tenant-B Analytics and Draft RPC/read denials using a non-customer Tenant-A-only Member or Viewer identity.
+- Mobile/responsive route matrix for Member and Viewer.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / PM:** explicitly approve either (a) removal of one non-customer fixture user's Tenant-B membership, or (b) creation of a new non-customer Tenant-A-only Member/Viewer. Do not modify customer memberships. Record the user/tenant IDs privately, not in the work order.
+2. **QA:** use that identity for direct Tenant-B Draft and Analytics RPC/read-denial checks, then complete mobile coverage.
+3. **Theo:** only after those pass may QA issue READY and request separate production-release approval.
+
+## Independent QA fixture correction and direct-RPC isolation - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The authorised non-customer fixture correction removed the false isolation blocker. Direct Draft and Analytics cross-tenant denials now pass for the Tenant-A Viewer identity. Mobile/responsive evidence is the remaining release requirement.
+
+### 2. What was verified
+
+- With Theo's explicit approval, QA removed **only** the non-customer Tenant-A Viewer's Tenant-B membership. No customer membership, customer data, billing data, provider configuration, or credential was changed.
+- Under authenticated Viewer RLS context, `user_belongs_to_tenant(Tenant B)` is now false and `get_draft_workspace(Tenant B)` returns `NULL`.
+- The same Viewer call to `get_team_analytics_dataset(Tenant B, ...)` fails with the intended `Analytics access is unavailable for this workspace` denial. No Tenant-B Analytics payload was returned.
+- Earlier in the approved session, Member and Viewer writes returned zero rows; Owner rollback-only authoring returned one row and was confirmed fully rolled back.
+
+### 3. Blocking issues
+
+- No current server-side read/write/tenant-isolation defect is reproduced. Release is held for mobile/responsive evidence only.
+
+### 4. Important risks
+
+- The removed Tenant-B membership is an intentional non-customer fixture change for this audit. It may be re-created later only if a distinct cross-tenant denial identity is preserved.
+
+### 5. Unverified but required checks
+
+- Member and Viewer mobile/responsive route matrix for Analytics, Scouting/list/report, and Draft.
+
+### 6. Suggested fixes or next validation steps
+
+1. **QA / Theo:** complete the mobile checks at the agreed narrow viewport with the existing non-customer Member and Viewer sessions.
+2. **Theo:** after mobile passes, review the final QA evidence and separately approve production release if acceptable.
+
+## Independent QA Viewer mobile audit - 2026-07-31
+
+### 1. Release verdict: HOLD
+
+The Tenant-A Viewer mobile matrix passes at 390 × 844. The only remaining work-order requirement is the equivalent Member mobile journey.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `VIEWER` at a true 390 × 844 viewport loaded Analytics, Scouting/list/report, and Draft.
+- Each route stayed within the narrow viewport (document width 384–390px; no horizontal overflow).
+- Analytics finished loading into its truthful zero-game state. The Scouting report and unpublished Draft plan remained readable with no writable inputs or authoring controls.
+- The temporary viewport override was reset and the original session restored to `/overview`.
+
+### 3. Blocking issues
+
+- No Viewer mobile defect is reproduced. Final evidence is incomplete because the current authenticated session is Viewer-only and QA cannot silently switch identities.
+
+### 4. Important risks
+
+- Member and Viewer share the intended read-only capability model, but that does not replace an authenticated Member mobile verification.
+
+### 5. Unverified but required checks
+
+- Tenant-A Member mobile Analytics, Scouting/list/report, and Draft journey at 390 × 844.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** sign in as the existing Tenant-A Member fixture and leave it open on `/overview`.
+2. **QA:** repeat the four-route 390 × 844 inspection, then issue the final release verdict.
+
+## Independent QA Member mobile audit and final acceptance review - 2026-07-31
+
+### 1. Release verdict: CONDITIONAL
+
+WO-024's stated staging acceptance matrix now passes. It is conditionally ready for production deployment, not yet a production-release approval: Theo must separately approve the production deployment and QA must verify the deployed production revision before public/customer availability is claimed.
+
+### 2. What was verified
+
+- Authenticated Tenant-A `MEMBER` at a true 390 × 844 viewport loaded Analytics, Scouting/list/report, and Draft; the active report and unpublished plan remained readable.
+- All four Member routes remained within the narrow viewport (document width 384–390px; no horizontal overflow). No Member authoring controls or writable inputs were exposed.
+- Prior independent evidence in this work order now covers: Member and Viewer desktop/mobile reads; no authoring controls for either; live Scouting and unpublished Draft reads; direct Member/Viewer write denials; Owner rollback-only authoring success with no persisted change; UI report isolation; and direct Tenant-B Draft `NULL` plus Analytics access-denied responses for the Tenant-A-only Viewer.
+
+### 3. Blocking issues
+
+- None reproduced in the complete staging acceptance matrix.
+
+### 4. Important risks
+
+- This evidence is authenticated staging plus the shared production-backed Supabase project. It does not prove that a later production web deployment contains the same frontend revision.
+
+### 5. Unverified but required checks
+
+- After Theo's explicit production-deployment approval: verify the deployed production revision with a non-customer Member or Viewer on Analytics, Scouting/report, and Draft; confirm the same read-only boundary and tenant isolation.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** explicitly approve the production web deployment only when ready to release WO-024.
+2. **Developer:** deploy through the approved production path and record the revision/URL.
+3. **QA:** repeat the concise authenticated production smoke test before declaring production-ready. No further staging implementation work is required.
 
 ## Developer owner-capability repair - 2026-07-31
 

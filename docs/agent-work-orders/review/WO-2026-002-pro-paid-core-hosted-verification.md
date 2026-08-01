@@ -1,7 +1,7 @@
 # WO-2026-002 - Verify the Pro paid core end to end
 
-- **Status:** Blocked
-- **Assigned owner:** QA
+- **Status:** Superseded
+- **Assigned owner:** PM
 - **Size:** L
 - **Risk:** High
 - **Priority:** High
@@ -84,6 +84,16 @@ Use a dedicated test workspace to verify self-service signup, Pro checkout, webh
 - 2026-07-28 - Hosted release evidence: the approved migration applied successfully as `20260728211332_collector_pro_entitlement_enforcement` (the Supabase deployment timestamp). Aggregate verification confirmed Collector is disabled for 98 Free workspaces and enabled for 8 Pro and 2 Elite workspaces. No customer records were individually inspected.
 - 2026-07-28 - Hosted release evidence: Collector entitlement enforcement is deployed in `collector-pairing` v5, `collector-pair` v3, `collector-status` v4, and `collector-ingest` v11. Hosted source inspection confirmed each active revision contains the entitlement check and `collector_plan_required` denial response. Direct role/plan invocation remains required.
 - **Highest evidence achieved:** Browser verified for the isolated Pro-owner plan and route state. The new server entitlement enforcement remains only locally tested; Free denial, Elite allowance, direct Function calls, device-token revocation, and deployed migration/function verification remain required.
+
+## PM reconciliation - 2026-07-31
+
+This work order is superseded because its scope mixed three independently governed outcomes and its early evidence was overtaken by later, separately recorded evidence:
+
+- **Collector entitlement and lifecycle:** transferred to WO-2026-009, which is Done under Theo's explicit accepted-risk decision. Its outstanding lifecycle, manager-endpoint, and adversarial tenant-isolation checks remain unverified; they are not inherited as passes here.
+- **Stripe-to-tenant reconciliation:** reviewed and closed as a read-only investigation in WO-2026-008 following Theo's manual hosted-journey acceptance. It does not create a reproducible isolated checkout test or resolve every historical tenant/subscription divergence.
+- **Data-provider/live integration:** is not a checkout assertion. It remains under WO-2026-013's pending direction and provider-policy decision.
+
+The remaining, narrow commercial test is WO-2026-028: one isolated hosted Pro purchase, webhook-to-entitlement, billing return, and Free-comparator journey. It is blocked until Theo selects an approved test-mode route or explicitly authorises a capped live internal purchase/cancellation. No work remains for QA under this superseded mixed order.
 
 ## QA release audit handoff
 

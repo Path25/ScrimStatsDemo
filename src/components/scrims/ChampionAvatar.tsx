@@ -7,6 +7,7 @@ import { useChampionCatalog } from '@/hooks/useChampionCatalog';
 
 interface ChampionAvatarProps {
   championName?: string | null;
+  imageUrlOverride?: string | null;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -28,11 +29,12 @@ const getSizeClasses = (size: 'xs' | 'sm' | 'md' | 'lg') => {
 
 export const ChampionAvatar: React.FC<ChampionAvatarProps> = ({
   championName,
+  imageUrlOverride,
   size = 'md',
   className = ''
 }) => {
   const catalogue = useChampionCatalog();
-  const imageUrl = resolveChampionImageUrl(championName, catalogue.data);
+  const imageUrl = imageUrlOverride ?? resolveChampionImageUrl(championName, catalogue.data);
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const missingChampion = isMissingChampionIdentity(championName);
 

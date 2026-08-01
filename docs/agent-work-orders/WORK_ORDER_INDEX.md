@@ -29,14 +29,14 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-013 | Select a safe desktop live-integration direction without Riot API access | Blocked | Core Features Developer | [WO-2026-013](proposed/WO-2026-013-desktop-live-integration-direction.md) |
 | WO-2026-014 | Validate paid buyer problems and conversion proposition with target teams | Blocked | Marketing | [WO-2026-014](proposed/WO-2026-014-paid-buyer-validation-and-conversion-proposition.md) |
 | WO-2026-015 | Make Pro analytics legible and outcome-led | Done | Core Features Developer | [WO-2026-015](proposed/WO-2026-015-pro-analytics-legibility-and-value.md) |
-| WO-2026-016 | Restore reliable champion visual assets | Ready for QA | QA and Release Auditor | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) |
+| WO-2026-016 | Restore reliable champion visual assets | Blocked | Core Features Developer | [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) |
 | WO-2026-017 | Add tenant-safe workspace identity customization | Done | Core Features Developer | [WO-2026-017](proposed/WO-2026-017-workspace-identity-customization.md) |
 | WO-2026-018 | Audit and improve workspace language and journey coherence | Backlog | PM | [WO-2026-018](proposed/WO-2026-018-workspace-language-and-journey-coherence.md) |
 | WO-2026-020 | Make Solo Queue tracker available on Free consistently | Backlog | Core Features Developer | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) |
 | WO-2026-021 | Restore existing-account workspace creation and confirmation recovery | Done | QA | [WO-2026-021](proposed/WO-2026-021-existing-account-workspace-recovery.md) |
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Done | QA and Release Auditor | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
 | WO-2026-023 | Let workspace owners create additional independent workspaces | Backlog | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
-| WO-2026-024 | Give players reliable read-only intelligence access | Ready for QA | QA and Release Auditor | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
+| WO-2026-024 | Give players reliable read-only intelligence access | Done (conditional; production deployment and smoke test pending) | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
 | WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Backlog | Core Features Developer | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Done (conditional handoff to WO-016) | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |
 | WO-2026-026 | Define a safe new-workspace activation follow-up | In Progress | PM | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) |

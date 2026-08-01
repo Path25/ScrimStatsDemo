@@ -93,6 +93,8 @@ test("champion-first drafting supports drag, drop, touch, and keyboard placement
   assert.match(board, /onDrop=/);
   assert.match(board, /select a champion and then choose any pick or ban slot/i);
   assert.match(board, /ChampionAvatar/);
+  assert.match(board, /dedupeChampionImageCandidates\(catalog\.data \|\| \[\]\)/);
+  assert.match(board, /staging-avatar-qa-fixture/);
   assert.match(page, /onPlaceChampion=/);
 });
 

@@ -1,7 +1,7 @@
 # WO-2026-016 - Restore reliable champion visual assets
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Blocked
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
@@ -96,7 +96,7 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 | Reconcile local test command/count and candidate revision | Core Features Developer | Exact commands, pass counts, candidate commit/revision, and reproducible fixture note | Closed: recorded in Developer candidate handoff |
 | Approve staging deployment | Theo | Explicit staging deployment approval for the identified candidate only | Closed: approved 2026-07-31 |
 | Deploy approved candidate and record staging revision/time | Core Features Developer | Staging deployment identifier, time, and fixture handoff | Closed: branch head pushed and fresh authenticated staging response recorded |
-| Browser verify affected surfaces | QA and Release Auditor | Authenticated deployed-candidate evidence | Blocked on deployment evidence |
+| Browser verify affected surfaces | QA and Release Auditor | Authenticated deployed-candidate evidence | Blocked on approval and deployment of the revised candidate |
 
 ### Theo approval record
 
@@ -157,6 +157,14 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 5. **Exact developer handoff required:** Deploy the reviewed build to `staging.scrimstats.gg`, record deployment identifier/commit and time, and provide reproducible staging fixtures for Draft, SoloQ, and Scouting. Do not mark this Ready for QA until that deployment evidence exists.
 6. **QA action after deployment:** QA will run CA01-CA04 on desktop and mobile, refresh/cache-clear between runs, force one avatar failure, and retain request/response, screenshot, fallback, and console evidence. Release remains separate from this staging QA result.
 
+## Hosted staging QA - partial - 2026-07-31
+
+1. **Release verdict: HOLD.** The deployed candidate fixes the known Draft defect, but the full cross-surface and failure-path acceptance scenario is incomplete.
+2. **What was verified:** In authenticated owner staging, a fresh `/draft` reload changed the cached baseline from historical 14.1.1 URLs to current 16.15.1 URLs. `Ambessa`, `K'Sante`, and `Ahri` loaded complete 128px images; `K'Sante` correctly resolved to `KSante.png`. SoloQ also rendered current 16.15.1 images for live match entries (`Taliyah`, `Naafiri`, and `Vi`). No browser console warnings or errors were captured on either surface.
+3. **Important evidence note:** The first Draft observation was the old cached page. The successful full reload is evidence that a normal cache refresh reaches the candidate; it is not equivalent to a browser cache-clear test.
+4. **Unverified but required:** CA03 unknown/`None`, CA04 deliberately failed image request and named fallback, mobile viewport rendering, and a champion-bearing Scouting report. The current authenticated Scouting workspace contains only an opponent list and no champion avatar to inspect.
+5. **Next QA requirement:** Provide or identify one staging Scouting report containing a champion avatar, and enable a safe way to deliberately fail a single static image request. QA will then complete desktop/mobile and cache-clear checks without creating customer data.
+
 ## PM ownership resolution - 2026-07-31
 
 - **Core Features Developer:** Feature implementation is complete locally. Before deployment, provide a short corrected handoff naming the exact test commands and pass counts (the 23-versus-17 discrepancy), candidate commit/revision, and the non-customer fixtures QA will use. No further feature code is requested unless that review identifies a defect.
@@ -179,3 +187,36 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 - **Hosted evidence:** Authenticated Vercel fetch of `https://staging.scrimstats.gg/draft` returned HTTP 200 with fresh static HTML. Vercel reported `Last-Modified: Fri, 31 Jul 2026 20:02:53 GMT`, `x-vercel-cache: MISS`, and request reference `lhr1:iad1::dr7ml-1785528173535-4bb0ce3a5e2d`.
 - **Deployment identifier limitation:** The configured Vercel API connection lists no accessible project and therefore cannot expose Vercel's deployment ID. The remote revision, deployment time, protected staging URL, and Vercel request reference above are the available reproducible deployment evidence.
 - **QA handoff:** QA and Release Auditor may now run CA01-CA04 on the deployed candidate. Retain desktop/mobile, cache-clear, request/response, screenshot, named fallback, and console evidence. Release remains HOLD.
+
+## Hosted staging QA - remainder - 2026-07-31
+
+1. **Release verdict: HOLD.** The primary current-version repair is verified, but two explicit acceptance cases cannot yet be exercised against hosted staging.
+2. **What was verified:** Authenticated staging rendered Draft at a 390x844 mobile viewport with current 16.15.1 Data Dragon images, including `Ambessa`; all sampled images were complete at 128px and there were no visible alert errors. The normal desktop Draft reload and SoloQ checks recorded above remain valid. A completed Scrim game was also opened safely; its saved champions (`Evelynn`, `Twisted Fate`) are text-only in this fixture, so it does not exercise `ChampionAvatar` and adds no false cross-surface claim.
+3. **Blocking issue:** CA03 (unknown/`None`) and CA04 (a genuinely failed static-image request with the visible named fallback) remain unverified in hosted staging. Source and contract coverage prove the intended `onError` path exists, but they do not prove a deployed browser handles a real failed request. No safe hosted test route, request-blocking control, or eligible unknown fixture is available to QA.
+4. **Important risk:** The successful full reload confirms a normal cache refresh reaches the candidate; it is not browser cache-clear evidence. Scouting is deliberately not tested in this pass because the available report has no avatar-bearing data; that surface remains unverified, rather than failed.
+5. **Exact return to Core Features Developer:** Provide (a) a non-customer staging record that renders `None` or an unknown champion through `ChampionAvatar`, and (b) a staging-only, non-production-safe method to cause one specified avatar URL to fail without changing customer data or provider configuration. Include exact URLs and reproduction steps. Do not deploy to production for this validation.
+6. **Exact Theo decision required to close without those fixtures:** Either have Core supply the two fixtures above, or explicitly accept CA03, CA04, cache-clear, and Scouting as unverified release risk. An acceptance would permit a conditional business decision; it would not convert this QA result into a full pass.
+
+## Newly verified Draft regression - 2026-07-31
+
+1. **Finding classification: Important.** Authenticated staging Draft's editable Champion pool renders 233 selectable entries for 173 unique champion names: 60 duplicate entries. Examples include `Ahri`, `Alistar`, `Amumu`, `Anivia`, `Annie`, `Ashe`, and `Nunu & Willump`.
+2. **Reproduction:** Open `/draft` as an editor/owner, use the editable Champion pool, and inspect its tiles. Reloading the page retained exactly 233 entries and 173 unique names, so this is not a transient stale-render observation.
+3. **Source evidence:** `DraftSequenceBoard` maps `catalog.data` directly into the picker without a uniqueness guard. The local `loadChampionCatalog` source similarly does not deduplicate its return value. The exact deployed source/data path that yields 233 records must be traced; QA will not infer that the public catalogue is the sole cause.
+4. **Required developer outcome:** Ensure the picker presents each normalized champion identity once, with a deterministic preferred display name/image for aliases, and add a regression test asserting the rendered picker contains no duplicate normalized identities. Re-run current/special-name avatar cases after the change.
+
+## Core follow-up implementation - 2026-07-31
+
+1. **Outcome:** The approved local remediation is complete but is not deployed. WO-016 remains **Blocked** until Theo approves staging deployment of this revised candidate.
+2. **Duplicate repair:** `dedupeChampionImageCandidates` now reduces entries by normalized display identity with deterministic selection (longer canonical display name, then name, ID, and image URL). Both `useChampionCatalog` and `DraftSequenceBoard` apply it, so the picker is protected even if a cached or future catalogue response contains repeated entries.
+3. **Regression coverage:** The focused suite now has 24 passing tests, including repeated `Ahri` and `K'Sante`/`Ksante` candidates and source contracts proving both catalogue and picker deduplication.
+4. **Safe hosted fixtures:** On **staging only**, an authenticated editor can open `/draft?avatar-qa=1`. The fixture creates no data and renders `None`, `Unknown Champion`, and `Ahri` with the one fixed deliberately nonexistent Data Dragon URL `https://ddragon.leagueoflegends.com/cdn/16.15.1/img/champion/__scrimstats_avatar_qa_missing__.png`. The production hostname does not render the fixture.
+5. **Local validation:** Focused tests, zero-warning ESLint, TypeScript, production Vite build, and bundle budget passed. The build reported only the existing Browserslist data-age notice.
+6. **QA after approved staging deployment:** Confirm 173 unique normalized Draft tiles (no duplicates), run the staging fixture at desktop and mobile, retain the 404 request/response and the visible named fallback, then rerun the existing current/special-name Draft and SoloQ checks. Scouting remains explicitly unverified until an avatar-bearing report exists.
+
+## Daily QA review - 2026-08-01
+
+1. **Outcome: Blocked. Release verdict: HOLD.** This is the only open candidate with a current developer handoff; no work order is marked Ready for QA today.
+2. **Local verification:** QA independently ran `node --experimental-strip-types --test scripts/champion-avatar.test.ts scripts/competitive-platform-contract.test.mjs scripts/draft-workspace-contract.test.mjs`: 24 passed, 0 failed. The added duplicate-identity test passed. Source inspection confirms deduplication occurs both when loading the catalogue and immediately before the Draft picker renders.
+3. **Safety verification:** The intentionally missing image URL is a fixed public Data Dragon URL. The QA fixture is guarded by both the `staging.scrimstats.gg` hostname and `avatar-qa=1`; it creates no workspace data. This is local/source evidence only.
+4. **Unverified required acceptance:** There is no revised staging deployment identifier, timestamp, or hosted browser evidence. Therefore QA cannot verify the 173-tile result, the real 404/fallback, desktop/mobile behaviour, or current/special-name regressions against the revised candidate.
+5. **Action returned:** Theo must approve a staging-only deployment of the revised candidate; Core Features Developer must record revision and deployment time. QA will then run the documented `/draft?avatar-qa=1` matrix. No production deployment or release approval is authorised by this review.

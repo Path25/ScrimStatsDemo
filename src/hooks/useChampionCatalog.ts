@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ChampionImageCandidate } from "@/lib/champion-avatar";
+import { dedupeChampionImageCandidates, type ChampionImageCandidate } from "@/lib/champion-avatar";
 
 export interface ChampionCatalogEntry extends ChampionImageCandidate {
   key: string;
@@ -31,7 +31,7 @@ async function loadChampionCatalog(): Promise<ChampionCatalogEntry[]> {
   }
 
   const payload = (await championsResponse.json()) as DataDragonChampionPayload;
-  return Object.values(payload.data)
+  return dedupeChampionImageCandidates(Object.values(payload.data)
     .flatMap(({ id, key, name, image }) => image?.full
       ? [{
         id,
@@ -39,8 +39,7 @@ async function loadChampionCatalog(): Promise<ChampionCatalogEntry[]> {
         name,
         imageUrl: `https://ddragon.leagueoflegends.com/cdn/${currentVersion}/img/champion/${image.full}`,
       }]
-      : [])
-    .sort((left, right) => left.name.localeCompare(right.name));
+      : []));
 }
 
 export function useChampionCatalog() {

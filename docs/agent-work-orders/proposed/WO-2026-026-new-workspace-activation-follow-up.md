@@ -138,6 +138,7 @@ Use the manual, one-to-one procedure in `docs/operations/NEW_WORKSPACE_ACTIVATIO
 
 - 2026-07-31 - Theo asked for a Project Manager review of a reusable activation follow-up for future new workspaces, with either safe automation or a manual-send template and procedure.
 - 2026-07-31 - PM selected a manual-first experiment: one-to-one sends only, after 48 hours and before day 7, with Theo approval for every recipient and no new email automation. The procedure and Message Ledger draft were created; no customer follow-up was sent and no production system was changed.
+- 2026-08-01 - Theo requested a draft follow-up that preserves the established ScrimStats email design and offers a direct Discord support route. The manual template and Message Ledger now require a verified recipient-specific Discord contact/invite and prohibit implying product Discord integration. No email was sent or email system changed.
 
 ## Implementation and review evidence
 

@@ -11,7 +11,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-| [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) | QA and Release Auditor | `codex/Staging` revision `52e17ae` pushed; authenticated Vercel staging response was fresh at 2026-07-31 20:02:53 UTC. | Run CA01-CA04 in deployed Draft, SoloQ, and Scouting on desktop/mobile with cache-clear and forced image-failure evidence. |
 
 ## In Progress
 
@@ -23,6 +22,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Current blocker | Required routing |
 |---|---|---|---|
+| [WO-2026-016](proposed/WO-2026-016-champion-visual-asset-reliability.md) | Theo, then Core Features Developer | The approved duplicate repair and staging-only no-data fixture are locally validated but not deployed. Scouting remains out of scope for this pass because no avatar-bearing record is available. | Theo must approve staging deployment of the revised candidate. QA then opens `/draft?avatar-qa=1`, verifies 173 unique normalized tiles and CA03/CA04 desktop/mobile evidence, then reruns current/special-name Draft and SoloQ. |
 | [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) | QA and Release Auditor | The connected Stripe evidence is live-mode; no isolated payment route, cost cap, or cancellation boundary has been selected. | Theo must approve either a test-mode route or one capped live internal purchase/cancellation, then provide the isolated account/workspace and redacted event/log access. WO-002 is superseded; WO-009 Collector evidence does not close checkout verification. |
 | [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | No approved isolated funnel journey has produced an event; the ledger and scorecard remain empty. | Theo must approve the minimal temporary non-customer schedule/completed-game workflow; PM must keep any browser scorecard exposure under WO-011. |
 

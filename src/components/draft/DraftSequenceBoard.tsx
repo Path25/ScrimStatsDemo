@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataSurface } from "@/components/workspace/DataSurface";
 import { useChampionCatalog } from "@/hooks/useChampionCatalog";
+import { dedupeChampionImageCandidates, isStagingAvatarQaFixtureEnabled, STAGING_AVATAR_QA_FAILURE_URL } from "@/lib/champion-avatar";
 import {
   DRAFT_SEQUENCE,
   sequenceSlot,
@@ -44,9 +45,10 @@ export function DraftSequenceBoard({
   const bySequence = new Map(actions.map((action) => [action.sequence_number, action]));
   const issues = validateDraftScenario(actions, side, restrictions);
   const restricted = useMemo(() => new Set(restrictions.map((name) => name.toLocaleLowerCase())), [restrictions]);
+  const avatarQaFixtureEnabled = isStagingAvatarQaFixtureEnabled();
   const champions = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
-    return (catalog.data || []).filter((champion) => !normalized || champion.name.toLocaleLowerCase().includes(normalized));
+    return dedupeChampionImageCandidates(catalog.data || []).filter((champion) => !normalized || champion.name.toLocaleLowerCase().includes(normalized));
   }, [catalog.data, query]);
 
   function place(sequence: number, champion: string) {
@@ -115,6 +117,15 @@ export function DraftSequenceBoard({
           {!catalog.isLoading&&!champions.length&&<p className="col-span-full py-6 text-center text-sm text-[var(--workspace-subtle)]">No champions match this search.</p>}
         </div>
         {selectedChampion&&<div className="border-t border-[var(--workspace-rule)] px-5 py-3 text-sm text-[var(--workspace-muted)]"><strong className="text-[var(--workspace-text)]">{selectedChampion}</strong> selected · choose a slot to place it.</div>}
+        {avatarQaFixtureEnabled && <div className="border-t border-[var(--workspace-rule)] bg-[var(--workspace-surface-raised)] px-5 py-4" data-testid="staging-avatar-qa-fixture">
+          <p className="workspace-eyebrow">Staging QA fixture</p>
+          <p className="mt-1 text-xs text-[var(--workspace-muted)]">Non-customer visual checks only. This fixture creates no workspace data.</p>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-[var(--workspace-muted)]">
+            <div className="flex items-center gap-2"><ChampionAvatar championName="None" size="sm" className="rounded-none" /><span>None</span></div>
+            <div className="flex items-center gap-2"><ChampionAvatar championName="Unknown Champion" size="sm" className="rounded-none" /><span>Unknown champion</span></div>
+            <div className="flex items-center gap-2"><ChampionAvatar championName="Ahri" imageUrlOverride={STAGING_AVATAR_QA_FAILURE_URL} size="sm" className="rounded-none" /><span>Forced image failure: Ahri</span></div>
+          </div>
+        </div>}
       </DataSurface>}
 
       <div className="grid gap-4 lg:grid-cols-2">

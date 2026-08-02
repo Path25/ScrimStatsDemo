@@ -1,8 +1,8 @@
 # WO-2026-020 - Make Solo Queue tracker available on Free consistently
 
 - **ID reservation:** [WO-2026-020 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Backlog
-- **Assigned owner:** Core Features Developer
+- **Status:** Ready for QA
+- **Assigned owner:** QA and Release Auditor
 - **Size:** M
 - **Risk:** Medium
 - **Priority:** High
@@ -84,35 +84,55 @@ It blocks a core Free workflow during soft launch and weakens the intended Free-
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Free route access | Authenticated browser matrix | Browser | Outstanding |
-| Module-state alignment | Migration and hosted state query | Hosted | Outstanding |
-| Tenant/role safety | Direct API/function and browser checks | Hosted | Outstanding |
-| Truthful plan copy | Source and browser review | Browser | Outstanding |
+| Free route access | `/soloq` now renders `SoloQTracker` directly; route contract passes and an authenticated staging owner reaches the tracker without an upgrade gate. | Source / local test / authenticated staging browser | Free-plan-specific QA remains outstanding |
+| Module-state alignment | Forward-only `20260801111044_enable_free_soloq_entitlement.sql` was applied to the shared hosted project. Aggregate hosted query returned Free: 100, Pro: 7, Elite: 6 Solo Queue rows, all `live` and enabled. | Hosted query | Pass |
+| Tenant/role safety | Existing tenant-scoped client queries, Riot-key-only sync, and `managerMembership(user.id, player.tenant_id)` manual-refresh check were audited and contracted. No RLS or function authorization was changed. | Source / local test | Ready for authenticated QA |
+| Truthful plan copy | Free lists Solo Queue; Pro now lists Team analytics without claiming Solo Queue is paid-only. | Source / local test | Ready for browser QA |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Source-confirmed Pro-only route/module logic; no approved remediation exists.
+- **Rationale:** The approved migration was applied and `23b040c` was pushed to the staging branch. An authenticated staging owner reaches Solo Queue without a plan gate. Plan-specific, role-specific, and tenant-isolation QA remains required before any release claim.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Theo implementation approval | Theo | Written approval | Open |
-| Entitlement-surface audit | Core Features Developer | Gate/function/migration inventory | Open |
-| Hosted plan matrix | QA | Authenticated evidence | Open |
+| Approved hosted migration application | Core Features Developer | Theo approval and migration-tool receipt for `20260801111044_enable_free_soloq_entitlement.sql` against shared project `tvcgjehreaayfazlhvps` | Complete |
+| Hosted plan matrix | QA and Release Auditor | Authenticated Free/Pro/Elite manager/member and second-tenant evidence after deployed migration | Open |
+| Database lint and advisor review | QA and Release Auditor | Hosted advisor export plus migration application evidence; local lint was unavailable because no local database is running | Open |
 
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
-| Implementation | Yes | Pending | - | Plan entitlement change. |
-| Production migration/release | Yes | Pending | - | Separate approval after review. |
+| Implementation | Yes | Approved | 2026-08-01 | Theo approved completion of WO-2026-020. |
+| Hosted migration and staging deployment | Yes | Approved and applied | 2026-08-02 | Migration tool returned success; `23b040c` pushed to `origin/codex/Staging`. |
 
 ## Decision and approval record
 
 - 2026-07-30 - Theo reported that Free should use Solo Queue tracker. Source review confirmed a Pro-only route gate and Pro/Elite-only module seed.
+- 2026-08-01 - Theo approved implementation. Core removed the browser gate, corrected plan copy, and created a forward-only entitlement migration. No hosted mutation was requested or performed.
+- 2026-08-02 - Theo approved hosted migration application and staging deployment. The migration was applied to `tvcgjehreaayfazlhvps`; `23b040c` was pushed to `codex/Staging` and authenticated staging browser verification reached `/soloq` without a plan gate.
 
 ## Implementation and review evidence
 
-- **Highest evidence achieved:** Source reviewed.
+- **Highest evidence achieved:** Local source validation.
+- **Implementation:**
+  - `/soloq` now renders the tenant-scoped Solo Queue tracker for all plans; Analytics, Collector, Scouting, and Draft retain their existing paid gates.
+  - `20260801111044_enable_free_soloq_entitlement.sql` preserves the current Collector lifecycle logic, changes only Solo Queue to live/enabled for every tier, and reconciles existing (including missing) Solo Queue rows with a scoped upsert.
+  - The migration retains `SECURITY DEFINER` fixed search path and service-role-only execution for the internal trigger; it introduces no table, RLS, provider, billing-price, or Edge Function change.
+  - Billing copy lists Solo Queue with Free and removes the Pro-only implication.
+- **Validation:**
+  - `node --test scripts/billing-invitations-contract.test.mjs scripts/soloq-tracker-contract.test.mjs scripts/riot-integration-contract.test.mjs` — 20/20 passing.
+  - ESLint (`--max-warnings 0`) — passing.
+  - TypeScript (`tsc --noEmit`) — passing.
+  - Production Vite build and `scripts/bundle-budget.mjs` — passing; only the pre-existing Browserslist data-age notice was emitted.
+  - `supabase db lint --local --fail-on warning` — not run to completion: no local Postgres was listening at `127.0.0.1:54322`. No local reset/start or hosted fallback was performed.
+- **Hosted validation (2026-08-02):**
+  - Migration tool receipt: success for `enable_free_soloq_entitlement` on `tvcgjehreaayfazlhvps`.
+  - Aggregate query: all 113 existing Solo Queue module rows are `live` and enabled (Free 100, Pro 7, Elite 6); no workspace or customer identifiers were retrieved.
+  - Function ACL query: `anon` and `authenticated` cannot execute `sync_tenant_plan_entitlements`; `service_role` can.
+  - Security and Performance Advisors were reviewed after application. They continue to report the documented project-wide legacy notices; this migration added no table, policy, index, or client-executable function and no new Solo Queue-specific advisor finding was observed.
+  - Authenticated staging browser: an owner workspace opened `https://staging.scrimstats.gg/soloq`, reached the Solo Queue tracker, and emitted no browser console warning/error. This evidence does not establish Free-plan, non-manager, or cross-tenant behavior.
+- **QA handoff:** After Theo approves hosted application and deployment, QA and Release Auditor should use isolated Free, Pro, Elite, manager/member, and second-tenant accounts to verify the route, `tenant_feature_access` rows, Riot-unconfigured state, manager-only refresh, and cross-tenant denial. Capture browser, request, migration-history, function-log, and advisor evidence without customer data.

@@ -172,3 +172,40 @@ The source and recorded hosted deployment support a controlled private-server QA
 1. **Core Features Developer:** catch malformed signed JSON in `discord-interactions` and return the same safe ephemeral unavailable response; add a focused regression contract. Keep the endpoint otherwise unchanged.
 2. **Theo:** after that local fix is reviewed, explicitly approve one non-customer private Discord server, endpoint URL/public key configuration, command registration, and a bounded test invocation. This approval must name the isolated workspace and recovery/cleanup boundary.
 3. **QA:** then run the signed provider and two-tenant role/replay/overlap/outbox matrix, recording Function version and redacted request IDs. Do not enable a customer guild or make a release claim.
+
+## Independent QA re-audit - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The malformed-JSON correction is implemented and locally verified, but a second signed malformed-input path remains. The endpoint and provider workflow also remain unconfigured and unverified by design.
+
+### 2. What was verified
+
+- **Correction:** Commit `a56a387` catches malformed JSON, `null`, arrays, and other non-object payloads after signature verification and returns the existing ephemeral unavailable response before tenant lookup or mutation.
+- **Tests:** Independent execution of the focused Discord contracts passed 9/9. The new contract asserts the guarded parse and non-object response path.
+- **Recorded hosted state:** the developer handoff records `discord-interactions` deployed as Function version 2 with `verify_jwt=false`, retaining Discord Ed25519 verification as the public-endpoint authentication boundary. This is recorded handoff evidence, not an independently exercised provider result.
+
+### 3. Blocking issues
+
+- **Blocking:** No approved private-server endpoint configuration, public key, command registration, or isolated signed PING/`/scrim` invocation exists.
+- **Blocking:** The two-tenant entitlement, guild, role, replay, overlap, canonical-block, and outbox matrix remains unverified.
+
+### 4. Important risks
+
+- **Important:** The `starts_at` regex accepts ISO-shaped impossible dates such as `2026-99-99T00:00:00Z`. `new Date(startsAt).toISOString()` then throws after signature verification instead of returning a safe ephemeral validation response. This should be checked with `Number.isNaN(date.getTime())` before `toISOString()` and covered by a focused contract.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The provider invocation matrix and direct server-side denials listed in the preceding audit, plus the invalid-date response path after the next correction.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** validate `starts_at` as a real date before `toISOString()`, return the existing safe ephemeral validation response, and add a contract for an ISO-shaped invalid date. Do not alter provider configuration, secrets, entitlement, RLS, or RPC behaviour.
+2. **QA:** rerun the focused contracts after the correction. Private-server configuration and invocation remain subject to the already-recorded separate Theo approval.
+
+## Developer invalid-date correction response - 2026-08-02
+
+- QA finding accepted: the ISO-shape check alone did not prove `starts_at` was a real date before serialization.
+- Commit `cd52696` parses `starts_at` once, rejects `NaN` dates through the existing safe ephemeral validation response, and only calls `toISOString()` on the validated date. This remains before tenant lookup or mutation.
+- The focused Discord contracts passed 9/9 with the new real-date regression assertions; ESLint zero warnings, TypeScript, and `git diff --check` passed.
+- `discord-interactions` was deployed as hosted Function version 3 with `verify_jwt=false`. No endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, or provider invocation was configured.

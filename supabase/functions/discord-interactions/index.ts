@@ -54,7 +54,8 @@ serve(async (request) => {
   const durationMinutes = typeof duration === "number" ? duration : Number.parseInt(String(duration), 10);
   const format = typeof options.get("format") === "string" ? options.get("format") : "BO5";
   const notes = typeof options.get("notes") === "string" ? options.get("notes") : null;
-  if (!opponent || !timezone || !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(startsAt) || !Number.isInteger(durationMinutes)) {
+  const parsedStartsAt = new Date(startsAt);
+  if (!opponent || !timezone || !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(startsAt) || Number.isNaN(parsedStartsAt.getTime()) || !Number.isInteger(durationMinutes)) {
     return ephemeral("Use the required opponent, timezone, ISO start time with an offset, and duration.");
   }
 
@@ -68,7 +69,7 @@ serve(async (request) => {
     p_guild_id: interaction.guild_id,
     p_role_ids: roleIds,
     p_opponent_name: opponent,
-    p_starts_at: new Date(startsAt).toISOString(),
+    p_starts_at: parsedStartsAt.toISOString(),
     p_timezone: timezone,
     p_duration_minutes: durationMinutes,
     p_format: format,

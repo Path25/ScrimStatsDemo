@@ -15,6 +15,9 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.ok(source.indexOf("await verified(request, rawBody)") < source.indexOf("JSON.parse(rawBody)"));
   assert.match(source, /try \{\s+parsed = JSON\.parse\(rawBody\);\s+\} catch \{\s+return ephemeral\("This interaction is not available\."\);\s+\}/);
   assert.match(source, /typeof parsed !== "object" \|\| Array\.isArray\(parsed\)/);
+  assert.match(source, /const parsedStartsAt = new Date\(startsAt\);/);
+  assert.match(source, /Number\.isNaN\(parsedStartsAt\.getTime\(\)\)/);
+  assert.match(source, /p_starts_at: parsedStartsAt\.toISOString\(\)/);
   assert.match(source, /interaction\.type === 1/);
   assert.match(source, /command\.name !== "scrim"/);
   assert.match(source, /flags: 64/);

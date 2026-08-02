@@ -31,7 +31,14 @@ serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
   const rawBody = await request.text();
   if (!(await verified(request, rawBody))) return json({ error: "Invalid request signature." }, 401);
-  const interaction = JSON.parse(rawBody) as Record<string, unknown>;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawBody);
+  } catch {
+    return ephemeral("This interaction is not available.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return ephemeral("This interaction is not available.");
+  const interaction = parsed as Record<string, unknown>;
   if (interaction.type === 1) return json({ type: 1 });
   if (interaction.type !== 2 || !snowflake(interaction.id) || !snowflake(interaction.guild_id)) return ephemeral("This interaction is not available.");
 

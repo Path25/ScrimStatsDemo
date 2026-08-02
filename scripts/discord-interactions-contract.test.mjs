@@ -13,6 +13,8 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.match(source, /name: "Ed25519"/);
   assert.match(source, /if \(!\(await verified\(request, rawBody\)\)\) return json/);
   assert.ok(source.indexOf("await verified(request, rawBody)") < source.indexOf("JSON.parse(rawBody)"));
+  assert.match(source, /try \{\s+parsed = JSON\.parse\(rawBody\);\s+\} catch \{\s+return ephemeral\("This interaction is not available\."\);\s+\}/);
+  assert.match(source, /typeof parsed !== "object" \|\| Array\.isArray\(parsed\)/);
   assert.match(source, /interaction\.type === 1/);
   assert.match(source, /command\.name !== "scrim"/);
   assert.match(source, /flags: 64/);

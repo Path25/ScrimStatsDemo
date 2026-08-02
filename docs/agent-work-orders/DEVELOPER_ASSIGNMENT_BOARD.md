@@ -12,7 +12,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | QA and Release Auditor | Commit `2d5072a`; migration `20260802173000`; deployed `discord-config` v6, `discord-roles` v1, and `discord-interactions` v1. | Separate Theo approval for private-server endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, and isolated invocation. Audit signature, role, tenant, replay, overlap, and outbox matrix. |
+| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | QA and Release Auditor | Commits `2d5072a`, `a56a387`; migration `20260802173000`; `discord-interactions` v2 safely handles signed malformed JSON. | Separate Theo approval for private-server endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, and isolated invocation. Audit signature, role, tenant, replay, overlap, and outbox matrix. |
 
 ## In Progress
 

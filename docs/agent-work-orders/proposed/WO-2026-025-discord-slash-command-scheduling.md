@@ -132,3 +132,43 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 - 2026-08-02 - Hosted schema verification: `discord_permitted_roles` and `discord_interaction_receipts` exist. `authenticated` cannot execute `create_discord_scrim_block`; `service_role` can. The deployed Functions are `discord-config` (version 6), `discord-roles` (version 1), and `discord-interactions` (version 1).
 - 2026-08-02 - Security Advisor was run at warning level. It retains the documented project-wide legacy `SECURITY DEFINER` and leaked-password-protection warnings; the new service-only creation RPC is not among authenticated-callable functions.
 - **Highest evidence achieved:** Hosted schema and Function deployment
+
+## Developer QA-correction response - 2026-08-02
+
+- QA finding accepted: a validly signed malformed JSON payload could reach an unhandled parse failure.
+- Commit `a56a387` guards parsing after signature verification. Malformed JSON, `null`, arrays, and other non-object JSON now return the existing ephemeral `This interaction is not available.` response before any tenant lookup or mutation.
+- The focused regression contract passed with the full Discord contract set (9/9), ESLint zero warnings, TypeScript, and `git diff --check`.
+- `discord-interactions` was deployed as hosted Function version 2 with `verify_jwt=false`; Discord Ed25519 verification remains the required public-endpoint authentication boundary. No endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, or provider invocation was configured.
+
+## Independent QA and release audit - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The source and recorded hosted deployment support a controlled private-server QA stage, not release. Endpoint configuration, Discord command registration, signed provider invocation, and the two-tenant authorization/idempotency matrix remain approval-gated and unverified. A contained malformed-payload response defect should be corrected before that stage.
+
+### 2. What was verified
+
+- **Implemented and locally tested:** Commit `2d5072a` includes the interaction Function, role configuration Function, migration `20260802173000_discord_interaction_scheduling.sql`, and focused contracts. Independent execution of `discord-interactions-contract.test.mjs` and `discord-elite-contract.test.mjs` passed 9/9.
+- **Source security review:** `discord-interactions` requires an Ed25519 signature over the raw request before JSON parsing or tenant lookup; it accepts only PING and `/scrim`. Its creation call reaches a service-role-only RPC with fixed search path, Elite plus live/enabled module, matching active guild, configured permitted role, receipt replay, advisory lock, and overlap checks. Browser role discovery/configuration Functions require a validated JWT plus owner/admin membership and server-side entitlement.
+- **Recorded hosted evidence:** the work order records deployed `discord-config` v6, `discord-roles` v1, and `discord-interactions` v1; hosted tables/RLS/grants were inspected and the service-only creation RPC was not authenticated-callable.
+- **Authenticated browser check:** the staging owner workspace rendered the Discord integration as `Setup required` with no connection active and no browser warnings/errors. QA did not connect a server, load roles, register a command, or invoke the endpoint.
+
+### 3. Blocking issues
+
+- **Blocking:** No approved isolated Discord server, endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, or signed PING/`/scrim` invocation exists. The provider-to-ScrimStats path, canonical-block count, receipt replay, outbox count, and denial matrix are therefore not hosted-verified.
+- **Blocking:** No controlled two-tenant role matrix exists for owner/admin/member/viewer, permitted/unpermitted Discord roles, Free/Pro, disabled/revoked module, wrong guild, and no-workspace cases.
+
+### 4. Important risks
+
+- **Important:** After signature verification, `JSON.parse(rawBody)` is not caught. A validly signed malformed payload would cause an unhandled Function failure rather than a safe provider response; it should return an ephemeral unavailable response and create no data.
+- **Important:** The browser's `Setup required` state proves only that this selected workspace has no active installation. It does not establish that the public endpoint is unconfigured, that no other tenant is enabled, or that the deployed Function has the expected provider secret.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Deployed Function revision and secrets/configuration; valid/invalid signed PING; permitted `/scrim`; replay, wrong-guild, missing-role, Free/Pro, disabled/revoked, malformed-signature, malformed-payload, and overlap denial; exact canonical/outbox row counts; owner/admin configuration and member/viewer/cross-tenant browser/RPC denials; dated hosted Security Advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** catch malformed signed JSON in `discord-interactions` and return the same safe ephemeral unavailable response; add a focused regression contract. Keep the endpoint otherwise unchanged.
+2. **Theo:** after that local fix is reviewed, explicitly approve one non-customer private Discord server, endpoint URL/public key configuration, command registration, and a bounded test invocation. This approval must name the isolated workspace and recovery/cleanup boundary.
+3. **QA:** then run the signed provider and two-tenant role/replay/overlap/outbox matrix, recording Function version and redacted request IDs. Do not enable a customer guild or make a release claim.

@@ -116,6 +116,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         ? nextMemberships[0].id
         : null;
 
+    if (preferredTenantId && selectedTenantId === preferredTenantId) {
+      window.localStorage.setItem(activeTenantStorageKey, preferredTenantId);
+    }
+
     setMemberships(nextMemberships);
     setActiveTenantId(selectedTenantId);
     setError(null);

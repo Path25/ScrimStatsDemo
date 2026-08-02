@@ -13,7 +13,7 @@ const settings = read("src/pages/Settings.tsx");
 const tenantContext = read("src/contexts/TenantContext.tsx");
 const forgotPassword = read("src/pages/ForgotPassword.tsx");
 const migration = read("supabase/migrations/20260727111002_self_service_signup.sql");
-const additionalWorkspaceMigration = read("supabase/migrations/20260802140000_owner_additional_workspaces.sql");
+const additionalWorkspaceMigration = read("supabase/migrations/20260802150008_owner_additional_workspaces.sql");
 const supabaseConfig = read("supabase/config.toml");
 
 test("public launch entry points lead to self-service signup", () => {
@@ -76,4 +76,7 @@ test("additional workspace provisioning remains owner-only, Free, and independen
   assert.match(settings, /Manage team workspaces/);
   assert.match(tenantContext, /refreshTenant: \(preferredTenantId\?: string\)/);
   assert.match(tenantContext, /const storedTenantId = preferredTenantId \|\| window\.localStorage\.getItem/);
+  assert.match(tenantContext, /window\.localStorage\.setItem\(activeTenantStorageKey, preferredTenantId\)/);
+  assert.match(workspaces, /isLoading: tenantLoading/);
+  assert.match(workspaces, /if \(isLoading \|\| tenantLoading\)/);
 });

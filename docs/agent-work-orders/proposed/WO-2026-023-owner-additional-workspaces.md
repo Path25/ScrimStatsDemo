@@ -130,3 +130,75 @@ Multi-team organisations are within the target buyer profile. The current one-wo
 - Advisor: the WO-023-specific security warning is the expected authenticated-callable SECURITY DEFINER classification. Its direct verified-auth/owner predicate, fixed search path, and minimal execute grant were reviewed; no unrelated advisory findings were changed by this migration.
 - Not performed: authenticated browser role matrix, direct-RPC role matrix, or staged frontend deployment. The supplied controlled accounts each have at least one owner membership, so they cannot prove the member/admin/viewer-only denial case; a controlled member-only and no-workspace account are still required.
 - **Highest evidence achieved:** Hosted migration/function/grant inspection plus local validation.
+
+## Independent QA audit - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The owner-only RPC design is defensible in source and the staging workspace-management UI is reachable, but no authorised isolated creation or direct role-denial matrix has exercised the deployed boundary.
+
+### 2. What was verified
+
+- **Local:** `node --test scripts/self-service-signup-contract.test.mjs` passed 5/5.
+- **Source:** `create_self_service_workspace` requires `auth.uid()`, confirmed email, and—where memberships already exist—at least one server-side `owner` membership. It creates a fresh `Free` tenant and only a new owner membership; the function has a fixed empty search path and direct execution is revoked from `PUBLIC`/`anon`.
+- **Hosted browser:** `/workspaces` is reachable on staging. The supplied viewer session also owns a different workspace, so its displayed `Create another workspace` link matches the approved any-owner rule and is not a viewer-only allow result. No creation form was opened or submitted.
+
+### 3. Blocking issues
+
+- **Blocking:** No approved isolated owner workspace-creation exercise exists. Until one runs, new-tenant Free/module/billing state, switching after creation, funnel behaviour, and independence from the source workspace are unproved.
+- **Blocking:** No member-only, admin-only, viewer-only, or no-workspace account is available for direct RPC and browser denial checks. The supplied viewer is not viewer-only because it owns another workspace.
+
+### 4. Important risks
+
+- **Important:** The work-order evidence says frontend deployment is pending, but the staging `/workspaces` surface is visible. Core must record the deployed revision and deployment evidence rather than leave these conflicting statements.
+- **Important:** The repository migration filename is `20260802140000_owner_additional_workspaces.sql`, while the recorded hosted migration is `20260802150008_owner_additional_workspaces`. Reconcile the deployed migration-history version and exact SQL before further promotion; do not assume filename/source parity.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Owner creation of a second Free workspace; all new module/entitlement rows; Stripe fields absent; empty roster/settings/integrations; source workspace unchanged; workspace switch persistence; `workspace_created` funnel event; direct RPC denial for non-owner-only and unauthenticated callers; RLS/advisor evidence against the exact deployed migration.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** explicitly approve one isolated, non-customer owner creation and its recovery/cleanup boundary, then provide controlled owner, member-only, admin-only, viewer-only, no-workspace, and second-tenant accounts.
+2. **Core Features Developer:** record the staging deployment revision and reconcile `20260802140000` versus `20260802150008` migration provenance before QA exercises the RPC.
+3. **QA:** execute the browser/direct-RPC matrix and issue a new verdict; do not create provider, billing, or customer data.
+
+## Authenticated owner-creation QA - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The approved isolated owner creation completed, but its post-create selection and workspace-management journey regress. This is a blocking workflow defect, not a failed authorization boundary.
+
+### 2. What was verified
+
+- **Hosted owner creation:** QA created one clearly labelled isolated workspace, `WO-023 QA Additional 2026-08-02`, through the staging owner flow. It initially opened as the new workspace with the creator as owner, an empty Overview, zero scheduled/completed activity, and no browser warnings/errors.
+- **Isolation observed at initial load:** the newly created Overview contained no source-workspace scrim, schedule, or coaching data.
+- **Source diagnosis:** `CreateWorkspace` calls `refreshTenant(createdWorkspace.tenant_id)`, which selects the returned tenant only for that refresh. `Workspaces` does not wait for `TenantContext.isLoading` before redirecting when `memberships` is initially empty.
+
+### 3. Blocking issues
+
+- **Blocking — active-tenant regression:** after the successful creation, the next navigation loaded a previously selected viewer workspace instead of retaining the returned new owner workspace. This risks placing an owner into the wrong tenant immediately after provisioning.
+- **Blocking — workspace-management race:** a subsequent direct `/workspaces` navigation redirected to `/create-workspace` while the membership query was loading. Once the context later had memberships, the form labelled itself `New independent workspace`, confirming this was not a no-membership account. The workspace picker is therefore unreliable after creation.
+
+### 4. Important risks
+
+- **Important:** The fresh workspace exists as an intentional QA fixture. It must remain isolated and must not receive provider credentials, billing, invitations, or operational data while the defect is repaired.
+- **Important:** The defect prevents completing the required Free billing/module, switch-persistence, source-workspace-unchanged, and funnel-event checks from the intended post-create tenant. No browser-only conclusion should override the server-side tenant boundary.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Persisted active selection of the returned tenant; workspace picker after tenant refresh; new tenant's Billing/Settings module state; source workspace unchanged after a stable switch; `workspace_created` funnel event; direct member-only/admin-only/viewer-only/no-workspace RPC denial; and migration-version provenance.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** fix the active-tenant persistence/selection handoff after successful creation and make `Workspaces` wait for tenant loading before any no-membership redirect. Keep the change scoped away from WO-030's `DashboardLayout` work and do not alter the owner-only RPC without a separate security review.
+2. **Core Features Developer:** provide a staging revision and a focused regression test covering creation → new workspace Overview → Settings → `/workspaces` picker → source-workspace switch.
+3. **QA:** rerun the owner creation and role/tenant matrix using the existing QA fixture; do not create additional workspaces until the regression is corrected.
+
+## Core regression remediation - 2026-08-02
+
+- `TenantContext` now persists the server-confirmed `preferredTenantId` after the refreshed membership query contains it. A later route remount therefore retains the newly created workspace instead of restoring an older browser selection.
+- `Workspaces` now waits for both Auth and TenantContext loading before it evaluates the no-membership redirect, preventing the observed `/workspaces` to `/create-workspace` race.
+- Local migration provenance now matches the hosted migration record: `20260802150008_owner_additional_workspaces.sql`. This is a source-file rename only; no new database SQL was applied.
+- Local validation passed: focused provisioning contract (5/5), ESLint zero warnings, TypeScript, production Vite build, and bundle budget.
+- **Pending:** Theo staging-deployment approval, then QA rerun using the existing isolated workspace fixture. No additional workspace, provider, billing, or customer-data action is authorised by this remediation.

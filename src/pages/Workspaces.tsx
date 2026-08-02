@@ -4,11 +4,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Workspaces() {
-  const { memberships, chooseTenant } = useTenant();
+  const { memberships, chooseTenant, isLoading: tenantLoading } = useTenant();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  if (isLoading) return <main className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">Checking access...</main>;
+  if (isLoading || tenantLoading) return <main className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">Checking access...</main>;
   if (!user) return <Navigate to="/sign-in" replace />;
   if (!memberships.length) return <Navigate to="/create-workspace" replace />;
 

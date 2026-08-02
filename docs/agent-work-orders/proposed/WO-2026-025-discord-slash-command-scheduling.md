@@ -1,7 +1,7 @@
 # WO-2026-025 - Add tenant-safe Discord `/scrim` practice-block creation
 
 - **ID reservation:** [WO-2026-025 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Backlog
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -93,9 +93,9 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Signed endpoint and safe `/scrim` creation | Not implemented | Proposed | Outstanding |
-| Role, tenant, entitlement, replay, and overlap denial | Not implemented | Proposed | Outstanding |
-| Canonical block and bounded outbox behaviour | Not implemented | Proposed | Outstanding |
+| Signed endpoint and safe `/scrim` creation | Source, migration, and focused contracts | Local source validation | Implemented; hosted deployment/configuration outstanding |
+| Role, tenant, entitlement, replay, and overlap denial | Service-only database wrapper, RLS/grants, and focused contracts | Local source validation | Implemented; hosted two-tenant verification outstanding |
+| Canonical block and bounded outbox behaviour | Canonical `scrims` insert with existing trigger path and focused contract | Local source validation | Implemented; hosted database verification outstanding |
 
 ### Final verdict
 
@@ -107,7 +107,7 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Finish WO-2026-001 outbound-status correction | Core Features Developer / QA | WO-001 developer and QA handoff | Open |
-| Implement secure interaction path | Core Features Developer | PR/commit and local validation | Open |
+| Implement secure interaction path | Core Features Developer | Commit and local validation | In progress — source validation complete; deployment not approved |
 | Configure/test endpoint and command | Theo / QA | Explicit approval, hosted test evidence | Open |
 
 ### Theo approval record
@@ -124,5 +124,8 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 
 ## Implementation and review evidence
 
-- WO-2026-001 QA verified no `discord-interactions` Function, interaction receipt table, Discord-role access model, or command-configuration UI currently exists.
-- **Highest evidence achieved:** Proposed
+- 2026-08-02 - Theo reconfirmed implementation approval when dispatching WO-025. External configuration, command registration, provider invocation, migration application, and release remain separately gated.
+- 2026-08-02 - Added source-only `discord-interactions` and `discord-roles` Functions, a service-only `create_discord_scrim_block` wrapper, permitted-role and receipt tables, explicit RLS/grants, and owner/admin role configuration in the Discord integration panel. The interaction handler verifies Discord Ed25519 signatures over the raw request before parsing or lookup; only a signed PING or `/scrim` is supported.
+- 2026-08-02 - The server wrapper rechecks Elite plus live/enabled Discord module, active installed guild, configured permitted role, replay receipt, and overlap under a tenant advisory lock before inserting one canonical `scrims` record. The existing `queue_scrim_integration_event` trigger remains the only outbound path.
+- 2026-08-02 - Local validation: focused Discord contracts passed 9/9; ESLint zero warnings; TypeScript passed; production build and bundle budget passed; `git diff --check` passed. The local Supabase CLI is not present, so migration lint and Advisor review remain hosted verification tasks.
+- **Highest evidence achieved:** Local source validation

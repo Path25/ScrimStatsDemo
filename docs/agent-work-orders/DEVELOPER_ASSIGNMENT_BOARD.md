@@ -20,6 +20,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | [WO-2026-012](proposed/WO-2026-012-paid-buyer-standard-and-conversion-thesis.md) | PM | Define and evidence the Pro buyer's recurring value loop before hard-launch claims or packaging changes. | Do not change prices, plan claims, entitlements, or public copy; coordinate with WO-003, WO-028, and WO-031. |
 | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) | PM | Manual-first activation procedure and Message Ledger drafted; no send authorised. | Do not modify email, Auth, invitation, notification-worker, billing, or provisioning flows. |
 | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) | Core Features Developer | Shared-project migration applied and function/grants inspected; frontend deployment and controlled role/tenant matrix pending. | Do not overlap with WO-2026-030 `DashboardLayout` work or tenant-membership/RPC migrations. |
+| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | Core Features Developer | Source-only signed `/scrim` workflow: role configuration, RLS/grants, service-only canonical scheduling wrapper, and focused local validation. | Shared Discord configuration/UI/outbox/manifest; do not reopen WO-001. Hosted migration, deployment, endpoint configuration, command registration, and provider test are separately gated. |
 
 ## QA blocked — Theo or PM input required
 
@@ -36,7 +37,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | Work order | Proposed lane / owner | Why it is not ready | Collision risk |
 |---|---|---|---|
 | [WO-2026-013](proposed/WO-2026-013-desktop-live-integration-direction.md) | Core Features Developer | WO-2026-009 is complete under Theo's accepted-risk decision; a desktop direction still needs selecting | Collector/native integration strategy; preserve the completed Collector entitlement boundary. |
-| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | Core Features Developer | WO-2026-001 is conditionally done; reconfirm the dated implementation approval before dispatching this separate L/high-risk inbound provider feature. | Shared Discord helpers/UI/outbox/manifest; do not overlap with any reopened Discord work. |
 
 ## Fast Lane
 

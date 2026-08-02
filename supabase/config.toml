@@ -67,6 +67,12 @@ verify_jwt = true
 [functions.discord-config]
 verify_jwt = true
 
+[functions.discord-roles]
+verify_jwt = true
+
+[functions.discord-interactions]
+verify_jwt = false
+
 [functions.discord-schedule-reminders]
 verify_jwt = false
 

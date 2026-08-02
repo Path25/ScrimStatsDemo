@@ -21,9 +21,22 @@ serve(async (request) => {
   const { data: installation } = await db.from("discord_installations").select("id, guild_id, guild_name, status, installed_at").eq("tenant_id", tenantId).maybeSingle();
   if (action === "status") {
     const { data: subscriptions } = await db.from("discord_channel_subscriptions").select("channel_id, channel_name, event_type, enabled").eq("tenant_id", tenantId).eq("enabled", true);
-    return json({ installation: installation && installation.status === "active" ? installation : null, subscriptions: subscriptions || [] });
+    const { data: permittedRoles } = await db.from("discord_permitted_roles").select("role_id, role_name").eq("tenant_id", tenantId).order("role_name");
+    return json({ installation: installation && installation.status === "active" ? installation : null, subscriptions: subscriptions || [], permitted_roles: permittedRoles || [] });
   }
   if (!installation || installation.status !== "active") return json({ error: "No active Discord installation." }, 404);
+  if (action === "set_permitted_roles") {
+    const roles = Array.isArray(body.roles)
+      ? body.roles.filter((role): role is { id: string; name?: string } => Boolean(role) && typeof role.id === "string" && (typeof role.name === "string" || typeof role.name === "undefined"))
+      : [];
+    const { data, error } = await db.rpc("replace_discord_permitted_roles", {
+      p_tenant_id: tenantId,
+      p_actor_user_id: user.id,
+      p_roles: roles.map((role) => ({ id: role.id, name: typeof role.name === "string" ? role.name.slice(0, 100) : null })),
+    });
+    if (error) return json({ error: "Discord command roles could not be saved." }, 400);
+    return json({ permitted_roles: data || [] });
+  }
   if (action === "configure") {
     const channelId = typeof body.channel_id === "string" ? body.channel_id : "";
     const channelName = typeof body.channel_name === "string" ? body.channel_name.slice(0, 100) : "";

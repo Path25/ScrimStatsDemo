@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataSurface } from "@/components/workspace/DataSurface";
 import { WorkspaceState } from "@/components/workspace/WorkspaceState";
-import { discordEventTypes, type DiscordChannel, type DiscordEventType, useDiscordIntegration } from "@/hooks/useDiscordIntegration";
+import { discordEventTypes, type DiscordChannel, type DiscordEventType, type DiscordRole, useDiscordIntegration } from "@/hooks/useDiscordIntegration";
 
 const eventLabels: Record<DiscordEventType, string> = {
   schedule_created: "New practice blocks",
@@ -16,7 +16,7 @@ const eventLabels: Record<DiscordEventType, string> = {
   practice_reminder: "Practice reminders",
 };
 
-function toggle(events: DiscordEventType[], event: DiscordEventType, checked: boolean) {
+function toggle<T extends string>(events: T[], event: T, checked: boolean) {
   return checked ? [...new Set([...events, event])] : events.filter((value) => value !== event);
 }
 
@@ -25,9 +25,12 @@ export function DiscordScheduleIntegration() {
   const [channels, setChannels] = useState<DiscordChannel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState("");
   const [events, setEvents] = useState<DiscordEventType[]>([]);
+  const [roles, setRoles] = useState<DiscordRole[]>([]);
+  const [permittedRoleIds, setPermittedRoleIds] = useState<string[]>([]);
   const installation = discord.data?.installation;
   const subscriptions = useMemo(() => discord.data?.subscriptions ?? [], [discord.data?.subscriptions]);
   const deliveryConfigured = subscriptions.length > 0;
+  const permittedRoles = useMemo(() => discord.data?.permitted_roles ?? [], [discord.data?.permitted_roles]);
 
   useEffect(() => {
     if (!subscriptions.length) return;
@@ -36,7 +39,10 @@ export function DiscordScheduleIntegration() {
     setEvents(subscriptions.filter((subscription) => subscription.channel_id === channelId).map((subscription) => subscription.event_type));
   }, [installation?.id, subscriptions]);
 
+  useEffect(() => setPermittedRoleIds(permittedRoles.map((role) => role.role_id)), [installation?.id, permittedRoles]);
+
   const selectedChannel = useMemo(() => channels.find((channel) => channel.id === selectedChannelId), [channels, selectedChannelId]);
+  const loadRoles = async () => setRoles(await discord.loadRoles());
 
   if (discord.isLoading) return <WorkspaceState icon={Bot} title="Loading Discord delivery…" description="Checking this workspace's Discord connection." />;
   if (discord.error) return <WorkspaceState icon={ShieldAlert} title="Discord delivery unavailable" description="The Discord connection could not be checked. Try again, or contact support if the problem continues." />;
@@ -68,6 +74,7 @@ export function DiscordScheduleIntegration() {
         <div className="grid gap-5 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--workspace-rule)] pb-5"><div className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[var(--workspace-success)]" aria-hidden="true" /><div><p className="font-medium">{installation.guild_name || "Connected Discord server"}</p><p className="mt-1 text-xs text-[var(--workspace-subtle)]">{deliveryConfigured ? "Schedule prompts are limited to your selected channels." : "Server connected — choose a channel and prompts before Discord delivery starts."}</p></div></div><Button variant="outline" disabled={discord.isMutating} onClick={() => void discord.disconnect().catch(() => undefined)}><Trash2 className="h-4 w-4" />Disconnect</Button></div>
           <div className="grid gap-3"><div className="flex flex-wrap items-center justify-between gap-2"><Label htmlFor="discord-channel">Delivery channel</Label><Button variant="ghost" size="sm" disabled={discord.isMutating} onClick={() => void loadChannels().catch(() => undefined)}><RefreshCw className="h-4 w-4" />Refresh channels</Button></div><Select value={selectedChannelId} onValueChange={setSelectedChannelId} disabled={discord.isMutating || !channels.length}><SelectTrigger id="discord-channel"><SelectValue placeholder={channels.length ? "Choose a Discord channel" : "Refresh channels to choose one"} /></SelectTrigger><SelectContent>{channels.map((channel) => <SelectItem key={channel.id} value={channel.id}>#{channel.name}</SelectItem>)}</SelectContent></Select>{!channels.length && <p className="text-xs text-[var(--workspace-subtle)]">Load the channels available to the connected Discord bot before saving delivery prompts.</p>}</div>
+          <fieldset className="grid gap-3 border-t border-[var(--workspace-rule)] pt-5"><div className="flex flex-wrap items-center justify-between gap-2"><legend className="text-sm font-medium">Who can use /scrim</legend><Button variant="ghost" size="sm" disabled={discord.isMutating} onClick={() => void loadRoles().catch(() => undefined)}><RefreshCw className="h-4 w-4" />Load Discord roles</Button></div><p className="text-sm leading-6 text-[var(--workspace-muted)]">Only members with a selected Discord role can create a practice block. Clear every role and save to disable the command. The command remains unavailable until Discord configuration and release approval are complete.</p>{roles.length > 0 ? <div className="grid max-h-56 gap-2 overflow-y-auto sm:grid-cols-2">{roles.map((role) => <label key={role.id} className="flex min-h-10 items-center gap-3 border border-[var(--workspace-rule)] px-3 text-sm"><Checkbox checked={permittedRoleIds.includes(role.id)} disabled={discord.isMutating} onCheckedChange={(checked) => setPermittedRoleIds((current) => toggle(current, role.id, checked === true))} />{role.name}</label>)}</div> : <p className="text-xs text-[var(--workspace-subtle)]">Load roles to set the permitted staff group. Saved roles: {permittedRoles.length || "none"}.</p>}<div><Button disabled={discord.isMutating || roles.length === 0} onClick={() => void discord.configurePermittedRoles(roles.filter((role) => permittedRoleIds.includes(role.id)).map(({ id, name }) => ({ id, name }))).catch(() => undefined)}><ShieldAlert className="h-4 w-4" />Save /scrim roles</Button></div></fieldset>
           <fieldset className="grid gap-3"><legend className="text-sm font-medium">Send prompts for</legend><div className="grid gap-2 sm:grid-cols-2">{discordEventTypes.map((event) => <label key={event} className="flex min-h-10 items-center gap-3 border border-[var(--workspace-rule)] px-3 text-sm"><Checkbox checked={events.includes(event)} disabled={discord.isMutating} onCheckedChange={(checked) => setEvents((current) => toggle(current, event, checked === true))} />{eventLabels[event]}</label>)}</div></fieldset>
           <div className="flex flex-wrap items-center gap-3"><Button disabled={discord.isMutating || !selectedChannel || events.length === 0} onClick={() => selectedChannel && void discord.configure({ channelId: selectedChannel.id, channelName: selectedChannel.name, eventTypes: events }).catch(() => undefined)}><MessageSquareText className="h-4 w-4" />Save schedule prompts</Button>{subscriptions.length > 0 && <p className="text-xs text-[var(--workspace-subtle)]">{subscriptions.length} selected prompt{subscriptions.length === 1 ? "" : "s"} active.</p>}</div>
           <div className="flex gap-3 border-l-2 border-[var(--workspace-rule-strong)] pl-4 text-sm leading-6 text-[var(--workspace-muted)]"><Clock3 className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />Practice reminders and schedule changes link teammates back to ScrimStats. Message delivery is tracked separately from this configuration.</div>

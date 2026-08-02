@@ -8,9 +8,11 @@ export const discordEventTypes = ["schedule_created", "schedule_changed", "sched
 export type DiscordEventType = typeof discordEventTypes[number];
 
 export type DiscordChannel = { id: string; name: string; position: number };
+export type DiscordRole = { id: string; name: string; position: number };
 export type DiscordStatus = {
   installation: { id: string; guild_id: string; guild_name: string | null; status: string; installed_at: string | null } | null;
   subscriptions: Array<{ channel_id: string; channel_name: string | null; event_type: DiscordEventType; enabled: boolean }>;
+  permitted_roles: Array<{ role_id: string; role_name: string | null }>;
 };
 
 function message(error: unknown, fallback: string) {
@@ -60,6 +62,18 @@ export function useDiscordIntegration() {
     onError: (error) => toast.error(message(error, "Discord channels could not be loaded.")),
   });
 
+  const roles = useMutation({
+    mutationFn: async () => {
+      if (!tenant?.id) throw new Error("A team workspace is required.");
+      const { data, error } = await supabase.functions.invoke<{ roles?: DiscordRole[] }>("discord-roles", {
+        body: { tenant_id: tenant.id },
+      });
+      if (error) throw error;
+      return data?.roles || [];
+    },
+    onError: (error) => toast.error(message(error, "Discord roles could not be loaded.")),
+  });
+
   const configure = useMutation({
     mutationFn: async (input: { channelId: string; channelName: string; eventTypes: DiscordEventType[] }) => {
       if (!tenant?.id) throw new Error("A team workspace is required.");
@@ -90,6 +104,21 @@ export function useDiscordIntegration() {
     onError: (error) => toast.error(message(error, "Discord delivery could not be disconnected.")),
   });
 
+  const configurePermittedRoles = useMutation({
+    mutationFn: async (input: Array<{ id: string; name: string }>) => {
+      if (!tenant?.id) throw new Error("A team workspace is required.");
+      const { error } = await supabase.functions.invoke("discord-config", {
+        body: { tenant_id: tenant.id, action: "set_permitted_roles", roles: input },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Discord command roles saved.");
+    },
+    onError: (error) => toast.error(message(error, "Discord command roles could not be saved.")),
+  });
+
   return {
     ...status,
     beginInstall: async () => {
@@ -97,8 +126,10 @@ export function useDiscordIntegration() {
       window.location.assign(authorizeUrl);
     },
     loadChannels: () => channels.mutateAsync(),
+    loadRoles: () => roles.mutateAsync(),
     configure: (input: { channelId: string; channelName: string; eventTypes: DiscordEventType[] }) => configure.mutateAsync(input),
+    configurePermittedRoles: (input: Array<{ id: string; name: string }>) => configurePermittedRoles.mutateAsync(input),
     disconnect: () => disconnect.mutateAsync(),
-    isMutating: install.isPending || channels.isPending || configure.isPending || disconnect.isPending,
+    isMutating: install.isPending || channels.isPending || roles.isPending || configure.isPending || configurePermittedRoles.isPending || disconnect.isPending,
   };
 }

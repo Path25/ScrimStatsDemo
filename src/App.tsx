@@ -106,7 +106,7 @@ function AppWorkspace() {
             <Route path="/actions" element={<CoachingActions />} />
             <Route path="/collector" element={<PlanGate minimum="pro" feature="collector capture"><CollectorWorkspace /></PlanGate>} />
             <Route path="/analytics" element={<PlanGate minimum="pro" feature="team analytics" preview={<AnalyticsPlanPreview />}><Analytics /></PlanGate>} />
-            <Route path="/soloq" element={<PlanGate minimum="pro" feature="Solo Queue tracking"><SoloQTracker /></PlanGate>} />
+            <Route path="/soloq" element={<SoloQTracker />} />
             <Route path="/scouting" element={<PlanGate minimum="pro" feature="opponent scouting"><Scouting /></PlanGate>} />
             <Route path="/scouting/:opponentId" element={<PlanGate minimum="pro" feature="opponent scouting"><ScoutingTeamReport /></PlanGate>} />
             <Route path="/draft" element={<PlanGate minimum="pro" feature="the Draft workspace"><Draft /></PlanGate>} />

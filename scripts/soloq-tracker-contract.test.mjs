@@ -44,6 +44,7 @@ test("Riot sync uses workspace credentials, fetches only uncached details, and h
   assert.match(sync, /job\.attempts < 3/);
   assert.match(sync, /onConflict: 'player_id,match_id'/);
   assert.match(sync, /match_context: normalizedContext\(match\)/);
+  assert.match(sync, /managerMembership\(user\.id, player\.tenant_id\)/);
 });
 
 test("legacy API-key accepting endpoint is retired", () => {

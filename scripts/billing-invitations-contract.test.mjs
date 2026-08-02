@@ -33,9 +33,10 @@ test("Stripe webhook verifies signatures and records idempotent events", () => {
   assert.match(source, /elite: "price_1RWKZeCiOpn9NlRMYfi1hMeJ"/);
 });
 
-test("paid product routes have explicit plan gates", () => {
+test("Solo Queue is available on Free while paid product routes retain their plan gates", () => {
   const source = read("src/App.tsx");
-  assert.match(source, /minimum="pro" feature="Solo Queue tracking"/);
+  assert.match(source, /path="\/soloq" element={<SoloQTracker\s*\/>}/);
+  assert.doesNotMatch(source, /path="\/soloq" element={<PlanGate/);
   assert.match(source, /minimum="pro" feature="team analytics"/);
   assert.match(source, /minimum="pro" feature="collector capture"/);
   assert.match(source, /path="\/integrations" element={<Integrations/);
@@ -62,6 +63,18 @@ test("billing presents the exact configured monthly prices", () => {
   const source = read("src/components/billing/BillingPanel.tsx");
   assert.match(source, /id: "pro", price: "\$9\.99"/);
   assert.match(source, /id: "elite", price: "\$19\.99"/);
+  assert.match(source, /Scrim blocks, coaching actions, and Solo Queue/);
+  assert.doesNotMatch(source, /Solo Queue and team analytics/);
+});
+
+test("Solo Queue entitlement is live for every plan and reconciles existing workspaces", () => {
+  const migration = read("supabase/migrations/20260801111044_enable_free_soloq_entitlement.sql");
+  assert.match(migration, /\(new\.id, 'soloq', 'live', true, now\(\)\)/);
+  assert.match(migration, /select tenant\.id, 'soloq', 'live', true, now\(\)\s+from public\.tenants tenant/s);
+  assert.match(migration, /on conflict \(tenant_id, module_key\) do update\s+set release_state = excluded\.release_state,\s+is_enabled = excluded\.is_enabled/s);
+  assert.match(migration, /security definer set search_path = ''/);
+  assert.match(migration, /revoke all on function public\.sync_tenant_plan_entitlements\(\) from public, anon, authenticated/);
+  assert.match(migration, /grant execute on function public\.sync_tenant_plan_entitlements\(\) to service_role/);
 });
 
 test("billing permits only production and explicit local development origins", () => {

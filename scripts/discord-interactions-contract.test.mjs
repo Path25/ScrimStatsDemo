@@ -15,13 +15,40 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.ok(source.indexOf("await verified(request, rawBody)") < source.indexOf("JSON.parse(rawBody)"));
   assert.match(source, /try \{\s+parsed = JSON\.parse\(rawBody\);\s+\} catch \{\s+return ephemeral\("This interaction is not available\."\);\s+\}/);
   assert.match(source, /typeof parsed !== "object" \|\| Array\.isArray\(parsed\)/);
-  assert.match(source, /const parsedStartsAt = new Date\(startsAt\);/);
-  assert.match(source, /Number\.isNaN\(parsedStartsAt\.getTime\(\)\)/);
+  assert.match(source, /options\.get\("start_date"\)/);
+  assert.match(source, /options\.get\("start_time"\)/);
+  assert.match(source, /function parseLocalStart\(startDate: string, startTime: string, timezone: string\)/);
+  assert.match(source, /timeZone: timezone/);
+  assert.match(source, /date YYYY-MM-DD, time HH:MM \(24-hour\)/);
   assert.match(source, /p_starts_at: parsedStartsAt\.toISOString\(\)/);
   assert.match(source, /interaction\.type === 1/);
   assert.match(source, /command\.name !== "scrim"/);
   assert.match(source, /flags: 64/);
   assert.match(config, /\[functions\.discord-interactions\]\s+verify_jwt = false/);
+});
+
+test("Discord /scrim provider payload uses explicit local start options", () => {
+  const source = read("supabase/functions/discord-interactions/index.ts");
+  const payload = {
+    type: 2,
+    id: "123456789012345678",
+    guild_id: "234567890123456789",
+    data: {
+      name: "scrim",
+      options: [
+        { name: "opponent", value: "Practice Opponent" },
+        { name: "start_date", value: "2026-08-03" },
+        { name: "start_time", value: "19:30" },
+        { name: "timezone", value: "Europe/London" },
+        { name: "duration_minutes", value: 120 },
+        { name: "format", value: "BO5" },
+      ],
+    },
+  };
+  assert.equal(payload.data.options.find((option) => option.name === "start_date")?.value, "2026-08-03");
+  assert.equal(payload.data.options.find((option) => option.name === "start_time")?.value, "19:30");
+  assert.equal(payload.data.options.find((option) => option.name === "duration_minutes")?.value, 120);
+  assert.doesNotMatch(source, /options\.get\("starts_at"\)/);
 });
 
 test("Discord interaction creation is service-only, tenant-safe, idempotent, and overlap-aware", () => {

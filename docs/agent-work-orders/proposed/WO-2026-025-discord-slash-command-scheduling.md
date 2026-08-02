@@ -2,7 +2,7 @@
 
 - **ID reservation:** [WO-2026-025 registry row](../WORK_ORDER_INDEX.md)
 - **Status:** Ready for QA
-- **Assigned owner:** Core Features Developer
+- **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
 - **Priority:** Medium
@@ -209,3 +209,101 @@ The malformed-JSON correction is implemented and locally verified, but a second 
 - Commit `cd52696` parses `starts_at` once, rejects `NaN` dates through the existing safe ephemeral validation response, and only calls `toISOString()` on the validated date. This remains before tenant lookup or mutation.
 - The focused Discord contracts passed 9/9 with the new real-date regression assertions; ESLint zero warnings, TypeScript, and `git diff --check` passed.
 - `discord-interactions` was deployed as hosted Function version 3 with `verify_jwt=false`. No endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, or provider invocation was configured.
+
+## Independent QA validation of date correction - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The narrow input-validation corrections are now locally verified and the work order is correctly Ready for QA. Release remains on hold because the external-provider and two-tenant authorization evidence has not been approved or performed.
+
+### 2. What was verified
+
+- **Correction:** Commit `cd52696` parses `starts_at` once, rejects an invalid timestamp with `Number.isNaN(parsedStartsAt.getTime())`, and calls `toISOString()` only after validation, before any tenant lookup or mutation.
+- **Tests:** Independent execution of `discord-interactions-contract.test.mjs` and `discord-elite-contract.test.mjs` passed 9/9. The source contract covers the real-date validation and validated serialization path.
+- **Recorded deployment:** Core records hosted `discord-interactions` Function version 3. This is a deployment handoff, not an independently invoked Discord interaction.
+
+### 3. Blocking issues
+
+- **Blocking:** No approved private Discord endpoint/public-key configuration, command registration, or isolated signed PING/`/scrim` invocation.
+- **Blocking:** No controlled two-tenant matrix proving role, guild, entitlement, replay, overlap, canonical-block, and outbox outcomes.
+
+### 4. Important risks
+
+- **Important:** The public endpoint has `verify_jwt=false` by design, so its deployed Discord Ed25519 signature boundary and secret configuration must be proven through an approved provider interaction before any availability claim.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Valid and invalid signed requests; all listed negative paths; exact canonical/outbox counts; owner/admin configuration and member/viewer/cross-tenant denial; and dated hosted Advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** if progressing this feature, explicitly approve one named non-customer private Discord server, endpoint/public-key configuration, command registration, and a bounded invocation/recovery plan.
+2. **QA:** run the full hosted provider and two-tenant matrix only within that approved boundary. No source change is indicated by this re-audit.
+
+## Private-server role configuration evidence - 2026-08-02
+
+- **Browser verified:** In staging, `fridayxiiiempire@gmail.com` selected workspace `clash` as owner. Its Discord integration showed active delivery to the private server `ScrimStats Integration Test` with four existing schedule prompt types.
+- **Approved configuration:** Theo explicitly approved `Test` as the sole Discord role permitted to use `/scrim` for `clash`. QA loaded the role from the connected server, selected it, and saved the configuration. The browser confirmed `Discord command roles saved.` and subsequently displayed `Test` as checked.
+- **Boundary preserved:** QA did not configure endpoint URL or `DISCORD_PUBLIC_KEY`, register a command, invoke PING or `/scrim`, create a practice block, change delivery prompts, or touch any other workspace. This is browser-verified role configuration, not provider-command or production-ready evidence.
+
+## Theo isolated provider-QA approval - 2026-08-02
+
+Theo approved the next stage for the non-customer `clash` staging workspace and private Discord server `ScrimStats Integration Test`: staging `DISCORD_PUBLIC_KEY` configuration, that server's Interactions Endpoint URL, private `/scrim` command registration, and the bounded QA invocation matrix. This approval excludes customer guilds/workspaces, production configuration, plan or entitlement changes, and any unapproved data beyond the single disposable QA practice-block/replay fixture.
+
+## Hosted Discord positive-path QA - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The first approved private-server `/scrim` invocation reached the signed interaction handler but failed its input validation and created no practice block. The accepted positive path is therefore not hosted-verified.
+
+### 2. What was verified
+
+- **Hosted provider path:** Theo configured the staging Function public key and Discord Interactions Endpoint URL, registered the guild-only command, and invoked `/scrim` once in `ScrimStats Integration Test` from the `clash` fixture using the configured `Test` role.
+- **Observed response:** Discord returned `Use the required opponent, timezone, ISO start time with an offset, and duration.` No duplicate invocation was made.
+- **Boundary:** No customer data was used. No canonical practice block, replay fixture, or deliberate overlap was created.
+
+### 3. Blocking issues
+
+- **Blocking:** The approved positive-path command did not create the required canonical practice block. Until Core reproduces the actual Discord option payload and corrects the command/handler contract, PING, role configuration, and source contracts do not establish usable `/scrim` scheduling.
+
+### 4. Important risks
+
+- **Important:** The single opaque ISO timestamp field is difficult to enter correctly in Discord and its generic validation response does not identify which field failed. Theo requested separate start-date and start-time inputs with explicit formats; this is the preferred corrective design, but it changes the registered command contract and must be implemented/tested coherently.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Successful canonical creation, receipt replay, wrong-guild/missing-role/Free-Pro/disabled/overlap denials, exact outbox count, and two-tenant role matrix. The original request payload and Function request ID must be recovered in redacted form before diagnosing the failure.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** inspect redacted deployed Function logs for this interaction and compare its actual `data.options` payload with the registered command schema. Reproduce with a contract that uses the real provider payload.
+2. **Core Features Developer:** replace `starts_at` with required `start_date` and `start_time` options, each with an explicit accepted format in its command description; parse/validate their combined timestamp server-side, preserving the existing signature, role, entitlement, replay, overlap, and canonical-scheduling boundary.
+3. **QA:** after the updated command is privately re-registered and deployed, rerun one isolated positive invocation before any replay or negative-path tests.
+
+## Developer provider-contract correction - 2026-08-02
+
+- The available hosted Edge Function logs record a signed `200` interaction and a separate `401` invalid-signature request, but this retained log feed contains only invocation metadata; it does not expose the prior request body or option values. No customer data was accessed.
+- The deployed Function was still the prior `starts_at` implementation despite the earlier handoff claim. The approved correction is now deployed as `discord-interactions` version 6 with `verify_jwt=false`; Discord Ed25519 verification remains the public-endpoint authentication boundary.
+- `/scrim` now requires the provider options `opponent`, `start_date` (`YYYY-MM-DD`), `start_time` (`HH:MM`, 24-hour), `timezone` (IANA name), and `duration_minutes` (15-720). The handler combines date/time server-side in the supplied timezone, rejects invalid calendar, clock, timezone, and non-existent local times before any tenant lookup, and passes the resulting UTC instant to the existing canonical RPC.
+- Signature verification, installed-guild lookup, Elite/live/enabled module enforcement, permitted-role check, receipt idempotency, overlap protection, canonical insertion, and the existing outbound trigger remain unchanged.
+- Local focused contracts passed 10/10 across `discord-interactions-contract.test.mjs` and `discord-elite-contract.test.mjs`; the added provider-payload fixture locks the named Discord options and numeric duration shape. `git diff --check` passed. Hosted deployment compiled successfully; provider invocation is not yet rerun.
+
+### Private guild command re-registration contract
+
+Register or update only the approved guild-only `/scrim` command in `ScrimStats Integration Test` with required options listed before optional options:
+
+1. `opponent` - String - `Opponent name`
+2. `start_date` - String - `Start date: YYYY-MM-DD`
+3. `start_time` - String - `Start time: HH:MM (24-hour)`
+4. `timezone` - String - `IANA timezone, e.g. Europe/London`
+5. `duration_minutes` - Integer - `Practice duration: 15-720 minutes`
+6. `format` - optional String - `Series format, e.g. BO5`
+7. `notes` - optional String - `Internal practice notes`
+
+This is private-test-server configuration only. Do not register a global command, change customer guilds, or use customer workspaces/data.
+
+### QA handoff
+
+1. Re-register the private guild command exactly with the contract above, then invoke it once as the already-permitted `Test` role in non-customer workspace `clash`, using an unoccupied future date/time.
+2. Record the Discord response, Function version/request ID, canonical `scrims` count, and eligible outbox-event count. A delivered Function version proves deployment; the command result and counts prove the workflow.
+3. If the positive path succeeds, proceed with the approved replay and denial matrix. If it fails, return the redacted `data.options` array and request ID to Core without repeating a mutation.

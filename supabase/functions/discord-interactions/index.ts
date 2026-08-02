@@ -27,6 +27,45 @@ function optionMap(data: Record<string, unknown>) {
   }));
 }
 
+function localParts(instant: Date, timezone: string) {
+  const values = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(instant);
+  const part = (type: string) => Number(values.find((value) => value.type === type)?.value);
+  return { year: part("year"), month: part("month"), day: part("day"), hour: part("hour"), minute: part("minute") };
+}
+
+function parseLocalStart(startDate: string, startTime: string, timezone: string) {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startDate);
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(startTime);
+  if (!dateMatch || !timeMatch) return null;
+
+  const [year, month, day] = dateMatch.slice(1).map(Number);
+  const [hour, minute] = timeMatch.slice(1).map(Number);
+  const intendedLocal = Date.UTC(year, month - 1, day, hour, minute);
+  const calendarDate = new Date(intendedLocal);
+  if (calendarDate.getUTCFullYear() !== year || calendarDate.getUTCMonth() !== month - 1 || calendarDate.getUTCDate() !== day || hour > 23 || minute > 59) return null;
+
+  try {
+    const offsetAt = (instant: Date) => {
+      const local = localParts(instant, timezone);
+      return (Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute) - instant.getTime()) / 60_000;
+    };
+    let instant = new Date(intendedLocal - offsetAt(new Date(intendedLocal)) * 60_000);
+    instant = new Date(intendedLocal - offsetAt(instant) * 60_000);
+    const resolved = localParts(instant, timezone);
+    return resolved.year === year && resolved.month === month && resolved.day === day && resolved.hour === hour && resolved.minute === minute ? instant : null;
+  } catch {
+    return null;
+  }
+}
+
 serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
   const rawBody = await request.text();
@@ -48,15 +87,16 @@ serve(async (request) => {
   const roleIds = Array.isArray(member.roles) ? member.roles.filter(snowflake) : [];
   const options = optionMap(command);
   const opponent = typeof options.get("opponent") === "string" ? options.get("opponent") : "";
-  const startsAt = typeof options.get("starts_at") === "string" ? options.get("starts_at") : "";
+  const startDate = typeof options.get("start_date") === "string" ? options.get("start_date") : "";
+  const startTime = typeof options.get("start_time") === "string" ? options.get("start_time") : "";
   const timezone = typeof options.get("timezone") === "string" ? options.get("timezone") : "";
   const duration = options.get("duration_minutes");
-  const durationMinutes = typeof duration === "number" ? duration : Number.parseInt(String(duration), 10);
+  const durationMinutes = typeof duration === "number" ? duration : typeof duration === "string" && /^\d+$/.test(duration) ? Number(duration) : Number.NaN;
   const format = typeof options.get("format") === "string" ? options.get("format") : "BO5";
   const notes = typeof options.get("notes") === "string" ? options.get("notes") : null;
-  const parsedStartsAt = new Date(startsAt);
-  if (!opponent || !timezone || !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(startsAt) || Number.isNaN(parsedStartsAt.getTime()) || !Number.isInteger(durationMinutes)) {
-    return ephemeral("Use the required opponent, timezone, ISO start time with an offset, and duration.");
+  const parsedStartsAt = parseLocalStart(startDate, startTime, timezone);
+  if (!opponent || !parsedStartsAt || !Number.isInteger(durationMinutes) || durationMinutes < 15 || durationMinutes > 720) {
+    return ephemeral("Use the required opponent, date YYYY-MM-DD, time HH:MM (24-hour), valid timezone, and duration.");
   }
 
   const db = serviceClient();

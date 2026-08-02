@@ -1,7 +1,7 @@
 # WO-2026-023 - Let workspace owners create additional independent workspaces
 
 - **ID reservation:** [WO-2026-023 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Backlog
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -89,36 +89,44 @@ Multi-team organisations are within the target buyer profile. The current one-wo
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Owner-only creation | Direct RPC and browser matrix | Hosted | Outstanding |
-| Tenant independence | Two-tenant data/billing/module inspection | Hosted | Outstanding |
-| Safe switching | Browser journey and selected-workspace state | Browser | Outstanding |
-| Function/RLS/grant safety | Migration review and Advisor output | Hosted | Outstanding |
+| Owner-only creation | Shared-project migration `20260802150008_owner_additional_workspaces` retains verified-auth checks and adds a direct owner-membership predicate; local contract test passes | Hosted migration / local | Pending hosted direct-RPC matrix |
+| Tenant independence | New RPC still inserts a new Free tenant and only a new owner membership; existing tenant/module/funnel triggers are unchanged | Source / local | Pending hosted two-tenant inspection |
+| Safe switching | `CreateWorkspace` refreshes with the returned tenant ID; owner Settings link opens workspace management | Source / local | Pending authenticated browser check |
+| Function/RLS/grant safety | Hosted function inspection confirms SECURITY DEFINER, fixed empty `search_path`, anon/public denied, authenticated execute only, and unchanged seeding/funnel triggers | Hosted | Advisor reviewed; role matrix pending |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Current server creation is intentionally single-membership; no reviewed multi-workspace boundary exists.
+- **Rationale:** Local implementation is ready for an approved hosted migration and role/tenant verification matrix; no hosted proof exists yet.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Theo implementation approval | Theo | Written approval | Open |
-| Owner-only server design | Core Features Developer / QA | Reviewed RPC, grants, RLS | Open |
-| Hosted multi-tenant matrix | QA | Authenticated evidence | Open |
+| Theo implementation approval | Theo | Written approval | Complete (2026-08-02) |
+| Owner-only server design | Core Features Developer / QA | Reviewed RPC, grants, RLS | Hosted migration/function/grants complete; authenticated role matrix open |
+| Hosted multi-tenant matrix | QA | Authenticated evidence | Open; frontend deployment and controlled member-only/no-workspace accounts required |
 
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
-| Implementation | Yes | Pending | - | Tenant/RPC/auth boundary change. |
+| Implementation | Yes | Approved | 2026-08-02 | Theo approved WO-023 implementation. |
 | Production migration/release | Yes | Pending | - | Separate approval after review. |
 
 ## Decision and approval record
 
 - 2026-07-30 - Theo requested owner-created additional independent workspaces for multi-team organisations.
+- 2026-08-02 - Theo approved implementation. Hosted migration/release approval remains separate.
 
 ## Implementation and review evidence
 
 - Source: Workspaces already selects multiple memberships, but self-service creation rejects any `tenant_users` membership.
-- **Highest evidence achieved:** Source reviewed.
+- Local implementation: `20260802140000_owner_additional_workspaces.sql` permits a verified account with no memberships or at least one owner membership; member/admin/viewer-only accounts remain denied in the RPC. It retains the original Free tenant, new owner-membership, authenticated-only grant, and fixed-search-path behaviour.
+- UI: owner-only Settings entry point opens `/workspaces`; that screen can open the existing workspace or start an additional independent workspace. The newly returned tenant ID is selected only after the refreshed tenant-scoped membership query confirms it.
+- Local validation: `node --test scripts/self-service-signup-contract.test.mjs` (5/5), full scripts suite (205/205), ESLint zero warnings, TypeScript, Vite production build, and bundle budget all passed on 2026-08-02.
+- Hosted migration: applied to the shared project as `20260802150008_owner_additional_workspaces` on 2026-08-02 after Theo approval.
+- Hosted function/grant inspection: `security_definer=true`; `search_path` is fixed empty; `anon` and `public` cannot execute; `authenticated` can execute. Existing `sync_tenant_plan_entitlements_trigger` and `record_workspace_created_trigger` remain installed for new tenant/module/funnel isolation.
+- Advisor: the WO-023-specific security warning is the expected authenticated-callable SECURITY DEFINER classification. Its direct verified-auth/owner predicate, fixed search path, and minimal execute grant were reviewed; no unrelated advisory findings were changed by this migration.
+- Not performed: authenticated browser role matrix, direct-RPC role matrix, or staged frontend deployment. The supplied controlled accounts each have at least one owner membership, so they cannot prove the member/admin/viewer-only denial case; a controlled member-only and no-workspace account are still required.
+- **Highest evidence achieved:** Hosted migration/function/grant inspection plus local validation.

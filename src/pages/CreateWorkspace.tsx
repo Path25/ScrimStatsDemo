@@ -17,6 +17,8 @@ export default function CreateWorkspace() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { memberships, isLoading: tenantLoading, refreshTenant } = useTenant();
+  const canCreateAdditionalWorkspace = memberships.some((membership) => membership.userRole === "owner");
+  const isAdditionalWorkspace = memberships.length > 0;
   const suggestedName = typeof user?.user_metadata?.pending_team_name === "string" ? user.user_metadata.pending_team_name : "";
   const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const [name, setName] = useState(suggestedName);
@@ -31,7 +33,7 @@ export default function CreateWorkspace() {
 
   if (authLoading || tenantLoading) return <main className="public-page grid min-h-screen place-items-center text-sm">Preparing your workspace…</main>;
   if (!user) return <Navigate to="/sign-in" replace />;
-  if (memberships.length) return <Navigate to={memberships.length > 1 ? "/workspaces" : "/overview"} replace />;
+  if (isAdditionalWorkspace && !canCreateAdditionalWorkspace) return <Navigate to="/workspaces" replace />;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -51,7 +53,13 @@ export default function CreateWorkspace() {
       setError("Your workspace could not be created. Check the details and try again.");
       return;
     }
-    await refreshTenant();
+    const createdWorkspace = result.data as { tenant_id?: string } | null;
+    if (!createdWorkspace?.tenant_id) {
+      setPending(false);
+      setError("Your workspace could not be created. Check the details and try again.");
+      return;
+    }
+    await refreshTenant(createdWorkspace.tenant_id);
     setPending(false);
     navigate("/overview", { replace: true });
   }
@@ -62,9 +70,9 @@ export default function CreateWorkspace() {
         <div className="grid h-11 w-11 place-items-center rounded-full border border-[var(--public-accent)]/30 bg-[var(--public-accent)]/10">
           <Building2 className="h-5 w-5 text-[var(--public-accent)]" aria-hidden="true" />
         </div>
-        <p className="mt-6 font-mono text-[13px] uppercase tracking-[0.12em] text-[var(--public-accent)]">Final account step</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.035em]">Create your team workspace.</h1>
-        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--public-muted)]">You will be the workspace owner. Add staff and players from Settings after setup.</p>
+        <p className="mt-6 font-mono text-[13px] uppercase tracking-[0.12em] text-[var(--public-accent)]">{isAdditionalWorkspace ? "New independent workspace" : "Final account step"}</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.035em]">{isAdditionalWorkspace ? "Create another team workspace." : "Create your team workspace."}</h1>
+        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--public-muted)]">{isAdditionalWorkspace ? "This workspace starts separately on Free. Your current team, billing, members, and data will stay unchanged." : "You will be the workspace owner. Add staff and players from Settings after setup."}</p>
         <form onSubmit={(event) => void submit(event)} className="mt-8 grid gap-6">
           <div><Label htmlFor="workspace-name">Team name</Label><Input id="workspace-name" required minLength={2} maxLength={100} autoComplete="organization" value={name} onChange={(event) => setName(event.target.value)} className="public-form-control mt-2" /></div>
           <div>

@@ -32,7 +32,7 @@ interface TenantContextType {
   hasNoTenant: boolean;
   requiresWorkspaceSelection: boolean;
   chooseTenant: (tenantId: string) => void;
-  refreshTenant: () => Promise<void>;
+  refreshTenant: (preferredTenantId?: string) => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -82,7 +82,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUserTenants = useCallback(async () => {
+  const loadUserTenants = useCallback(async (preferredTenantId?: string) => {
     if (!user) {
       setMemberships([]);
       setActiveTenantId(null);
@@ -109,7 +109,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       .map((membership) => toTenantConfig(membership as unknown as { role: string; tenants: Tenant | Tenant[] | null }))
       .filter((membership): membership is TenantConfig => membership !== null);
     const nextMemberships = await Promise.all(membershipConfigs.map(withSignedWorkspaceLogo));
-    const storedTenantId = window.localStorage.getItem(activeTenantStorageKey);
+    const storedTenantId = preferredTenantId || window.localStorage.getItem(activeTenantStorageKey);
     const selectedTenantId = nextMemberships.some((membership) => membership.id === storedTenantId)
       ? storedTenantId
       : nextMemberships.length === 1

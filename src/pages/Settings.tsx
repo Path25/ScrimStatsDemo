@@ -35,7 +35,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function Settings() {
   const { user } = useAuth();
-  const { tenant } = useTenant();
+  const { tenant, memberships } = useTenant();
   const { activeRole, isManager } = useRole();
   const hasDesktopAccess = Boolean(tenant?.collectorEntitled);
   const administration = useWorkspaceAdministration();
@@ -88,6 +88,11 @@ export default function Settings() {
               <DetailRow label="Email" value={user?.email || "Unavailable"} />
               <DetailRow label="Workspace role" value={activeRole || "Unavailable"} />
             </dl>
+            {memberships.some((membership) => membership.userRole === "owner") && (
+              <div className="border-t border-[var(--workspace-rule)] px-5 py-4">
+                <Link to="/workspaces" className="text-sm font-medium text-[var(--workspace-accent)] underline underline-offset-4">Manage team workspaces</Link>
+              </div>
+            )}
             <form
               className="border-t border-[var(--workspace-rule)] p-5"
               onSubmit={(event) => {

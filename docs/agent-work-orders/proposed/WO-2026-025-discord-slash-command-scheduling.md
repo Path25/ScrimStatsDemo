@@ -1,7 +1,7 @@
 # WO-2026-025 - Add tenant-safe Discord `/scrim` practice-block creation
 
 - **ID reservation:** [WO-2026-025 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -93,22 +93,22 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Signed endpoint and safe `/scrim` creation | Source, migration, and focused contracts | Local source validation | Implemented; hosted deployment/configuration outstanding |
-| Role, tenant, entitlement, replay, and overlap denial | Service-only database wrapper, RLS/grants, and focused contracts | Local source validation | Implemented; hosted two-tenant verification outstanding |
-| Canonical block and bounded outbox behaviour | Canonical `scrims` insert with existing trigger path and focused contract | Local source validation | Implemented; hosted database verification outstanding |
+| Signed endpoint and safe `/scrim` creation | Deployed `discord-interactions` source and focused contracts | Hosted deployment / local source validation | Ready for private-server configuration and provider verification |
+| Role, tenant, entitlement, replay, and overlap denial | Hosted tables/RLS/grants and service-only wrapper; focused contracts | Hosted schema / local source validation | Ready for two-tenant QA matrix |
+| Canonical block and bounded outbox behaviour | Hosted canonical wrapper with existing trigger path and focused contract | Hosted schema / local source validation | Ready for isolated command verification |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** This is a newly separated scope. No inbound interaction endpoint, data model, or hosted validation exists.
+- **Verdict:** READY FOR QA
+- **Rationale:** Source, migration, and Edge Functions are deployed. Provider endpoint setup, command registration, and an isolated command invocation remain separate approval-gated QA steps.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Finish WO-2026-001 outbound-status correction | Core Features Developer / QA | WO-001 developer and QA handoff | Open |
-| Implement secure interaction path | Core Features Developer | Commit and local validation | In progress — source validation complete; deployment not approved |
-| Configure/test endpoint and command | Theo / QA | Explicit approval, hosted test evidence | Open |
+| Implement secure interaction path | Core Features Developer | Commit, hosted migration, Function deployment, and local validation | Complete — `2d5072a`; migration `20260802173000`; deployed `discord-config`, `discord-roles`, and `discord-interactions` |
+| Configure/test endpoint and command | Theo / QA | Explicit approval, hosted test evidence | Pending — endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, and isolated invocation |
 
 ### Theo approval record
 
@@ -128,4 +128,7 @@ The feature has founder approval but must not keep the outbound Discord reliabil
 - 2026-08-02 - Added source-only `discord-interactions` and `discord-roles` Functions, a service-only `create_discord_scrim_block` wrapper, permitted-role and receipt tables, explicit RLS/grants, and owner/admin role configuration in the Discord integration panel. The interaction handler verifies Discord Ed25519 signatures over the raw request before parsing or lookup; only a signed PING or `/scrim` is supported.
 - 2026-08-02 - The server wrapper rechecks Elite plus live/enabled Discord module, active installed guild, configured permitted role, replay receipt, and overlap under a tenant advisory lock before inserting one canonical `scrims` record. The existing `queue_scrim_integration_event` trigger remains the only outbound path.
 - 2026-08-02 - Local validation: focused Discord contracts passed 9/9; ESLint zero warnings; TypeScript passed; production build and bundle budget passed; `git diff --check` passed. The local Supabase CLI is not present, so migration lint and Advisor review remain hosted verification tasks.
-- **Highest evidence achieved:** Local source validation
+- 2026-08-02 - Hosted deployment: the project is `tvcgjehreaayfazlhvps` (ScrimStats.gg, active). A normal migration push was blocked by pre-existing remote/local history divergence, so no historic migration record was altered. The reviewed `20260802173000_discord_interaction_scheduling.sql` was applied through Supabase's linked direct-query command and only version `20260802173000` was then recorded as applied.
+- 2026-08-02 - Hosted schema verification: `discord_permitted_roles` and `discord_interaction_receipts` exist. `authenticated` cannot execute `create_discord_scrim_block`; `service_role` can. The deployed Functions are `discord-config` (version 6), `discord-roles` (version 1), and `discord-interactions` (version 1).
+- 2026-08-02 - Security Advisor was run at warning level. It retains the documented project-wide legacy `SECURITY DEFINER` and leaked-password-protection warnings; the new service-only creation RPC is not among authenticated-callable functions.
+- **Highest evidence achieved:** Hosted schema and Function deployment

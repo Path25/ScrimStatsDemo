@@ -12,6 +12,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
+| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | QA and Release Auditor | Commit `2d5072a`; migration `20260802173000`; deployed `discord-config` v6, `discord-roles` v1, and `discord-interactions` v1. | Separate Theo approval for private-server endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, and isolated invocation. Audit signature, role, tenant, replay, overlap, and outbox matrix. |
 
 ## In Progress
 
@@ -20,7 +21,6 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 | [WO-2026-012](proposed/WO-2026-012-paid-buyer-standard-and-conversion-thesis.md) | PM | Define and evidence the Pro buyer's recurring value loop before hard-launch claims or packaging changes. | Do not change prices, plan claims, entitlements, or public copy; coordinate with WO-003, WO-028, and WO-031. |
 | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) | PM | Manual-first activation procedure and Message Ledger drafted; no send authorised. | Do not modify email, Auth, invitation, notification-worker, billing, or provisioning flows. |
 | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) | Core Features Developer | Shared-project migration applied and function/grants inspected; frontend deployment and controlled role/tenant matrix pending. | Do not overlap with WO-2026-030 `DashboardLayout` work or tenant-membership/RPC migrations. |
-| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | Core Features Developer | Source-only signed `/scrim` workflow: role configuration, RLS/grants, service-only canonical scheduling wrapper, and focused local validation. | Shared Discord configuration/UI/outbox/manifest; do not reopen WO-001. Hosted migration, deployment, endpoint configuration, command registration, and provider test are separately gated. |
 
 ## QA blocked — Theo or PM input required
 

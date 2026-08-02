@@ -37,7 +37,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Done | QA and Release Auditor | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
 | WO-2026-023 | Let workspace owners create additional independent workspaces | In Progress | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
 | WO-2026-024 | Give players reliable read-only intelligence access | Done (conditional; production deployment and smoke test pending) | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
-| WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | In Progress | Core Features Developer | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
+| WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Ready for QA | QA and Release Auditor | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Done (conditional handoff to WO-016) | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |
 | WO-2026-026 | Define a safe new-workspace activation follow-up | In Progress | PM | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) |
 | WO-2026-027 | Diagnose OnceUponATeam owner Draft-load failure | Done | QA and Release Auditor | [WO-2026-027](proposed/WO-2026-027-onceuponateam-draft-load-investigation.md) |

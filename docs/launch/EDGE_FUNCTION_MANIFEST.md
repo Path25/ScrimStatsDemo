@@ -24,7 +24,7 @@
 - `discord-install`, `discord-channels`, `discord-config`, `discord-roles` (workspace owner/admin JWT required)
 - `discord-schedule-reminders`, `discord-dispatch` (dispatch-secret authenticated workers)
 
-`discord-interactions` is source-only until a separately approved private-server configuration. It accepts no browser JWT: Discord Ed25519 signature verification is mandatory before parsing or lookup, and its only intended command is the server-gated `/scrim` practice-block workflow.
+`discord-interactions` is deployed but inactive until a separately approved private-server configuration. It accepts no browser JWT: Discord Ed25519 signature verification is mandatory before parsing or lookup, and its only intended command is the server-gated `/scrim` practice-block workflow.
 
 These Functions are deployed for the isolated Discord test workflow only. They remain server-gated by Elite plus a `live` and enabled Discord module; no customer workspace is enabled until the separate QA and release gates pass.
 

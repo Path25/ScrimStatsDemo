@@ -143,3 +143,33 @@ The privacy and append-only controls are now materially stronger, but the requir
 
 1. Theo confirms the existing isolated non-customer funnel-test approval still applies to the production-backed staging project and supplies/opens the dedicated test account.
 2. QA performs the one controlled workflow and records only milestone names/counts, then reissues the verdict.
+
+## QA daily brief - 2026-08-01
+
+### 1. Release verdict: HOLD
+
+No new hosted or authenticated evidence is available to move this high-risk order from its existing blocked state.
+
+### 2. What was verified
+
+- **Local, current checkout:** `node --test scripts/premium-copy-integrity.test.mjs scripts/funnel-instrumentation-contract.test.mjs` passed 3/3 on 2026-08-01.
+- **Implementation boundary:** the reviewed migration retains RLS and no `anon` or `authenticated` grant path for `workspace_funnel_events`; the scorecard function remains service-role-only in the migration. The later append-only grant migration is present in source and limits `service_role` to `SELECT` and `INSERT`.
+- **Release routing:** the assignment board still records this order as blocked, with no Ready-for-QA handoff or authorised isolated journey.
+
+### 3. Blocking issues
+
+- **Blocking:** No controlled non-customer authenticated journey has produced a ledger event. Registration/workspace creation where applicable, first scheduled block, first completed recorded game, activation, retry idempotency, and aggregate scorecard output remain unproved in a hosted environment.
+
+### 4. Important risks
+
+- **Important:** Passing local contracts and source inspection cannot establish deployed trigger operation, tenant-bound event attribution, or safe operator-scorecard availability. Do not treat an empty ledger as evidence of a working funnel.
+
+### 5. Unverified but required checks
+
+- **Unverified:** An approved production-backed staging workspace and authenticated session; the minimum temporary schedule and completed-game workflow; one repeat attempt; aggregate-only scorecard output; ordinary browser-role denial; and visible unavailable/error states on any separately governed operator surface.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** reconfirm the prior isolated non-customer approval for the production-backed staging project and provide the dedicated test account/workspace.
+2. **QA:** run the documented minimum workflow, retain only milestone names/counts and redacted correlation evidence, and verify the retry does not add duplicate milestones.
+3. **PM:** retain any browser-accessible founder scorecard work under WO-011; this order must not create a browser path to raw funnel events.

@@ -1,7 +1,7 @@
 # WO-2026-020 - Make Solo Queue tracker available on Free consistently
 
 - **ID reservation:** [WO-2026-020 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done
 - **Assigned owner:** QA and Release Auditor
 - **Size:** M
 - **Risk:** Medium
@@ -136,3 +136,82 @@ It blocks a core Free workflow during soft launch and weakens the intended Free-
   - Security and Performance Advisors were reviewed after application. They continue to report the documented project-wide legacy notices; this migration added no table, policy, index, or client-executable function and no new Solo Queue-specific advisor finding was observed.
   - Authenticated staging browser: an owner workspace opened `https://staging.scrimstats.gg/soloq`, reached the Solo Queue tracker, and emitted no browser console warning/error. This evidence does not establish Free-plan, non-manager, or cross-tenant behavior.
 - **QA handoff:** After Theo approves hosted application and deployment, QA and Release Auditor should use isolated Free, Pro, Elite, manager/member, and second-tenant accounts to verify the route, `tenant_feature_access` rows, Riot-unconfigured state, manager-only refresh, and cross-tenant denial. Capture browser, request, migration-history, function-log, and advisor evidence without customer data.
+
+## Independent QA audit - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The entitlement migration and staging delivery have evidence, and the current authenticated staging owner can load Solo Queue. The required plan, role, and tenant matrix is not safely available, so this order is blocked rather than release-ready.
+
+### 2. What was verified
+
+- **Local:** `node --test scripts/billing-invitations-contract.test.mjs scripts/soloq-tracker-contract.test.mjs scripts/riot-integration-contract.test.mjs` passed 20/20 on 2026-08-02.
+- **Source / migration:** `/soloq` has no browser `PlanGate`; the forward-only migration sets Solo Queue `live`/enabled for new and existing Free, Pro, and Elite tenants. It retains a fixed `SECURITY DEFINER` search path and revokes direct execution from `PUBLIC`, `anon`, and `authenticated`, granting only `service_role`.
+- **Source / server boundary:** tenant-scoped reads filter on the active tenant, and manual sync still requires `managerMembership(user.id, player.tenant_id)` plus a valid workspace Riot integration.
+- **Hosted browser:** the supplied authenticated staging owner session loaded the tracker with visible current data and no browser warnings or errors. Its subscription tier and isolation status were not established, so this is not Free-plan evidence.
+
+### 3. Blocking issues
+
+- **Blocking:** QA has no confirmed isolated Free, Pro, Elite, manager/member, and second-tenant accounts. The currently available owner session must not be used to manufacture plan, refresh, or cross-tenant evidence.
+
+### 4. Important risks
+
+- **Important:** Source contracts and aggregate module-row counts do not prove that a Free workspace sees honest Riot-unconfigured/empty states, that a non-manager is refused refresh, or that another tenant's Solo Queue data cannot be read.
+- **Important:** The recorded hosted migration/advisor evidence is implementation/deployment evidence; it is not a substitute for authenticated role and tenant checks against the deployed revision.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Free/Pro/Elite route and Billing copy states; Free Riot-unconfigured state; owner/admin refresh allow; member/viewer refresh denial; second-tenant data and request denial; mobile/responsive state; and current hosted migration-history/function-log correlation.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** provide or approve isolated non-customer Free, Pro, Elite, and second-tenant staging accounts, including one manager and one non-manager, and confirm their project is safe for the read-only/refresh-denial matrix.
+2. **QA:** run the documented matrix without creating provider credentials or customer data, recording only redacted request outcomes and visible states.
+3. **Core Features Developer:** receive a separately scoped defect only if a plan, role, or tenant check fails. No entitlement, provider, or migration change is authorised by this audit.
+
+## QA continuation - 2026-08-02
+
+- **Verified hosted Elite owner:** Billing showed active Elite and the revised Free card lists Solo Queue. `/soloq` loaded the tracker without an upgrade gate; the existing manual-refresh control was available. QA did not invoke it because that would create a provider-backed sync run.
+- **Verified hosted tenant-scoped empty states:** Two separately switched isolated QA tenants each loaded `/soloq` with `No eligible roster profiles`, a disabled refresh control, and no player from the initial Elite workspace rendered. No browser warnings or errors were observed across these checks.
+- **Still unverified:** The available account is owner/Elite in all three workspaces. Free entitlement, a non-manager's refresh denial, and a direct cross-tenant API denial require a separate authenticated login/session.
+
+## Free owner QA - 2026-08-02
+
+- **Verified hosted Free owner:** An isolated active Free workspace reached `/soloq` without an upgrade gate. It showed the truthful `No eligible roster profiles` state and roster guidance; refresh was disabled because no eligible profile was selected. Settings showed `Free · active`, with Solo Queue included in the Free plan and no Pro-only copy.
+- **Verified responsive:** At 390x844, the Free Solo Queue route retained the same truthful empty state, had no horizontal overflow (`scrollWidth` = `clientWidth` = 390), and emitted no browser warnings/errors.
+- **Still unverified:** An authenticated non-manager's manual-refresh denial and an adversarial direct cross-tenant request denial. These require an isolated non-manager login; no provider credential, roster profile, or sync run was created by QA.
+
+## Viewer QA - 2026-08-02
+
+- **Verified hosted viewer:** An authenticated viewer in an isolated QA tenant reached `/soloq`, read the truthful `No eligible roster profiles` state, and saw no `Refresh player` control. No browser warnings or errors were observed.
+- **Role conclusion:** The browser does not expose manual refresh to this non-manager. Together with the source-level `managerMembership(user.id, player.tenant_id)` check, this supports the intended role boundary but does not independently exercise the deployed Function's 403 response.
+- **Still unverified:** A direct viewer/cross-tenant `soloq-sync-v2` denial against a pre-existing isolated eligible-player fixture. No such fixture is presently available, and QA will not create roster or provider data to manufacture it.
+
+## Theo risk acceptance and conditional closure - 2026-08-02
+
+### 1. Release verdict: CONDITIONAL
+
+Theo explicitly accepted the remaining direct Function endpoint-evidence risk. This conditional closure does not constitute production-release approval.
+
+### 2. What was verified
+
+- The reviewed migration was applied to staging and reconciled the Solo Queue module as live/enabled for all plans.
+- Elite-owner, Free-owner, and viewer browser paths were verified. Free opens Solo Queue without an upgrade gate, carries truthful billing copy and an honest empty state, and remains responsive at 390px.
+- Isolated workspace switching showed no prior workspace player data in the empty Solo Queue states. Viewer has no refresh control.
+
+### 3. Blocking issues
+
+- None remaining under Theo's accepted-risk decision.
+
+### 4. Important risks
+
+- **Accepted risk:** QA did not invoke the deployed `soloq-sync-v2` Function as a viewer or against a cross-tenant player. Source-level manager membership enforcement and viewer UI denial are verified, but a deployed 403 response remains unproved.
+
+### 5. Unverified but required checks
+
+- **Unverified, accepted:** Direct viewer and adversarial cross-tenant Function-denial response using an existing isolated eligible-player fixture.
+
+### 6. Suggested fixes or next validation steps
+
+1. If this direct endpoint evidence is required later, provide an existing isolated eligible-player fixture and rerun the 403 matrix without creating provider, roster, or customer data.
+2. Do not infer this conditional closure as approval for an unrelated entitlement, billing, provider, migration, or production release.

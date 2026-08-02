@@ -1,7 +1,7 @@
 # WO-2026-016 - Restore reliable champion visual assets
 
 - **ID reservation:** [WO-2026-016 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Done (conditional; Theo accepted remaining evidence risk)
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** Medium
@@ -220,3 +220,18 @@ Champion recognition is central to scrim review, draft, analytics, and scouting.
 3. **Safety verification:** The intentionally missing image URL is a fixed public Data Dragon URL. The QA fixture is guarded by both the `staging.scrimstats.gg` hostname and `avatar-qa=1`; it creates no workspace data. This is local/source evidence only.
 4. **Unverified required acceptance:** There is no revised staging deployment identifier, timestamp, or hosted browser evidence. Therefore QA cannot verify the 173-tile result, the real 404/fallback, desktop/mobile behaviour, or current/special-name regressions against the revised candidate.
 5. **Action returned:** Theo must approve a staging-only deployment of the revised candidate; Core Features Developer must record revision and deployment time. QA will then run the documented `/draft?avatar-qa=1` matrix. No production deployment or release approval is authorised by this review.
+
+## Hosted staging QA - revised candidate - 2026-08-01
+
+1. **Outcome: Pass with follow-up. Release verdict: CONDITIONAL.** The revised candidate is deployed to authenticated staging and resolves the verified duplicate-picker regression and the available fallback cases. It is not production-ready solely on this evidence.
+2. **Verified desktop:** On `https://staging.scrimstats.gg/draft?avatar-qa=1`, the editable Champion pool rendered exactly 173 tiles with 173 unique normalized identities (previously 233/173). `Ambessa`, `K'Sante`, and `Nunu & Willump` loaded complete 128px current-16.15.1 Data Dragon images; the special mappings resolved to `KSante.png` and `Jade_Nunu.png` respectively.
+3. **Verified fallback fixture:** The staging-only fixture is visible and states it creates no workspace data. It renders named accessible fallbacks for `None` (`Champion not recorded`), `Unknown Champion` (`Unknown Champion icon unavailable`), and its forced-failure Ahri case (`Ahri icon unavailable`). The failed fixture has no remaining image element, consistent with the deployed `onError` fallback behaviour. No browser warning/error logs or visible alerts were captured.
+4. **Verified mobile and SoloQ:** At 390x844 the same Draft pool remained 173/173 with all three fixture fallbacks visible and no alerts. Authenticated SoloQ loaded sampled current 16.15.1 champion images complete at 128px without browser warnings/errors.
+5. **Follow-up still required:** The browser surface cannot expose the raw HTTP response for the deliberately missing image, so the explicit 404 response is unverified; normal reload was exercised, not a cache-clear. Scouting remains intentionally unverified because no avatar-bearing report is available. These are release-evidence gaps, not a re-observed functional failure.
+6. **Release boundary:** Keep the work order Blocked and do not approve production from this staging audit. Theo may accept the three follow-up gaps as release risk, or Core can provide a cache-clear procedure, captured 404 network proof, and an avatar-bearing Scouting fixture for full QA closure.
+
+## Theo risk acceptance and conditional closure - 2026-08-01
+
+1. **Decision:** Theo explicitly accepted the remaining evidence risk after the authenticated staging result.
+2. **Accepted gaps:** Raw 404 network-response capture for the deliberately failed image, browser cache-clear verification, and an avatar-bearing Scouting report remain unverified.
+3. **Closure:** WO-016 is **Done (conditional; Theo accepted remaining evidence risk)**. The deployed Draft duplicate repair, named fallback fixture, mobile Draft check, and SoloQ regression check are retained as verified evidence; this record does not imply a separate production deployment approval.

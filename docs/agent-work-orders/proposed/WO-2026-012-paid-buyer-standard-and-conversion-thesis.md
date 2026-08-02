@@ -1,7 +1,7 @@
 # WO-2026-012 - Define the paid buyer standard and Free-to-Pro conversion thesis
 
 - **ID reservation:** [WO-2026-012 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Backlog
+- **Status:** In Progress
 - **Assigned owner:** PM
 - **Size:** M
 - **Risk:** Medium
@@ -116,3 +116,11 @@ The meeting makes desktop/live capability strategically important, but the immed
 
 - Current billing source displays USD9.99 Pro and USD19.99 Elite monthly prices. Historical Stripe reconciliation measured USD19.98 current MRR at its snapshot; paid tenant labels remain unreconciled and must not be used as revenue evidence.
 - **Highest evidence achieved:** Proposed
+
+## Founder hard-launch review - 2026-08-02
+
+- **Proposed paid-buyer hypothesis:** a coach or manager who runs recurring custom-game practice and needs one dependable loop from scheduling, through captured/recorded game evidence, to review, coaching actions, and the next practice decision. This is a decision hypothesis, not a public claim or evidence of customer demand.
+- **Current product fit:** Free already covers the initial team-operations loop. Pro is the only tier that currently joins Game Capture, analytics, scouting, and Draft around completed practice. The Analytics preview honestly waits for qualifying games rather than fabricating metrics, and Collector access is server-gated for Pro/Elite in source plus conditional hosted evidence.
+- **Hard-launch gaps:** the isolated Free-to-Pro checkout/webhook/portal journey remains unverified under WO-2026-028; the activation/funnel journey remains unproved under WO-2026-003; and no observed cohort demonstrates that a team reaches a first captured game, review, repeat weekly use, then stays paid. Product analytics for visit-to-upgrade behaviour is unavailable.
+- **Ten-day definition of done:** (1) a founder-approved one-page buyer standard names the weekly Pro job and one primary upgrade moment; (2) an isolated Pro purchase is hosted-verified; (3) at least one controlled non-customer Pro workflow proves the visible value loop from a scheduled block through a completed recorded game into analytics/review/coaching evidence, without a fabricated team result; (4) the reporting plan names the first measured activation, upgrade, and retained-paid indicators plus any unavailable sources; and (5) all Elite purchase posture is resolved under WO-2026-031 before public hard-launch claims.
+- **Decision boundary:** this review does not approve pricing, public claims, customer outreach, provider activation, billing changes, or production release.

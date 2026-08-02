@@ -11,8 +11,8 @@
 ## Delivery routing
 
 - **Area / files likely affected:** A new `discord-interactions` Edge Function; Discord shared server helpers; Discord integration Settings/UI; canonical practice-block creation path; new interaction-receipt and Discord-role access tables/RLS/RPCs; `docs/launch/EDGE_FUNCTION_MANIFEST.md`; contract tests and QA runbook.
-- **Dependencies:** WO-2026-001 must first complete its single outbound-status correction and return to QA; implementation approval is recorded as the 2026-07-30 WO-001 extension; later external configuration/release approvals remain separate.
-- **Collision risk:** High. Do not run concurrently with WO-2026-001 changes to Discord shared helpers, integration UI, module gates, outbox, or Edge Function manifest.
+- **Dependencies:** WO-2026-001 closed conditionally on 2026-07-31 under Theo's accepted-risk decision; it is no longer a sequencing dependency. Reconfirm the dated implementation approval before dispatch because this is a separate L/high-risk inbound-provider feature. External configuration and release approvals remain separate.
+- **Collision risk:** High. Do not overlap with any reopened Discord shared-helper, integration UI, module-gate, outbox, or Edge Function manifest work; coordinate with the WO-001 owner if that work order is reopened.
 
 ## Problem and user impact
 

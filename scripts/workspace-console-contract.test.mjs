@@ -6,6 +6,7 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 const shell = read("src/components/layout/DashboardLayout.tsx");
+const notifications = read("src/components/notifications/NotificationInbox.tsx");
 const styles = read("src/index.css");
 const settings = read("src/pages/Settings.tsx");
 const review = read("src/components/scrims/ScrimBlockView.tsx");
@@ -55,6 +56,12 @@ test("workspace shell validates tenant accent and exposes analyst-console tokens
   assert.match(shell, /bg-\[#111a23\]/);
   assert.match(shell, /z-\[60\]/);
   assert.match(shell, /text-\[#11e2d0\]/);
+  assert.match(notifications, /notificationSurfaceStyle/);
+  assert.match(notifications, /bg-\[#111a23\]/);
+  assert.match(notifications, /border-\[rgba\(226,236,232,0\.22\)\]/);
+  assert.match(notifications, /shadow-xl/);
+  assert.match(notifications, /z-\[60\]/);
+  assert.match(notifications, /--workspace-surface/);
   assert.match(styles, /\.workspace-shell/);
   assert.match(styles, /--workspace-surface/);
   assert.match(styles, /--workspace-accent/);

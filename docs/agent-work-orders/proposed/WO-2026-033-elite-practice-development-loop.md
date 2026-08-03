@@ -128,6 +128,7 @@ The earlier `Implementation: Pending` table row predates Theo's subsequent appro
 - Phase 2 adds four private tenant-owned tables, explicit RPC-only customer access, fixed-search-path functions, locked grants, versioned mutations, immutable evidence provenance, safe staff/team projections, and an exact Elite + `live` + enabled server predicate. Existing and future tenants remain `planned/false`; downgrade disables without deleting history, and re-upgrade does not auto-activate.
 - The application embeds the loop in Scrim Block, reuses the canonical Coaching Action workflow, gives Owner/Admin controls and Member/Viewer safe read-only fields, invalidates role/action/context caches fail-closed, and uses a bounded batch breadcrumb projection on the action ledger.
 - Recovery is anchored to pre-Phase-2 commit `ac71123f86212437780d46647f39535abb1b0b31`. The record-preserving one-tenant disable defaults to rollback; the destructive structural restore is guarded and local-only outside migration discovery.
+- Phase 2 implementation and local QA handoff commit: `32b6ceb3d1536d4e0f48955477fcc2ae918c22fa`.
 - **Highest evidence achieved:** Implemented and locally tested in a disposable Supabase Postgres container; not authenticated-browser verified, hosted verified, deployed, activated, production-ready, or release-approved.
 
 ## Phase 2 QA handoff - 2026-08-03

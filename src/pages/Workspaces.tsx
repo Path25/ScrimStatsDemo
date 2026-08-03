@@ -1,15 +1,28 @@
 import { Link, Navigate, useNavigate } from '@/lib/router';
-import { Building2, Plus } from 'lucide-react';
+import { AlertTriangle, Building2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Workspaces() {
-  const { memberships, chooseTenant, isLoading: tenantLoading } = useTenant();
+  const { memberships, chooseTenant, isLoading: tenantLoading, error, refreshTenant } = useTenant();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   if (isLoading || tenantLoading) return <main className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">Checking access...</main>;
   if (!user) return <Navigate to="/sign-in" replace />;
+  if (error) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-background px-5 text-center">
+        <section className="w-full max-w-md rounded-xl border border-border bg-card p-7 shadow-xl">
+          <AlertTriangle className="mx-auto h-6 w-6 text-amber-300" aria-hidden="true" />
+          <h1 className="mt-4 text-xl font-semibold">Workspace access unavailable</h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{error}</p>
+          <Button className="mt-5" variant="outline" onClick={() => void refreshTenant()}>Try again</Button>
+        </section>
+      </main>
+    );
+  }
   if (!memberships.length) return <Navigate to="/create-workspace" replace />;
 
   const canCreateAdditionalWorkspace = memberships.some((membership) => membership.userRole === 'owner');

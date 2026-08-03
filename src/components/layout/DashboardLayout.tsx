@@ -12,6 +12,7 @@ import {
   Menu,
   MonitorCheck,
   MonitorX,
+  Plus,
   ScanSearch,
   Settings,
   Swords,
@@ -20,7 +21,7 @@ import {
   Workflow,
   X,
 } from "lucide-react";
-import { Link, useLocation } from "@/lib/router";
+import { Link, useLocation, useNavigate } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
@@ -121,12 +122,15 @@ function TeamMark({
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { tenant, memberships, chooseTenant } = useTenant();
   const { activeRole } = useRole();
   const { user, signOut } = useAuth();
   const { connectionInfo, isLoading: collectorLoading, error: collectorError } =
     useDesktopConnection();
   const { isError: modulesUnavailable, retry: retryModules } = useWorkspaceModules();
+  const canCreateAdditionalWorkspace = memberships.some((membership) => membership.userRole === "owner");
+  const hasWorkspaceMenu = memberships.length > 1 || canCreateAdditionalWorkspace;
 
   const tenantName = tenant?.name || "Team workspace";
   const userName =
@@ -174,7 +178,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {memberships.length > 1 ? (
+        {hasWorkspaceMenu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="mt-9 flex w-full items-center gap-3 border-y border-[var(--workspace-rule)] px-2 py-4 text-left">
@@ -211,6 +215,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   )}
                 </DropdownMenuItem>
               ))}
+              {canCreateAdditionalWorkspace && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setOpen(false);
+                      navigate("/create-workspace");
+                    }}
+                    className="flex items-center gap-3 py-2.5"
+                  >
+                    <Plus className="h-4 w-4 text-[#11e2d0]" aria-hidden="true" />
+                    Create workspace
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (

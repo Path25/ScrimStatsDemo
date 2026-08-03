@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
-import { ArrowRight, Building2, Check } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Check } from "lucide-react";
 import { Link, Navigate, useNavigate } from "@/lib/router";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ const commonTimezones = ["UTC", "Europe/London", "Europe/Paris", "Europe/Berlin"
 export default function CreateWorkspace() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const { memberships, isLoading: tenantLoading, refreshTenant } = useTenant();
+  const { memberships, isLoading: tenantLoading, error: tenantError, refreshTenant } = useTenant();
   const canCreateAdditionalWorkspace = memberships.some((membership) => membership.userRole === "owner");
   const isAdditionalWorkspace = memberships.length > 0;
   const suggestedName = typeof user?.user_metadata?.pending_team_name === "string" ? user.user_metadata.pending_team_name : "";
@@ -33,6 +33,18 @@ export default function CreateWorkspace() {
 
   if (authLoading || tenantLoading) return <main className="public-page grid min-h-screen place-items-center text-sm">Preparing your workspace…</main>;
   if (!user) return <Navigate to="/sign-in" replace />;
+  if (tenantError) {
+    return (
+      <main className="public-page grid min-h-screen place-items-center px-5 text-center">
+        <section className="w-full max-w-md rounded-xl border border-[var(--public-rule-strong)] bg-[var(--public-panel)] p-7">
+          <AlertTriangle className="mx-auto h-6 w-6 text-amber-300" aria-hidden="true" />
+          <h1 className="mt-4 text-2xl font-semibold">Workspace access unavailable</h1>
+          <p className="mt-3 text-sm leading-6 text-[var(--public-muted)]">{tenantError}</p>
+          <Button className="mt-5" variant="outline" onClick={() => void refreshTenant()}>Try again</Button>
+        </section>
+      </main>
+    );
+  }
   if (isAdditionalWorkspace && !canCreateAdditionalWorkspace) return <Navigate to="/workspaces" replace />;
 
   async function submit(event: FormEvent) {
@@ -67,6 +79,11 @@ export default function CreateWorkspace() {
   return (
     <main className="public-page grid min-h-screen place-items-center px-5 py-10">
       <section className="w-full max-w-2xl rounded-xl border border-[var(--public-rule-strong)] bg-[var(--public-panel)] p-6 sm:p-9">
+        {isAdditionalWorkspace && (
+          <Link to="/overview" className="mb-7 inline-flex items-center gap-2 text-sm text-[var(--public-muted)] transition hover:text-[var(--public-foreground)]">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />Back to current workspace
+          </Link>
+        )}
         <div className="grid h-11 w-11 place-items-center rounded-full border border-[var(--public-accent)]/30 bg-[var(--public-accent)]/10">
           <Building2 className="h-5 w-5 text-[var(--public-accent)]" aria-hidden="true" />
         </div>

@@ -1,9 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
 import { collectorEntitled } from '@/lib/collector-entitlement';
+import { resolveWorkspaceAccess } from '@/lib/workspace-access';
 import { workspaceLogoBucket, workspaceLogoPathFromSettings } from '@/lib/workspace-logo';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
@@ -77,29 +78,39 @@ async function withSignedWorkspaceLogo(config: TenantConfig) {
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const [memberships, setMemberships] = useState<TenantConfig[]>([]);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const loadUserTenants = useCallback(async (preferredTenantId?: string) => {
-    if (!user) {
+    const requestId = ++requestIdRef.current;
+    if (!userId) {
       setMemberships([]);
       setActiveTenantId(null);
+      setResolvedUserId(null);
       setError(null);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
+    setError(null);
     const { data, error: tenantError } = await supabase
       .from('tenant_users')
       .select('tenant_id, role, tenants (id, slug, name, settings, subscription_tier, subscription_status, subscription_period_end, subscription_past_due_started_at, created_at, updated_at)')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: true });
+
+    if (requestId !== requestIdRef.current) return;
 
     if (tenantError) {
       setMemberships([]);
+      setActiveTenantId(null);
+      setResolvedUserId(userId);
       setError('We could not load your team access. Please try again.');
       setIsLoading(false);
       return;
@@ -109,6 +120,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       .map((membership) => toTenantConfig(membership as unknown as { role: string; tenants: Tenant | Tenant[] | null }))
       .filter((membership): membership is TenantConfig => membership !== null);
     const nextMemberships = await Promise.all(membershipConfigs.map(withSignedWorkspaceLogo));
+    if (requestId !== requestIdRef.current) return;
+
     const storedTenantId = preferredTenantId || window.localStorage.getItem(activeTenantStorageKey);
     const selectedTenantId = nextMemberships.some((membership) => membership.id === storedTenantId)
       ? storedTenantId
@@ -122,40 +135,49 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     setMemberships(nextMemberships);
     setActiveTenantId(selectedTenantId);
+    setResolvedUserId(userId);
     setError(null);
     setIsLoading(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     if (!authLoading) void loadUserTenants();
   }, [authLoading, loadUserTenants]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const refreshTimer = window.setInterval(() => void loadUserTenants(), 45 * 60 * 1000);
     return () => window.clearInterval(refreshTimer);
-  }, [loadUserTenants, user]);
+  }, [loadUserTenants, userId]);
+
+  const access = useMemo(
+    () => resolveWorkspaceAccess({
+      userId,
+      resolvedUserId,
+      authLoading,
+      membershipLoading: isLoading,
+      memberships,
+      activeTenantId,
+      error,
+    }),
+    [activeTenantId, authLoading, error, isLoading, memberships, resolvedUserId, userId],
+  );
 
   const chooseTenant = useCallback((tenantId: string) => {
-    if (!memberships.some((membership) => membership.id === tenantId)) return;
+    if (!access.memberships.some((membership) => membership.id === tenantId)) return;
     window.localStorage.setItem(activeTenantStorageKey, tenantId);
     setActiveTenantId(tenantId);
-  }, [memberships]);
-
-  const tenant = useMemo(
-    () => memberships.find((membership) => membership.id === activeTenantId) || null,
-    [activeTenantId, memberships],
-  );
+  }, [access.memberships]);
 
   return (
     <TenantContext.Provider
       value={{
-        tenant,
-        memberships,
-        isLoading: isLoading || authLoading,
-        error,
-        hasNoTenant: Boolean(user) && !isLoading && memberships.length === 0,
-        requiresWorkspaceSelection: Boolean(user) && memberships.length > 1 && !tenant,
+        tenant: access.tenant,
+        memberships: access.memberships,
+        isLoading: access.isLoading,
+        error: access.error,
+        hasNoTenant: access.hasNoTenant,
+        requiresWorkspaceSelection: access.requiresWorkspaceSelection,
         chooseTenant,
         refreshTenant: loadUserTenants,
       }}

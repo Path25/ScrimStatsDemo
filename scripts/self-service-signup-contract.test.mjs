@@ -11,6 +11,7 @@ const workspaceGate = read("src/components/auth/WorkspaceGate.tsx");
 const workspaces = read("src/pages/Workspaces.tsx");
 const settings = read("src/pages/Settings.tsx");
 const tenantContext = read("src/contexts/TenantContext.tsx");
+const dashboard = read("src/components/layout/DashboardLayout.tsx");
 const forgotPassword = read("src/pages/ForgotPassword.tsx");
 const migration = read("supabase/migrations/20260727111002_self_service_signup.sql");
 const additionalWorkspaceMigration = read("supabase/migrations/20260802150008_owner_additional_workspaces.sql");
@@ -44,7 +45,10 @@ test("signup creates an Auth account and offers non-enumerating recovery next st
 test("membership-free accounts can create a workspace while failures remain unavailable", () => {
   assert.match(workspaceGate, /if \(hasNoTenant\) return <Navigate to="\/create-workspace" replace \/>;/);
   assert.match(workspaceGate, /if \(error \|\| !tenant\)/);
+  assert.match(workspaceGate, /error && <Button[\s\S]+refreshTenant/);
   assert.doesNotMatch(workspaceGate, /hasNoTenant \|\| error \|\| !tenant/);
+  assert.match(workspaces, /if \(error\)[\s\S]+Workspace access unavailable[\s\S]+refreshTenant/);
+  assert.match(workspace, /if \(tenantError\)[\s\S]+Workspace access unavailable[\s\S]+refreshTenant/);
   assert.match(workspace, /Confirm your email before creating a workspace/);
   assert.match(workspace, /to="\/forgot-password"/);
 });
@@ -77,6 +81,10 @@ test("additional workspace provisioning remains owner-only, Free, and independen
   assert.match(tenantContext, /refreshTenant: \(preferredTenantId\?: string\)/);
   assert.match(tenantContext, /const storedTenantId = preferredTenantId \|\| window\.localStorage\.getItem/);
   assert.match(tenantContext, /window\.localStorage\.setItem\(activeTenantStorageKey, preferredTenantId\)/);
+  assert.match(tenantContext, /requestId !== requestIdRef\.current/);
   assert.match(workspaces, /isLoading: tenantLoading/);
   assert.match(workspaces, /if \(isLoading \|\| tenantLoading\)/);
+  assert.match(dashboard, /canCreateAdditionalWorkspace = memberships\.some/);
+  assert.match(dashboard, /navigate\("\/create-workspace"\)[\s\S]+Create workspace/);
+  assert.match(workspace, /to="\/overview"[\s\S]+Back to current workspace/);
 });

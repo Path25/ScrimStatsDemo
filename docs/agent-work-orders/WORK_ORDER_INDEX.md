@@ -50,3 +50,4 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-034 | Build the Elite weekly performance command centre | Backlog | Core Features Developer | [WO-2026-034](proposed/WO-2026-034-elite-weekly-performance-command-centre.md) |
 | WO-2026-035 | Establish the League knowledge, patch, and learning-resource source boundary | Ready for Development | Technical Reporting Analyst | [WO-2026-035](proposed/WO-2026-035-league-knowledge-source-boundary.md) |
 | WO-2026-036 | Build repeatable Elite opponent-preparation playbooks | Backlog | Core Features Developer | [WO-2026-036](proposed/WO-2026-036-elite-opponent-preparation-playbooks.md) |
+| WO-2026-037 | Restore membership-first workspace entry and owner creation access | Ready for QA | QA and Release Auditor | [WO-2026-037](proposed/WO-2026-037-membership-first-workspace-entry-and-creation.md) |

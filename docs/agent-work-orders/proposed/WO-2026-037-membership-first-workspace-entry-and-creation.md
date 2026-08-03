@@ -146,6 +146,7 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 ### Validation evidence
 
+- Implementation and local QA handoff commit: `717beffda22ea088fc0dbeafc340a8e449aa10ed`.
 - Focused workspace/access/provisioning contracts: 16/16 passed.
 - Full repository tests: 233/233 passed.
 - ESLint: zero warnings.

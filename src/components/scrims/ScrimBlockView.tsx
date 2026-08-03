@@ -23,6 +23,8 @@ import { CoachingActionDialog } from "@/components/actions/CoachingActionDialog"
 import { ActionCycleRail } from "@/components/actions/ActionCycleRail";
 import { ReviewChecklist } from "@/components/scrims/ReviewChecklist";
 import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
+import { PracticeDevelopmentGameEvidenceChip } from "@/components/practice-development/PracticeDevelopmentGameEvidenceChip";
+import { PracticeDevelopmentPanel } from "@/components/practice-development/PracticeDevelopmentPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataSurface } from "@/components/workspace/DataSurface";
@@ -260,6 +262,13 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
             ]}
           />
 
+          <PracticeDevelopmentPanel
+            games={scrimGames.map((game) => ({ id: game.id, gameNumber: game.game_number, status: game.status }))}
+            reviewStatus={reviewStatus}
+            scrimId={scrimId}
+            scrimStartsAt={block.starts_at}
+          />
+
           {block.notes && (
             <DataSurface className="p-5">
               <p className="workspace-eyebrow">Block focus and notes</p>
@@ -333,6 +342,7 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold">Game {selectedGame.game_number}</h2>
                 <GameEvidenceDialog compact gameId={selectedGame.id} />
+                <PracticeDevelopmentGameEvidenceChip gameId={selectedGame.id} gameStatus={selectedGame.status} scrimId={scrimId} scrimStartsAt={block.starts_at} />
               </div>
               <p className="mt-2 text-sm text-[var(--workspace-muted)]">
                 {selectedGame.result ? `${selectedGame.result === "win" ? "Win" : "Loss"}` : "Outcome not recorded"} · {selectedGame.side ? `${selectedGame.side} side` : "Side not recorded"} · {formatGameDuration(selectedGame.duration_seconds)}

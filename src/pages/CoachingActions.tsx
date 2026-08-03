@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { CheckCircle2, CircleDot, ClipboardCheck, Clock3, History, Link2, RotateCcw, XCircle } from "lucide-react";
 
 import { CoachingActionDialog } from "@/components/actions/CoachingActionDialog";
+import { PracticeDevelopmentActionBreadcrumb } from "@/components/practice-development/PracticeDevelopmentActionBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ import { useRole } from "@/contexts/RoleContext";
 import { type CoachingAction, type CoachingActionStatus, type PlayerCheckIn, type ReviewOutcome, useCoachingActions } from "@/hooks/useCoachingActions";
 import { useOptimizedScrimsData } from "@/hooks/useOptimizedScrimsData";
 import { usePlayersData } from "@/hooks/usePlayersData";
+import { usePracticeDevelopmentBreadcrumbs } from "@/hooks/usePracticeDevelopmentBreadcrumbs";
 import { cn } from "@/lib/utils";
 import { Link } from "@/lib/router";
 
@@ -61,6 +63,7 @@ export default function CoachingActions() {
   });
   const dueSoon = actions.filter((action) => openStates.has(action.status) && action.due_at && new Date(action.due_at).getTime() < now + 3 * 86_400_000).length;
   const recurringPatterns = new Set(actions.map((action) => action.pattern_label).filter(Boolean)).size;
+  const practiceBreadcrumbs = usePracticeDevelopmentBreadcrumbs(visible.map((action) => action.id));
 
   if (isLoading) return <WorkspaceState icon={Clock3} title="Loading coaching actions..." description="Gathering action cycles, checkpoints, and review evidence." />;
   if (error) return <WorkspaceState icon={ClipboardCheck} title="Coaching actions could not be loaded" description="The workspace action contract is unavailable. Try again shortly." />;
@@ -98,6 +101,7 @@ export default function CoachingActions() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2"><ActionState status={action.status} /><span className="ss-mono text-xs uppercase tracking-[0.06em] text-[var(--workspace-subtle)]">{action.scope_type === "unit" ? action.unit_label : action.scope_type} / {action.category.replaceAll("_", " ")}</span>{overdue && <span className="ss-mono text-xs uppercase text-rose-300">Overdue</span>}</div>
             <h2 className="mt-4 text-xl font-semibold tracking-[-0.02em]">{action.title}</h2>
+            <PracticeDevelopmentActionBreadcrumb breadcrumb={practiceBreadcrumbs.get(action.id)} />
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--workspace-muted)]">{action.description || "Success evidence has not been described."}</p>
             {action.pattern_label && <p className="mt-3 inline-flex border-l-2 border-violet-300/50 pl-3 text-sm text-violet-200">Recurring pattern: {action.pattern_label}</p>}
             <dl className="mt-5 grid gap-4 border-y border-[var(--workspace-rule)] py-4 text-sm sm:grid-cols-3">

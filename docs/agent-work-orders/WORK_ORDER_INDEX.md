@@ -46,7 +46,7 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-030 | Restore an opaque workspace-switcher menu in the sidebar | Blocked | Developer – Fast Lane | [WO-2026-030](ready/WO-2026-030-workspace-switcher-menu-surface.md) |
 | WO-2026-031 | Reconcile Elite self-serve purchase with a verified differentiated outcome | Backlog | Core Features Developer | [WO-2026-031](proposed/WO-2026-031-elite-purchase-and-value-boundary.md) |
 | WO-2026-032 | Define and evidence the future Elite improvement-programme proposition | In Progress | PM | [WO-2026-032](proposed/WO-2026-032-elite-improvement-programme-proposition.md) |
-| WO-2026-033 | Build the Elite practice-development loop | Backlog | Core Features Developer | [WO-2026-033](proposed/WO-2026-033-elite-practice-development-loop.md) |
+| WO-2026-033 | Build the Elite practice-development loop | Ready for QA | QA and Release Auditor | [WO-2026-033](proposed/WO-2026-033-elite-practice-development-loop.md) |
 | WO-2026-034 | Build the Elite weekly performance command centre | Backlog | Core Features Developer | [WO-2026-034](proposed/WO-2026-034-elite-weekly-performance-command-centre.md) |
 | WO-2026-035 | Establish the League knowledge, patch, and learning-resource source boundary | Ready for Development | Technical Reporting Analyst | [WO-2026-035](proposed/WO-2026-035-league-knowledge-source-boundary.md) |
 | WO-2026-036 | Build repeatable Elite opponent-preparation playbooks | Backlog | Core Features Developer | [WO-2026-036](proposed/WO-2026-036-elite-opponent-preparation-playbooks.md) |

@@ -12,7 +12,7 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-No work orders are currently ready for QA.
+| [WO-2026-033](proposed/WO-2026-033-elite-practice-development-loop.md) | QA and Release Auditor | Phase 2 source/local handoff: pre-change checkpoint `ac71123`, 228/228 repository tests, 47/47 disposable-database assertions, guarded structural recovery rehearsal, zero-warning lint, TypeScript, production build, and bundle budget. No hosted migration, activation, deployment, or browser evidence. | Audit migration/RLS/RPC/recovery evidence first. Any production-backed migration, type regeneration, module activation, deployment, or hosted role/browser matrix requires a new exact Theo approval. |
 
 ## Recently closed conditionally
 
@@ -57,7 +57,7 @@ WO-2026-030 is blocked pending patched staging visual verification and the singl
 
 ## Future Elite strategy â€” not ready for dispatch
 
-Current-status note (2026-08-03): WO-032 is active in the In Progress table and WO-035 is ready in the Ready for Development table. Their stale rows below are retained as historical sequencing context only; the work orders and index are authoritative.
+Current-status note (2026-08-03): WO-032 remains active in the In Progress table, WO-033 is in Ready for QA, and WO-035 is ready in the Ready for Development table. Their stale rows below are retained as historical sequencing context only; the work orders and index are authoritative.
 
 | Work order | Proposed owner | Why it is not ready | Collision risk |
 |---|---|---|---|

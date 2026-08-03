@@ -91,6 +91,8 @@ export function useCoachingActions(filters?: { scrimId?: string; scrimGameId?: s
     void queryClient.invalidateQueries({ queryKey: ["coaching-actions"] });
     void queryClient.invalidateQueries({ queryKey: ["coaching-action-events"] });
     void queryClient.invalidateQueries({ queryKey: ["coaching-action-templates"] });
+    void queryClient.invalidateQueries({ queryKey: ["practice-development", tenant?.id] });
+    void queryClient.invalidateQueries({ queryKey: ["practice-development-breadcrumbs", tenant?.id] });
   }
 
   const createMutation = useMutation({

@@ -1,8 +1,8 @@
 # WO-2026-036 - Build repeatable Elite opponent-preparation playbooks
 
 - **ID reservation:** [WO-2026-036 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
-- **Assigned owner:** Core Features Developer
+- **Status:** Ready for QA
+- **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
 - **Priority:** Medium
@@ -85,7 +85,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Phase 2B is implemented and the additive schema is hosted without tenant activation, but the frontend is not deployed and the authenticated role/plan/tenant matrix has not been audited. External intelligence remains deliberately out of scope.
+- **Rationale:** The reviewed candidate is deployed and limited to one named non-customer Elite QA fixture. Core's hosted access matrix and authenticated Owner surface pass, but QA has not yet completed the playbook lifecycle, browser-role, responsive, provenance, or cross-workflow matrix. External intelligence remains deliberately out of scope.
 
 ### Outstanding checks
 
@@ -95,7 +95,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 | Implementation approval | Theo | Written approval | Complete (2026-08-03) |
 | Phase 2B application projection and workflow | Core | Local implementation, contracts, build and responsive shell check | Complete locally (2026-08-03) |
 | Hosted additive schema and generated client contract | Core | Migration record, catalog/ACL checks, empty-table proof, generated types, Advisor review | Complete (2026-08-03) |
-| Hosted QA | QA | Evidence pack | Open |
+| Hosted QA | QA and Release Auditor | Lifecycle, browser-role, responsive, provenance and cross-workflow evidence pack | Ready to execute |
 
 ### Theo approval record
 
@@ -103,6 +103,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 |---|---|---|---|---|
 | Implementation | Yes | Approved for bounded Phase 1 | 2026-08-03 | Existing tenant-owned evidence and explicit staff judgement only; hosted migration and deployment remain separate. |
 | Hosted migration and related validation | Yes | Approved | 2026-08-03 | Applied additively; no tenant activation, fixture, customer data, billing, deployment, or release action was performed. |
+| Staging deployment and isolated fixture activation | Yes | Approved | 2026-08-04 | Commit `52f9d62`; `WO-024 QA Tenant A` only. No customer activation or release approval. |
 | Release | Yes | Pending | — | Separate after QA. |
 
 ## Decision and approval record
@@ -117,6 +118,7 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - 2026-08-03 - Theo reviewed and accepted the Phase 1 design and approved local migration/security-boundary implementation. Hosted migration application and deployment remain separately approval-gated.
 - 2026-08-03 - Theo approved Phase 2B. Core implemented the staff projection, primary Scouting workflow, and bounded Draft/Coaching Action/Scrim breadcrumbs. No hosted migration, tenant activation, deployment, billing change, external source, or release occurred.
 - 2026-08-03 - Theo approved the hosted migration and related hosted validation. Core applied the additive migration and regenerated hosted types. No tenant module was activated, no fixture or customer record was created, and deployment and release remain separate.
+- 2026-08-04 - Theo approved the staging push/deployment and controlled isolated Elite QA activation. Core pushed `52f9d62`, deployed the exact Git candidate, and enabled `opponent_preparation` only for `WO-024 QA Tenant A`. Tenant B and every other tenant remain disabled controls; release remains separate.
 
 ## Implementation and review evidence
 
@@ -155,6 +157,15 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - Hosted Supabase types were regenerated and the browser RPC adapter now uses the generated `Database["public"]["Functions"]` contract without an unsafe cast.
 - The hosted Security Advisor reports the six locked tables as RLS-without-policy and the authenticated shaped RPCs as executable `SECURITY DEFINER` functions. These findings are intentional for the locked-table/shaped-RPC design: browser tables have no DML grants, while every public RPC delegates to the exact Elite/live/enabled/Owner-or-Admin server guard. Performance Advisor reports new foreign-key and unused-index notices; the composite equality paths are indexed and unused-index notices are expected before activation. These findings must be re-audited if the access model or query paths change.
 - **Highest evidence achieved:** hosted schema, catalog, ACL, empty-state, fail-closed identity, generated-client, and Advisor inspected. This is not an authenticated enabled-module workflow test, staging deployment, QA verdict, or release approval.
+
+### Staging deployment, isolated activation, and Core hosted handoff - 2026-08-04
+
+- Pushed the reviewed five-commit staging chain through `52f9d62d6a593e63e5f3cb399ff3ce2368a48d50` to `origin/codex/Staging`. Vercel deployment `dpl_2NMVKZBTD1t6PQRWTvU4Zi6WqCcf` built from that exact Git SHA, reached `READY`, and has both `staging.scrimstats.gg` and the `codex/Staging` branch alias with no alias error.
+- Enabled `opponent_preparation = live/true` only for the established non-customer Elite fixture `WO-024 QA Tenant A`. The post-change invariant is 1 enabled row, 114 planned/disabled rows, and 0 unexpectedly changed other tenants. `WO-024 QA Tenant B` remains the disabled Elite control.
+- Direct hosted authorization simulation passed: Tenant A Owner and Admin returned access; Tenant A Member and Viewer returned denial; an unrelated authenticated user returned denial. Rolled-back live-module simulations returned denial for dedicated Free and Pro owners, so the plan boundary was tested independently without persisting a Free/Pro activation.
+- The authenticated staging Owner session renders the `Opponent preparation` panel and `Start preparation` action for the existing QA opponent after a forced reload. Console warning/error capture was empty. No playbook, revision, evidence, action, review, or event row was created; all six workflow tables remain empty.
+- A requested 390px override did not take effect in the connected in-app browser: the page still reported a 1274px client width. This is explicitly **not** mobile evidence and remains for QA on a controllable 390px viewport.
+- **Highest evidence achieved:** exact candidate deployed; isolated fixture activated; direct hosted plan/role/tenant predicate verified; authenticated Owner empty-state surface browser verified. This is not lifecycle completion, Member/Viewer browser proof, cross-workflow breadcrumb proof, mobile proof, QA acceptance, customer availability, or release approval.
 
 ### Reproducible QA handoff after approved hosted migration and deployment
 

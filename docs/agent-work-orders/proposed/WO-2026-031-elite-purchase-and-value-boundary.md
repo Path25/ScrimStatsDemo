@@ -93,7 +93,7 @@ Hard launch is targeted in ten days. The product must not sell a premium tier wh
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Theo-selected Elite posture | Recorded founder decision | Proposed | Outstanding |
+| Theo-selected Elite posture | 2026-08-02 founder decision: retain Elite self-serve only after a separately evidenced customer-available differentiated outcome and truthful plan presentation | Decision recorded | Implementation and evidence outstanding |
 | Truthful purchase and plan presentation | Browser and source evidence | Local / Browser | Outstanding |
 | Checkout/webhook/entitlement coherence where purchasable | Isolated hosted evidence | Hosted | Outstanding |
 | Customer-available differentiated outcome | Hosted QA and support-boundary evidence | Hosted | Outstanding |
@@ -107,7 +107,7 @@ Hard launch is targeted in ten days. The product must not sell a premium tier wh
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Select Elite self-serve posture | Theo | Written decision and boundary | Open |
+| Select Elite self-serve posture | Theo | Written decision and boundary | Complete (2026-08-02): option 2 selected |
 | Implement selected posture | Core Features Developer | Commit and local validation | Open |
 | Verify paid path and entitlement boundary | QA and Release Auditor | Isolated hosted evidence | Open |
 | Approve public/customer claim and release | Theo / ProComps | Message Ledger and release approval | Open |
@@ -116,12 +116,16 @@ Hard launch is targeted in ten days. The product must not sell a premium tier wh
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
-| Implementation | Yes | Pending | — | Billing/entitlement/customer-facing change. |
+| Implementation | Yes | Approved | 2026-08-02 | Theo approved implementation of option 2. Customer-facing billing, entitlement, or checkout changes remain blocked until the differentiated outcome and hosted evidence boundary are explicitly identified. |
 | Release | Yes | Pending | — | Separate approval after isolated hosted QA. |
 
 ## Decision and approval record
 
 - 2026-08-02 - Founder requested hard-launch review of paid value and conversion readiness. PM identified a mismatch between Elite self-serve purchase and its unverified differentiated Discord outcome.
+- 2026-08-02 - Theo selected option 2: retain Elite self-serve purchase only after a separately evidenced, customer-available differentiated outcome and truthful plan presentation. This does not itself approve billing, entitlement, checkout, provider, or public-claim changes.
+- 2026-08-02 - Theo approved WO-031 implementation. Current source review confirms no separately evidenced customer-available Elite outcome has been identified yet; implementation is therefore constrained to preparation until that boundary is named.
+- 2026-08-02 - Theo directed that WO-031 remain parked until the end of the Elite implementation sequence, when the final differentiated outcome and launch evidence can be assessed together.
+- 2026-08-03 - Theo reconfirmed that ScrimStats is not hard launched and that WO-031 should remain parked. No Elite billing, entitlement, checkout, provider, customer-facing, or release action is authorised by this decision.
 
 ## Implementation and review evidence
 

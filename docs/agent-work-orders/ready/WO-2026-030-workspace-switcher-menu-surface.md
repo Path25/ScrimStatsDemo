@@ -1,7 +1,7 @@
 # WO-2026-030 - Restore an opaque workspace-switcher menu in the sidebar
 
 - **ID reservation:** [WO-2026-030 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** Blocked
 - **Assigned owner:** Developer – Fast Lane
 - **Size:** S
 - **Risk:** Low
@@ -10,7 +10,7 @@
 
 ## Delivery routing
 
-- **Area / files likely affected:** `src/components/layout/DashboardLayout.tsx`; only inspect `src/components/ui/dropdown-menu.tsx` if the local component contract shows that a contained styling correction is necessary.
+- **Area / files likely affected:** `src/components/layout/DashboardLayout.tsx`, `scripts/workspace-console-contract.test.mjs`; only inspect `src/components/ui/dropdown-menu.tsx` if the local component contract shows that a contained styling correction is necessary.
 - **Dependencies:** A controlled non-customer account with membership in two workspaces for browser verification.
 - **Collision risk:** Do not overlap with any active `DashboardLayout` refactor. Do not change `TenantContext`, tenant queries, workspace creation, local-storage selection, RLS, or tenant membership behaviour. WO-2026-023 remains separate high-risk multi-workspace creation work.
 
@@ -68,8 +68,9 @@ Multi-workspace membership is already supported for existing users. This is a co
 1. Use a non-customer account with membership in workspace A and workspace B; open an existing authenticated workspace route.
 2. Open the sidebar workspace switcher at desktop width, then at a mobile width with the navigation open.
 3. Confirm the menu has an opaque background, clear boundary, readable options, and sits above rather than blending into or overlapping the navigation.
-4. Select workspace B, then workspace A; confirm the existing selected indicator updates, no console error occurs, and the single-workspace presentation remains unchanged in its control account.
-5. Record screenshots, viewport sizes, build revision, and console result without exposing tenant identifiers.
+4. Select workspace B, then workspace A; confirm the existing selected indicator updates and no console error occurs.
+5. With the trigger focused, open the menu with Enter, select a workspace with the keyboard, and dismiss the menu with Escape.
+6. Record screenshots, viewport sizes, build revision, and console result without exposing tenant identifiers; use a separate single-workspace control account for the regression check.
 
 ## Role involvement and handoffs
 
@@ -88,36 +89,44 @@ Multi-workspace membership is already supported for existing users. This is a co
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Opaque, layered multi-workspace menu | Developer and QA browser screenshots | Browser | Outstanding |
-| Selection and active-state preservation | Controlled A/B workspace switch evidence | Browser | Outstanding |
-| Single-workspace regression check | Browser control-account evidence | Browser | Outstanding |
-| Local UI quality checks | Targeted test where available; lint, TypeScript, and build | Local | Outstanding |
+| Opaque, layered multi-workspace menu | Staging authenticated desktop/mobile screenshots and computed style report show `background-color: rgba(0, 0, 0, 0)` and `z-index: 50`; current staging candidate is pre-fix | Browser | Fail on current staging |
+| Selection and active-state preservation | Staging controlled account switched A → B → A with active trigger updates and no console errors; keyboard Enter selection also passed | Browser | Pass |
+| Single-workspace regression check | Single-workspace branch unchanged; browser control-account evidence still required | Local / Browser | Outstanding |
+| Local UI quality checks | Workspace contract (6 tests), full ESLint, TypeScript, Vite build, and bundle budget | Local | Pass |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** The defect is reported and the affected switcher is source-identified, but no correction or browser evidence exists yet.
+- **Rationale:** The local correction and validation are complete, and staging behavior checks pass, but the currently deployed staging build still has the transparent pre-fix menu surface. A patched staging candidate and single-workspace control-account check are still required.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Isolated visual correction | Developer – Fast Lane | Commit and local validation handoff | Open |
-| Controlled multi-workspace browser matrix | QA and Release Auditor | Desktop/mobile screenshots and selection evidence | Open |
+| Isolated visual correction | Developer – Fast Lane | Source diff, focused contract test, lint, TypeScript, build, and bundle-budget output | Closed |
+| Patched staging candidate and visual browser matrix | Theo / QA and Release Auditor | Deploy or otherwise expose the local patch in staging, then repeat desktop/mobile surface checks and retain screenshots | Open |
+| Single-workspace regression check | QA and Release Auditor | Control-account browser evidence showing the non-dropdown sidebar remains unchanged | Open |
 | Deployment/release decision | Theo | Separate explicit approval if a hosted candidate is proposed | Open |
 
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
-| Implementation | No | N/A | 2026-08-02 | Contained S/Low visual correction only; no tenant behaviour or data change. |
+| Implementation | No | Approved | 2026-08-03 | Theo explicitly approved the contained S/Low visual correction; no tenant behaviour or data change. |
 | Release | Yes | Pending | — | Separate hosted deployment/release approval remains required. |
 
 ## Decision and approval record
 
 - 2026-08-02 - Theo reported that the existing sidebar switcher shows multiple workspaces without a visible menu background and overlaps the navigation. PM isolated the issue to `DashboardLayout` and routed it to Developer – Fast Lane.
+- 2026-08-03 - Theo approved implementation. Developer – Fast Lane completed the isolated UI correction and local validation; staging behavior evidence is captured, while patched-candidate visual verification and the single-workspace regression remain open.
 
 ## Implementation and review evidence
 
-- Source review: `DashboardLayout` renders a `DropdownMenuContent` only when `memberships.length > 1`; it uses the existing `chooseTenant` path and attempts to set workspace-surface styling. The reported browser regression is not yet reproduced or diagnosed.
-- **Highest evidence achieved:** Source reviewed.
+- `DashboardLayout` now gives the portalled menu an explicit opaque `#111a23` surface, visible boundary, readable foreground, cyan active indicator, and `z-[60]` stacking level; `TenantContext` and `src/components/ui/dropdown-menu.tsx` are unchanged.
+- `scripts/workspace-console-contract.test.mjs` asserts the local surface and stacking contract.
+- Local validation passed: workspace contract (6 tests), full ESLint with zero warnings, TypeScript, Vite production build, and bundle budget.
+- Staging browser verification on 2026-08-03 used the authenticated controlled multi-workspace account at `/overview`: desktop and 390x844 mobile screenshots captured the transparent menu and navigation overlap; computed menu style was transparent background, default border, and `z-index: 50`.
+- The staging account successfully switched between two QA workspaces, retained the active trigger label, passed keyboard Enter selection and Escape dismissal, and produced no console errors. The initial workspace selection was restored before handoff.
+- Evidence artifacts: `C:\Users\Theo\.codex\visualizations\2026\07\29\019faf19-f52e-74b0-ac28-8828910f821a\WO-2026-030-staging-desktop.png` and `C:\Users\Theo\.codex\visualizations\2026\07\29\019faf19-f52e-74b0-ac28-8828910f821a\WO-2026-030-staging-mobile.png`.
+- The staging build still renders the old scoped `bg-[var(--workspace-surface-raised)]` class; the local patch is not deployed, so the visual acceptance criterion remains blocked.
+- **Highest evidence achieved:** Browser verified (pre-fix staging behavior; patched candidate not yet browser verified).

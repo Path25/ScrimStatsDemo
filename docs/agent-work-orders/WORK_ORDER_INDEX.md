@@ -1,6 +1,6 @@
 # Work order index
 
-This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-031`; the next available 2026 ID is `WO-2026-032`.
+This is the authoritative ID registry for ScrimStats work orders. IDs are never reused, including cancelled, superseded, or completed work. The current reservation is `WO-2026-036`; the next available 2026 ID is `WO-2026-037`.
 
 ## Reservation protocol
 
@@ -35,13 +35,18 @@ This is the authoritative ID registry for ScrimStats work orders. IDs are never 
 | WO-2026-020 | Make Solo Queue tracker available on Free consistently | Done (conditional; Theo accepted endpoint-evidence risk) | QA and Release Auditor | [WO-2026-020](proposed/WO-2026-020-free-soloq-entitlement.md) |
 | WO-2026-021 | Restore existing-account workspace creation and confirmation recovery | Done | QA | [WO-2026-021](proposed/WO-2026-021-existing-account-workspace-recovery.md) |
 | WO-2026-022 | Record daily Stripe MRR snapshots for measured churn reporting | Done | QA and Release Auditor | [WO-2026-022](proposed/WO-2026-022-daily-stripe-mrr-snapshots.md) |
-| WO-2026-023 | Let workspace owners create additional independent workspaces | In Progress | Core Features Developer | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
+| WO-2026-023 | Let workspace owners create additional independent workspaces | Done | QA and Release Auditor | [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) |
 | WO-2026-024 | Give players reliable read-only intelligence access | Done (conditional; production deployment and smoke test pending) | Core Features Developer | [WO-2026-024](proposed/WO-2026-024-player-read-only-intelligence-access.md) |
-| WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Ready for QA | QA and Release Auditor | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
+| WO-2026-025 | Add tenant-safe Discord `/scrim` practice-block creation | Done (conditional; staging-only risk accepted) | QA and Release Auditor | [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) |
 | WO-2026-019 | Create champion-avatar reproduction evidence and regression fixtures | Done (conditional handoff to WO-016) | Developer – Fast Lane | [WO-2026-019](proposed/WO-2026-019-champion-avatar-evidence-pack.md) |
 | WO-2026-026 | Define a safe new-workspace activation follow-up | In Progress | PM | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) |
 | WO-2026-027 | Diagnose OnceUponATeam owner Draft-load failure | Done | QA and Release Auditor | [WO-2026-027](proposed/WO-2026-027-onceuponateam-draft-load-investigation.md) |
 | WO-2026-028 | Verify an isolated Pro purchase, entitlement, and billing-return journey | Blocked | QA and Release Auditor | [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) |
 | WO-2026-029 | Repair multi-workspace Draft RLS cardinality failure | Done | QA and Release Auditor | [WO-2026-029](proposed/WO-2026-029-repair-multi-workspace-draft-rls.md) |
-| WO-2026-030 | Restore an opaque workspace-switcher menu in the sidebar | Ready for Development | Developer – Fast Lane | [WO-2026-030](ready/WO-2026-030-workspace-switcher-menu-surface.md) |
+| WO-2026-030 | Restore an opaque workspace-switcher menu in the sidebar | Blocked | Developer – Fast Lane | [WO-2026-030](ready/WO-2026-030-workspace-switcher-menu-surface.md) |
 | WO-2026-031 | Reconcile Elite self-serve purchase with a verified differentiated outcome | Backlog | Core Features Developer | [WO-2026-031](proposed/WO-2026-031-elite-purchase-and-value-boundary.md) |
+| WO-2026-032 | Define and evidence the future Elite improvement-programme proposition | In Progress | PM | [WO-2026-032](proposed/WO-2026-032-elite-improvement-programme-proposition.md) |
+| WO-2026-033 | Build the Elite practice-development loop | Backlog | Core Features Developer | [WO-2026-033](proposed/WO-2026-033-elite-practice-development-loop.md) |
+| WO-2026-034 | Build the Elite weekly performance command centre | Backlog | Core Features Developer | [WO-2026-034](proposed/WO-2026-034-elite-weekly-performance-command-centre.md) |
+| WO-2026-035 | Establish the League knowledge, patch, and learning-resource source boundary | Ready for Development | Technical Reporting Analyst | [WO-2026-035](proposed/WO-2026-035-league-knowledge-source-boundary.md) |
+| WO-2026-036 | Build repeatable Elite opponent-preparation playbooks | Backlog | Core Features Developer | [WO-2026-036](proposed/WO-2026-036-elite-opponent-preparation-playbooks.md) |

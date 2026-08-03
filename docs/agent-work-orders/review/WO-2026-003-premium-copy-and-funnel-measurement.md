@@ -66,6 +66,7 @@ Remove customer-visible encoding defects, expand copy-integrity checks, define p
 - 2026-07-28 - Theo approved the canonical activation definition: first scheduled practice block plus first completed recorded game.
 - 2026-07-28 - Theo approved application of the reviewed additive funnel migration to production. No production test-data creation, billing changes, or customer communications are approved by this decision.
 - 2026-07-28 - Theo approved isolated non-customer hosted test-workspace verification for the reviewed migration and funnel workflow. This does not authorise customer-data changes, billing changes, customer communications, or a production release beyond the separately recorded migration decision.
+- 2026-08-03 - Theo directed that WO-003 should wait for activity to occur naturally. No synthetic/test workflow or production-backed test-data creation is authorised by this direction. Retain the HOLD until a naturally occurring, authorised, privacy-safe eligible journey can be inspected using aggregate or redacted evidence.
 
 ## Implementation decision
 

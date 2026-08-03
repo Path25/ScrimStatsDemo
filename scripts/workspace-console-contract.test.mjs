@@ -52,6 +52,9 @@ test("workspace shell validates tenant accent and exposes analyst-console tokens
   assert.match(shell, /\^#\[0-9a-f\]\{6\}\$/i);
   assert.match(shell, /--team-accent/);
   assert.match(shell, /memberships\.length > 1/);
+  assert.match(shell, /bg-\[#111a23\]/);
+  assert.match(shell, /z-\[60\]/);
+  assert.match(shell, /text-\[#11e2d0\]/);
   assert.match(styles, /\.workspace-shell/);
   assert.match(styles, /--workspace-surface/);
   assert.match(styles, /--workspace-accent/);

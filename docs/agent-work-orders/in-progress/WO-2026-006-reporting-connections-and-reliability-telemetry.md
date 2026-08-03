@@ -91,6 +91,7 @@ Client growth, active teams, and MRR are the stated commercial priorities. The e
 - 2026-07-28 - Proposed by Analytics and Technical Reporting. Theo approval is required before granting external access, enabling billable monitoring/analytics, applying migrations, or deploying telemetry.
 - 2026-07-28 - Theo assigned the Project Manager to review and advance this work order. Read-only source access and all implementation/release boundaries remain approval-gated.
 - 2026-07-28 - Theo confirmed that relevant agents now have application access. The access blocker is cleared; the Project Manager must still produce the dated, reconciled baseline required by this work order before it can be completed.
+- 2026-08-03 - Theo approved the access needed to make this work, bounded to least-privilege, project-scoped, read-only Supabase, Stripe, Vercel, and GitHub access or approved aggregate/redacted exports. This does not approve service-role or provider secrets, Web Analytics or Speed Insights activation, configuration changes, migrations, deployments, external-provider activation, or spend; each remains separately approval-gated.
 
 ## Prepared Phase 1 access and baseline packet
 

@@ -1,7 +1,7 @@
 # WO-2026-023 - Let workspace owners create additional independent workspaces
 
 - **ID reservation:** [WO-2026-023 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Done
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -202,3 +202,72 @@ The approved isolated owner creation completed, but its post-create selection an
 - Local migration provenance now matches the hosted migration record: `20260802150008_owner_additional_workspaces.sql`. This is a source-file rename only; no new database SQL was applied.
 - Local validation passed: focused provisioning contract (5/5), ESLint zero warnings, TypeScript, production Vite build, and bundle budget.
 - **Pending:** Theo staging-deployment approval, then QA rerun using the existing isolated workspace fixture. No additional workspace, provider, billing, or customer-data action is authorised by this remediation.
+
+## Staging regression re-audit - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The deployed candidate resolves the workspace-picker loading race and supports stable selection of the existing QA workspace. The post-create persistence path and server role-denial matrix remain unverified, so the work order is Ready for QA rather than complete.
+
+### 2. What was verified
+
+- **Candidate:** local branch and `origin/codex/Staging` identify `8a1488e` (`Fix additional workspace selection handoff`); the focused self-service contract passes 5/5.
+- **Hosted picker:** staging `/workspaces` loaded the multi-workspace picker after a fresh navigation and showed the existing owner, viewer, and isolated QA workspace choices. It did not redirect to `/create-workspace`.
+- **Hosted switching:** selecting the isolated QA workspace opened its empty Overview as owner. A subsequent Settings navigation retained that workspace, showed `Free · active`, the Free plan as current, and no browser warnings/errors.
+- **Existing fixture:** its Overview remains empty (no scheduled/completed activity) and its Settings show no paid state inherited from the source workspace.
+
+### 3. Blocking issues
+
+- **Blocking:** The precise post-create persistence path (`refreshTenant(returnedTenantId)` followed by navigation) was not exercised against this deployed revision. QA deliberately did not create a second fixture solely to repeat it.
+- **Blocking:** Direct RPC/browser denial for controlled member-only, admin-only, viewer-only, and no-workspace accounts remains untested.
+
+### 4. Important risks
+
+- **Important:** The source fix persists only a server-confirmed preferred tenant, which is the correct guard, but source/local evidence cannot replace a new staging creation journey.
+- **Important:** The existing fixture should remain isolated; do not add provider credentials, billing, invitations, roster, or operational data while the remaining matrix is run.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One approved post-fix owner creation to verify returned-tenant persistence; direct non-owner/no-workspace RPC outcomes; new-tenant module and funnel evidence; exact hosted migration history/advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** approve reuse of the existing isolated owner account to create one final clearly labelled post-fix QA workspace, or explicitly accept the remaining post-create persistence risk.
+2. **QA:** after that approval, verify creation → new Overview → Settings → picker → source-workspace switch; then run the controlled role-denial matrix when the accounts are available.
+3. **Core Features Developer:** no further source change is indicated by this re-audit unless the post-fix journey fails.
+
+## Approved post-fix creation verification - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The deployed creation and active-workspace handoff now pass in staging. The server-side authorization and tenant-denial matrix remains release-critical and has not yet been verified with suitable controlled accounts.
+
+### 2. What was verified
+
+- **Approved hosted creation:** QA created `WO-023 Postfix QA 2026-08-02` through the staging owner flow. It redirected directly to that new workspace's Overview with the creator as `owner`.
+- **New-tenant state:** the new workspace remained Free / active, empty of scheduled and completed work, and showed no inherited operational data. No billing, provider credential, roster, invitation, or customer data was added.
+- **Persistence:** Settings retained `WO-023 Postfix QA 2026-08-02` as the active workspace, and a subsequent Overview navigation still showed that workspace as owner.
+- **Browser health:** the journey produced no captured warning or error entries.
+
+### 3. Blocking issues
+
+- **Blocking:** QA still lacks controlled member-only, admin-only, viewer-only, and no-workspace accounts to prove direct RPC and browser denial. The currently available viewer identity is not a valid denial subject because it owns another tenant.
+
+### 4. Important risks
+
+- **Important:** The successful browser journey demonstrates selection persistence, not server-side authorization. It must not be used as evidence that a non-owner cannot invoke the RPC or access a different tenant.
+- **Important:** Both isolated QA workspaces must remain non-operational fixtures; do not add billing, provider credentials, invitations, roster, or customer data.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Direct non-owner and no-workspace RPC denial, admin/member/viewer browser behaviour, cross-tenant isolation under those roles, `workspace_created` funnel evidence, and exact hosted migration/advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** provide or authorise controlled member-only, admin-only, viewer-only, and no-workspace accounts that do not hold an owner membership elsewhere.
+2. **QA:** run the direct-RPC and authenticated browser role/tenant matrix against the deployed candidate, preserving these QA fixtures as empty workspaces.
+3. **Core Features Developer:** no implementation change is indicated unless that controlled matrix identifies an authorization defect.
+
+## Theo QA risk acceptance and closure - 2026-08-02
+
+Theo manually tested the remaining role-sensitive portion and accepted completion of this fix. WO-2026-023 is therefore **Done**. The outstanding direct-RPC and controlled role-matrix evidence remains historical unverified evidence; this closure does not approve production deployment, migration application, billing changes, or any broader release.

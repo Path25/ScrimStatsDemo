@@ -192,9 +192,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-60 border-[var(--workspace-rule-strong)] bg-[var(--workspace-surface-raised)]"
+              className="z-[60] w-60 border-[rgba(226,236,232,0.22)] bg-[#111a23] text-[#f2f6f4] shadow-xl"
             >
-              <DropdownMenuLabel className="workspace-eyebrow text-[var(--workspace-subtle)]">
+              <DropdownMenuLabel className="workspace-eyebrow text-[#aebac2]">
                 Select workspace
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -207,7 +207,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <TeamMark logo={membership.logo} name={membership.name} size="small" />
                   <span className="min-w-0 flex-1 truncate">{membership.name}</span>
                   {membership.id === tenant?.id && (
-                    <Check className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden="true" />
+                    <Check className="h-4 w-4 text-[#11e2d0]" aria-hidden="true" />
                   )}
                 </DropdownMenuItem>
               ))}

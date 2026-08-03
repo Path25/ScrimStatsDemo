@@ -6,28 +6,36 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 | Work order | Lane | Size / risk | Dependencies | Collision risk / dispatch note |
 |---|---|---|---|---|
-| [WO-2026-030](ready/WO-2026-030-workspace-switcher-menu-surface.md) | Developer – Fast Lane | S / Low | Controlled account with memberships in two workspaces for browser QA | `DashboardLayout` only; do not alter `TenantContext`, membership queries, workspace creation, or RLS. |
+| [WO-2026-035](proposed/WO-2026-035-league-knowledge-source-boundary.md) | Technical Reporting Analyst | M / High | Theo-approved internal research scope; primary-source terms/rights review | Source register only; do not activate providers, scrape, ingest, store VODs, spend, or publish. |
 
 ## Ready for QA
 
 | Work order | Owner | Deployment evidence | QA dependency |
 |---|---|---|---|
-| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | QA and Release Auditor | Commits `2d5072a`, `a56a387`, `cd52696`; migration `20260802173000`; `discord-interactions` v3 safely handles malformed JSON and impossible ISO-shaped dates. | Separate Theo approval for private-server endpoint URL, `DISCORD_PUBLIC_KEY`, command registration, and isolated invocation. Audit signature, role, tenant, replay, overlap, and outbox matrix. |
+No work orders are currently ready for QA.
+
+## Recently closed conditionally
+
+| Work order | Owner | Accepted evidence and residual risk |
+|---|---|---|
+| [WO-2026-025](proposed/WO-2026-025-discord-slash-command-scheduling.md) | QA and Release Auditor | Theo accepted a staging-only conditional closure after one hosted Discord-to-receipt-to-scrim-to-delivered-outbox path. Exact replay and guild/role/entitlement/module/overlap/tenant denial matrix remain unverified; reopen before any production or customer activation. |
 
 ## In Progress
 
 | Work order | Lane | Active scope | Collision risk |
 |---|---|---|---|
+| [WO-2026-006](in-progress/WO-2026-006-reporting-connections-and-reliability-telemetry.md) | PM | Produce a dated, reconciled baseline through Theo-approved least-privilege read-only access or aggregate/redacted exports. | No secrets, provider/account activation, billable telemetry, configuration, migration, deployment, or spend. |
+| [WO-2026-032](proposed/WO-2026-032-elite-improvement-programme-proposition.md) | PM | Define the internal Elite buyer, weekly job, outcome, evidence boundary, and sequence. | Do not dispatch WOs 033, 034, or 036 or alter pricing, billing, claims, outreach, providers, or release scope. |
 | [WO-2026-012](proposed/WO-2026-012-paid-buyer-standard-and-conversion-thesis.md) | PM | Define and evidence the Pro buyer's recurring value loop before hard-launch claims or packaging changes. | Do not change prices, plan claims, entitlements, or public copy; coordinate with WO-003, WO-028, and WO-031. |
 | [WO-2026-026](proposed/WO-2026-026-new-workspace-activation-follow-up.md) | PM | Manual-first activation procedure and Message Ledger drafted; no send authorised. | Do not modify email, Auth, invitation, notification-worker, billing, or provisioning flows. |
-| [WO-2026-023](proposed/WO-2026-023-owner-additional-workspaces.md) | Core Features Developer | Shared-project migration applied and function/grants inspected; frontend deployment and controlled role/tenant matrix pending. | Do not overlap with WO-2026-030 `DashboardLayout` work or tenant-membership/RPC migrations. |
 
 ## QA blocked — Theo or PM input required
 
 | Work order | Owner | Current blocker | Required routing |
 |---|---|---|---|
-| [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) | QA and Release Auditor | The connected Stripe evidence is live-mode; no isolated payment route, cost cap, or cancellation boundary has been selected. | Theo must approve either a test-mode route or one capped live internal purchase/cancellation, then provide the isolated account/workspace and redacted event/log access. WO-002 is superseded; WO-009 Collector evidence does not close checkout verification. |
-| [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | No approved isolated funnel journey has produced an event; the ledger and scorecard remain empty. | Theo must approve the minimal temporary non-customer schedule/completed-game workflow; PM must keep any browser scorecard exposure under WO-011. |
+| [WO-2026-028](proposed/WO-2026-028-isolated-pro-purchase-and-entitlement-verification.md) | QA and Release Auditor | Theo authorised observation of naturally expiring internal subscriptions only; no new charge/cancellation is approved. | Observe an authorised, redacted cancellation-area state if available; isolated checkout, webhook-to-entitlement, and second-tenant comparator evidence still require their own safe route/account access. |
+| [WO-2026-003](review/WO-2026-003-premium-copy-and-funnel-measurement.md) | QA | Theo chose natural activity rather than synthetic hosted test data; the ledger and scorecard remain empty. | Wait for an authorised, privacy-safe naturally occurring eligible journey; record aggregate/redacted evidence only. Keep browser scorecard work under WO-011. |
+| [WO-2026-030](ready/WO-2026-030-workspace-switcher-menu-surface.md) | Developer – Fast Lane / QA | Local correction is complete; authenticated staging A/B behavior passes, but the deployed staging build still shows the pre-fix transparent surface. | Expose the local patch in staging, repeat desktop/mobile visual checks, and obtain single-workspace control-account evidence before QA closure. |
 
 ## Sequenced or blocked
 
@@ -40,13 +48,25 @@ This board is a dispatch aid, not a replacement for its linked work order. Befor
 
 ## Fast Lane
 
-No Fast Lane work order is currently ready. WO-2026-019 is complete as an evidence handoff; its verified shared-component defect is assigned to Core under WO-2026-016.
+WO-2026-030 is blocked pending patched staging visual verification and the single-workspace control-account check. WO-2026-019 is complete as an evidence handoff; its verified shared-component defect is conditionally complete under WO-2026-016.
 
 ## Backlog pending Theo implementation approval
 
 | Work order | Lane | Why it is not ready | Collision risk |
 |---|---|---|---|
-| [WO-2026-031](proposed/WO-2026-031-elite-purchase-and-value-boundary.md) | Core Features Developer | Theo must choose whether Elite is withheld from self-serve purchase until its differentiated outcome is verified, or approve a separately evidenced alternative Elite outcome. | Billing, checkout, plan copy, Discord module state, and Message Ledger; do not overlap with WO-2026-028 or WO-2026-025. |
+
+## Future Elite strategy â€” not ready for dispatch
+
+Current-status note (2026-08-03): WO-032 is active in the In Progress table and WO-035 is ready in the Ready for Development table. Their stale rows below are retained as historical sequencing context only; the work orders and index are authoritative.
+
+| Work order | Proposed owner | Why it is not ready | Collision risk |
+|---|---|---|---|
+| [WO-2026-031](proposed/WO-2026-031-elite-purchase-and-value-boundary.md) | Core Features Developer | Parked by Theo until the future Elite sequence identifies a separately evidenced customer-available differentiated outcome. | Billing, checkout, plan copy, Discord module state, and Message Ledger; do not overlap with WO-2026-028 or WO-2026-025. |
+| [WO-2026-032](proposed/WO-2026-032-elite-improvement-programme-proposition.md) | PM | Founder must approve the buyer, recurring job, success evidence, and sequencing before any Elite build. | Governs WO-033â€“036 and WO-031; do not turn hypotheses into plan claims. |
+| [WO-2026-033](proposed/WO-2026-033-elite-practice-development-loop.md) | Core Features Developer | Requires WO-032 decision and reviewed tenant-safe design. | Shared schedule, game, review, coaching-action, and role-capability workflows. |
+| [WO-2026-034](proposed/WO-2026-034-elite-weekly-performance-command-centre.md) | Core Features Developer | Depends on the implemented and verified WO-033 evidence model. | Shared Overview, analytics, scheduling, and action data; no parallel dashboard rewrite. |
+| [WO-2026-035](proposed/WO-2026-035-league-knowledge-source-boundary.md) | Technical Reporting Analyst | Source rights, freshness, attribution, provider, and cost boundary must be approved before ingestion or customer claims. | Do not activate providers, scrape, store VODs, or publish summaries without approval. |
+| [WO-2026-036](proposed/WO-2026-036-elite-opponent-preparation-playbooks.md) | Core Features Developer | Depends on WO-032, WO-033, and approved source boundary under WO-035. | Shared Scouting/Draft, provider data, playbook permissions, and tenant data. |
 
 ## Vague or incomplete before assignment
 

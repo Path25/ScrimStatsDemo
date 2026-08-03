@@ -1,7 +1,7 @@
 # WO-2026-025 - Add tenant-safe Discord `/scrim` practice-block creation
 
 - **ID reservation:** [WO-2026-025 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done (conditional; Theo accepted remaining staging evidence risk on 2026-08-02)
 - **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
@@ -307,3 +307,180 @@ This is private-test-server configuration only. Do not register a global command
 1. Re-register the private guild command exactly with the contract above, then invoke it once as the already-permitted `Test` role in non-customer workspace `clash`, using an unoccupied future date/time.
 2. Record the Discord response, Function version/request ID, canonical `scrims` count, and eligible outbox-event count. A delivered Function version proves deployment; the command result and counts prove the workflow.
 3. If the positive path succeeds, proceed with the approved replay and denial matrix. If it fails, return the redacted `data.options` array and request ID to Core without repeating a mutation.
+
+## Independent QA review of provider-contract correction - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The revised command contract is locally verified and preserves the critical server-side boundaries, but it is not yet the command registered in the private guild and has not completed a hosted positive path.
+
+### 2. What was verified
+
+- **Source:** `discord-interactions` version-6 source requires `start_date` in `YYYY-MM-DD` and `start_time` in 24-hour `HH:MM`, validates calendar/clock/timezone values, rejects non-existent local times, and serializes the resulting timezone-resolved instant only after validation.
+- **Security preservation:** Signature verification remains before parsing and lookup; the subsequent canonical RPC still enforces service-only execution, Elite plus live/enabled module, installed guild, permitted role, receipt idempotency, and overlap protection.
+- **Local validation:** Independent focused Discord contracts passed 10/10, including the new named provider-option fixture and numeric duration shape. This is local source/test evidence, not a hosted interaction result.
+
+### 3. Blocking issues
+
+- **Blocking:** The existing guild command still exposes the prior `starts_at` contract. It must be privately re-registered with the new required option names before the Function can receive a valid updated interaction.
+- **Blocking:** No updated positive invocation has yet proven canonical practice-block creation.
+
+### 4. Important risks
+
+- **Important:** The user-facing command description is the only input-format guidance in Discord; re-registering a stale or global command would leave the corrected Function unusable or broaden test scope. Use the exact guild-only schema in the work order.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Private guild re-registration, new positive invocation, replay, all authorization/entitlement/overlap denials, exact canonical/outbox counts, and two-tenant matrix.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** re-register only the private guild `/scrim` command using the seven-option schema in the developer handoff; do not create a global command.
+2. **QA:** after confirmation, execute one isolated positive command as the existing `Test` role using an unoccupied future local date/time and verify the resulting `clash` block before proceeding to negative paths.
+
+## Hosted positive-path browser corroboration - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The private positive path is now browser-corroborated, but release remains on hold pending receipt/outbox evidence and the required negative role, tenant, entitlement, replay, and overlap matrix.
+
+### 2. What was verified
+
+- **Hosted user report:** Theo re-registered the private guild command and invoked the updated `/scrim`; Theo reported that Discord indicated the block was added.
+- **Authenticated browser:** staging `clash` as owner shows exactly one current scheduled practice block on `/scrims`: `vs Fnatic`, `BO3`, `Sun 2 Aug` at `21:45`, with `Test notes`. The page showed no captured browser warnings or errors.
+- **Scope:** The observed block is in the intended isolated staging workspace. QA created no additional block and did not alter the existing Discord role or delivery configuration.
+
+### 3. Blocking issues
+
+- **Blocking:** Browser evidence cannot tie the observed block to the exact Discord interaction ID, prove the `discord_interaction_receipts` row, or establish the eligible outbound-event count.
+- **Blocking:** Replay, wrong-guild, missing-role, Free/Pro, disabled/revoked, overlap, and two-tenant role/authorization cases remain unverified.
+
+### 4. Important risks
+
+- **Important:** Existing fixture history contains prior blocks, so the visible scheduled block corroborates a successful integration journey but cannot by itself prove single-write or no-duplicate guarantees.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Redacted Function request ID/log entry, receipt and provider-scoped outbox counts, provider retry/replay behaviour, controlled negative paths, and hosted Advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **QA / Theo:** obtain redacted Function/log and database-count evidence for this single interaction, without exposing credentials or unrelated records.
+2. **QA:** run the remaining approved negative matrix only with explicitly controlled fixture roles/tenants and no customer data; do not submit a second ordinary `/scrim` as a substitute for provider replay.
+
+## Hosted receipt evidence - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The hosted positive path is now evidenced from provider invocation through a persisted receipt and the canonical staging block. Release remains on hold because the provider-scoped outbox count and the critical negative matrix are still absent.
+
+### 2. What was verified
+
+- **Hosted Function:** Supabase invocation evidence shows a successful `200` `POST` to `discord-interactions` for the test window. A separate earlier `401` is visible but is not evidence about the successful request's authorization outcome.
+- **Hosted persistence:** A redacted `discord_interaction_receipts` row maps one Discord interaction to the intended `clash` tenant, intended private guild, and one canonical `scrim_id`, with a receipt timestamp consistent with the successful invocation after accounting for dashboard display timezone.
+- **Authenticated browser:** The corresponding isolated staging workspace displays the `vs Fnatic` scheduled block with the expected `BO3` and notes, without captured browser warnings or errors.
+
+### 3. Blocking issues
+
+- **Blocking:** The evidence does not yet establish whether exactly one provider-scoped outbound `integration_events` record was created for the receipt's canonical `scrim_id`. A visible block plus one receipt cannot prove that outbox count.
+- **Blocking:** Controlled replay, wrong-guild, missing-permitted-role, Free/Pro, disabled/revoked, overlap, and two-tenant isolation checks remain unverified.
+
+### 4. Important risks
+
+- **Important:** The receipt proves idempotency data for the observed interaction, not provider replay behaviour. Do not send a second ordinary Discord command as a replay substitute.
+- **Important:** The previous `401` requires no remediation on this evidence alone; its cause and relationship to the successful `200` remain unverified without redacted request-level logs.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One exact `integration_events` record for the receipt's `scrim_id`, its Discord provider/status and any delivery attempts; controlled provider replay; all required authorization, entitlement, overlap, tenant, and hosted Advisor checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / QA:** run the read-only query below in the staging Supabase SQL editor using the receipt interaction ID, then provide a redacted screenshot of the result. It should return exactly one event row; `pending` or `delivered` status is acceptable, but zero or multiple rows is a defect to return to Core.
+
+   ```sql
+   with receipt as (
+     select tenant_id, scrim_id
+     from public.discord_interaction_receipts
+     where interaction_id = '<receipt interaction ID>'
+   )
+   select
+     event.provider,
+     event.event_type,
+     event.aggregate_id as scrim_id,
+     event.status,
+     event.created_at,
+     event.delivered_at,
+     event.attempt_count,
+     count(attempt.id) as delivery_attempt_count
+   from public.integration_events event
+   join receipt on receipt.tenant_id = event.tenant_id
+             and receipt.scrim_id = event.aggregate_id
+   left join public.integration_delivery_attempts attempt on attempt.event_id = event.id
+   where event.aggregate_type = 'scrim'
+   group by event.id
+   order by event.created_at desc;
+   ```
+
+2. **QA:** once that result is available, run the controlled replay and denial matrix in the approved non-customer staging fixtures. Do not make production or customer-data changes.
+
+## Hosted end-to-end positive-path evidence - 2026-08-02
+
+### 1. Release verdict: HOLD
+
+The isolated staging positive path is now hosted-verified end to end: Discord invocation, canonical receipt, canonical practice block, and provider-scoped delivery. Release remains on hold until the required controlled replay and authorization, entitlement, overlap, and tenant-isolation matrix is complete.
+
+### 2. What was verified
+
+- **Provider to canonical record:** One successful `discord-interactions` invocation is corroborated by one `discord_interaction_receipts` record for the same private-guild interaction and one canonical `scrim_id` in the `clash` fixture.
+- **Canonical record to outbox:** The read-only staging query returned exactly one `integration_events` row for that `scrim_id`: `provider = discord`, `event_type = schedule_created`, `status = delivered`, with one `integration_delivery_attempts` record. The event was created at the receipt time and delivered approximately 36 seconds later.
+- **User journey:** Authenticated staging browser QA shows the expected `vs Fnatic` `BO3` scheduled block and notes in `clash`; no captured browser warnings or errors.
+- **Scope:** All evidence relates to the isolated private test guild and non-customer staging fixture. No QA-created customer or production data was used.
+
+### 3. Blocking issues
+
+- **Blocking:** Receipt replay has not been tested with a controlled provider replay of the exact signed interaction.
+- **Blocking:** Wrong-guild, missing-permitted-role, Free/Pro, disabled/revoked, overlap, and two-tenant isolation denials have not been hosted-verified.
+
+### 4. Important risks
+
+- **Important:** A single successful delivery attempt verifies this event's outbox path, not retry handling or a provider replay guarantee.
+- **Important:** The earlier `401` remains unexplained and is not a release finding on the available evidence; retain it for traceability unless redacted logs show it relates to a real valid interaction.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Exact signed-provider replay returns the existing `scrim_id` without a second canonical or outbox record; role, guild, entitlement/module-state, overlap, and cross-tenant denials; hosted Supabase Advisor evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** no configuration or data change is needed now. Confirm whether to continue with the approved non-customer negative/replay matrix, or accept its residual risk for this staging-only work order.
+2. **QA:** if continued, perform the matrix in an order that avoids mutations first (wrong guild, no permitted role, non-Elite or disabled module), then use a controlled exact provider replay and a single deliberate overlap fixture. Record canonical receipt, scrim, and outbox counts after each mutation-capable case.
+
+## Conditional closure - 2026-08-02
+
+### 1. Release verdict: CONDITIONAL
+
+Theo accepted conditional closure of this staging-only work order after the isolated hosted positive path completed. This is not production-deployment approval and does not convert the unverified negative-path evidence into a pass.
+
+### 2. What was verified
+
+- One isolated staging Discord interaction reached the Function, created one receipt and one canonical `clash` practice block, and generated one delivered Discord `schedule_created` outbox event with one delivery attempt.
+- Source review and focused local contracts verified the signature-first parsing boundary, service-only RPC, Elite/live/enabled entitlement, installed-guild and permitted-role enforcement, receipt/idempotency design, and overlap guard.
+
+### 3. Blocking issues
+
+- **Blocking for any production release or stronger release claim:** Controlled exact-provider replay and hosted denial coverage for guild, role, entitlement/module, overlap, and tenant-isolation boundaries remain absent.
+
+### 4. Important risks
+
+- **Important:** The verified private test workflow does not demonstrate operational recovery or retry/replay behaviour.
+- **Important:** The uninvestigated earlier `401` invocation remains retained historical evidence and must be reviewed if it recurs for an apparently valid Discord interaction.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Exact replay single-write/outbox guarantee; wrong-guild, missing-role, Free/Pro, disabled/revoked, overlap, and cross-tenant cases; hosted Advisor evidence; production configuration and deployment smoke test.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / PM:** treat this as a staging conditional closure only. Reopen or create a release-verification work order before any production endpoint, Discord command, customer-guild, or customer-workspace activation.
+2. **QA:** retain the screenshots, receipt, event result, and this risk acceptance as the evidence pack. If the feature is reopened, run the outstanding matrix in isolated fixtures before making a production-readiness claim.

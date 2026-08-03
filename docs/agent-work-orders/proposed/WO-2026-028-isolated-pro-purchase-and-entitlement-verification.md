@@ -120,6 +120,7 @@ The immediate commercial goal is paid Pro conversions. This is the smallest rema
 ## Decision and approval record
 
 - 2026-07-31 - PM split the remaining checkout/entitlement evidence from superseded WO-2026-002. Collector enforcement remains WO-2026-009; provider/live-integration readiness remains WO-2026-013.
+- 2026-08-03 - Theo confirmed that live transactions have previously occurred and that concurrent internal subscriptions are naturally expiring this month, allowing cancellation-area observation. QA may observe that naturally occurring, authorised expiry/cancellation state using redacted evidence only. This does not authorise a new charge, a new cancellation, customer-subscription access, Stripe/configuration change, or a production-data mutation. The separate isolated checkout, webhook-to-entitlement, and second-tenant comparator evidence remains required.
 
 ## Implementation and review evidence
 

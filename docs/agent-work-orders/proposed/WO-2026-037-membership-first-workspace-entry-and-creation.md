@@ -88,15 +88,15 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Membership-first post-login entry | Fail-closed current-user resolver and focused state tests | Local | Pass locally; hosted browser open |
-| Explicit owner creation entry and selection preservation | Selector/create-route source contract | Local | Pass locally; hosted desktop/mobile open |
+| Membership-first post-login entry | Fail-closed current-user resolver, focused state tests, and exact deployed release marker | Local / hosted deployment | Pass locally and deployed; authenticated browser open |
+| Explicit owner creation entry and selection preservation | Selector/create-route source contract and exact deployed release marker | Local / hosted deployment | Pass locally and deployed; hosted desktop/mobile open |
 | No-membership / non-owner boundaries | Resolver tests plus read-only deployed RPC inspection | Local / hosted read-only | Source/server boundary passes; controlled browser/direct matrix open |
 | No billing or tenant-isolation regression | RPC unchanged; no hosted mutation performed | Source / hosted read-only | No scoped change; creation exercise open |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** The contained source fix and local validation are complete, but no deployed candidate or authenticated staging role/tenant/browser matrix exists. Ready for QA is not release approval.
+- **Rationale:** The contained source fix is deployed as the exact reviewed candidate, but no authenticated staging role/tenant/browser matrix exists. Ready for QA is not release approval.
 
 ### Outstanding checks
 
@@ -113,6 +113,7 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
 | Implementation | Yes | Approved | 2026-08-03 | Theo directed Core to proceed with WO-037 after the prioritisation and diagnosis plan. No migration, deployment, or release was implied. |
+| Staging frontend deployment | Yes | Approved and completed | 2026-08-03 | Theo explicitly approved pushing to `codex/Staging` and the Git-triggered staging frontend deployment. |
 | Release | Yes | Pending | - | Separate after authenticated hosted QA. |
 
 ## Decision and approval record
@@ -125,7 +126,7 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 - WO-2026-023 previously recorded a `Workspaces` loading race that redirected a member to creation before memberships settled, plus later staging evidence that the picker can load correctly. The new reported login prompt may share that cause, but this is a hypothesis—not a confirmed diagnosis.
 - Existing staging and authenticated evidence must be reconciled rather than overwritten; no code, migration, configuration, production data, or deployment changed under this PM work order.
-- **Highest evidence achieved:** Implemented and locally tested; hosted/authenticated browser verification remains outstanding.
+- **Highest evidence achieved:** Exact reviewed revision deployed to staging; authenticated role/workflow browser verification remains outstanding.
 
 ## Core implementation and QA handoff - 2026-08-03
 
@@ -158,8 +159,16 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 ### Reproducible QA handoff
 
-1. Deploy the exact reviewed candidate to staging under separate deployment approval and record its immutable revision.
+1. Use deployed candidate `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb` on `https://staging.scrimstats.gg/`; do not substitute a later revision without reconciling its diff.
 2. Fresh-sign-in as a one-workspace owner, multi-workspace owner, member-only, admin-only, viewer-only, no-membership account, and second-tenant control. Confirm loading never exposes the create route and only the confirmed no-membership account enters initial creation.
 3. For an owner-eligible account, open the sidebar workspace menu on desktop and 390x844 mobile, verify the WO-030 opaque surface remains intact, select A to B to A, open `Create workspace`, return without submitting, and confirm the original selection persists.
 4. Confirm member/admin/viewer-only accounts have no creation item and remain denied by direct RPC invocation. Do not create another tenant merely to test navigation; any approved creation exercise must separately verify Free/default modules, no Stripe inheritance, funnel semantics, and tenant independence.
 5. Record console output, deployed revision, redacted role/membership evidence, selected tenant before/after, and any retry/error-state result. Release remains HOLD until QA and Theo separately approve it.
+
+### Staging deployment evidence - 2026-08-03
+
+- Theo explicitly approved the push to `codex/Staging` and staging frontend deployment.
+- `origin/codex/Staging` advanced from `27b1b10` to QA handoff commit `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`; implementation commit `717beffda22ea088fc0dbeafc340a8e449aa10ed` is in its ancestry.
+- The established Git-triggered staging deployment completed. A protected Vercel fetch of `https://staging.scrimstats.gg/` returned HTTP 200 with `Last-Modified: Mon, 03 Aug 2026 16:43:42 GMT`, `x-vercel-cache: MISS`, and request reference `iad1:lhr1:iad1:iad1::2489p-1785775422583-26fba84bf1df`.
+- The served entry bundle `index-kxix4OQm.js` embeds release `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`, proving the exact approved revision is served. This is deployment evidence only; it does not prove authenticated membership, role denial, tenant selection, desktop/mobile rendering, or browser console health.
+- No Supabase migration, Edge Function, Auth, membership, tenant, billing, configuration, secret, or customer-data mutation was performed.

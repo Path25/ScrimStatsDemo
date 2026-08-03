@@ -159,7 +159,7 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 ### Reproducible QA handoff
 
-1. Use deployed candidate `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb` on `https://staging.scrimstats.gg/`; do not substitute a later revision without reconciling its diff.
+1. Use `https://staging.scrimstats.gg/` at a revision containing application candidate `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`. Documentation-only evidence commits may follow it; reconcile any later application-code diff before testing.
 2. Fresh-sign-in as a one-workspace owner, multi-workspace owner, member-only, admin-only, viewer-only, no-membership account, and second-tenant control. Confirm loading never exposes the create route and only the confirmed no-membership account enters initial creation.
 3. For an owner-eligible account, open the sidebar workspace menu on desktop and 390x844 mobile, verify the WO-030 opaque surface remains intact, select A to B to A, open `Create workspace`, return without submitting, and confirm the original selection persists.
 4. Confirm member/admin/viewer-only accounts have no creation item and remain denied by direct RPC invocation. Do not create another tenant merely to test navigation; any approved creation exercise must separately verify Free/default modules, no Stripe inheritance, funnel semantics, and tenant independence.
@@ -171,4 +171,5 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 - `origin/codex/Staging` advanced from `27b1b10` to QA handoff commit `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`; implementation commit `717beffda22ea088fc0dbeafc340a8e449aa10ed` is in its ancestry.
 - The established Git-triggered staging deployment completed. A protected Vercel fetch of `https://staging.scrimstats.gg/` returned HTTP 200 with `Last-Modified: Mon, 03 Aug 2026 16:43:42 GMT`, `x-vercel-cache: MISS`, and request reference `iad1:lhr1:iad1:iad1::2489p-1785775422583-26fba84bf1df`.
 - The served entry bundle `index-kxix4OQm.js` embeds release `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`, proving the exact approved revision is served. This is deployment evidence only; it does not prove authenticated membership, role denial, tenant selection, desktop/mobile rendering, or browser console health.
+- The subsequent documentation-only evidence deployment reported `READY` and retained the `staging.scrimstats.gg` alias. Its Vercel build completed and the bundle budget passed; the logs also contain a non-blocking TypeScript resolution warning for `@vercel/node` in `api/client-error.ts`, which is outside WO-037 and remains a separate build-hygiene concern.
 - No Supabase migration, Edge Function, Auth, membership, tenant, billing, configuration, secret, or customer-data mutation was performed.

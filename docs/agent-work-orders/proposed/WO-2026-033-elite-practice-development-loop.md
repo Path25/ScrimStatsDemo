@@ -1,7 +1,7 @@
 # WO-2026-033 - Build the Elite practice-development loop
 
 - **ID reservation:** [WO-2026-033 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Backlog
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** L
 - **Risk:** High
@@ -11,7 +11,7 @@
 ## Delivery routing
 
 - **Area / files likely affected:** Scrim-block objectives, recorded-game/review evidence, coaching actions, role capabilities, tenant-scoped data model/RLS/RPCs, Overview/Review screens, tests, and operational docs.
-- **Dependencies:** WO-2026-032 founder proposition; reviewed data/RLS design; isolated role/tenant fixtures; separate release approval for any migration/deployment.
+- **Dependencies:** Theo-approved Elite proposition and implementation scope; reviewed data/RLS design; isolated role/tenant fixtures; separate release approval for any migration/deployment.
 - **Collision risk:** Shared practice, review, coaching-action, and role-capability flows. Do not run beside a broad Overview, Scrims, or coaching-action refactor.
 
 ## Problem and user impact
@@ -21,6 +21,8 @@ Teams can schedule, record games, review, and create coaching actions, but the p
 ## Scope
 
 - Add one tenant-scoped practice-development loop: objective before a block; linked game/review evidence; accountable action owner and due date; staff review of completion/proof; and a next-session follow-up state.
+- Staff roles control creation, editing, assignment, completion, and evidence review. Other authorised workspace roles may view goals and their permitted status/evidence read-only; the Core design must document the exact role and field-level visibility before migration review.
+- The customer-visible development loop is Elite-only. Core may reuse a tenant-safe shared internal data foundation where that reduces duplication, but must not change Free or Pro customer workflows, remove existing access, introduce a new Free/Pro goal surface, or weaken server-side plan enforcement. Any later cross-tier exposure requires a separate work order and founder approval.
 - Make missing evidence explicit; never infer improvement from result, rank, or a small sample.
 - Establish the minimum Elite entitlement and server-side enforcement only after Theo approves the proposition and packaging boundary.
 
@@ -28,6 +30,7 @@ Teams can schedule, record games, review, and create coaching actions, but the p
 
 - No wellness/health data, player surveillance, automated performance claims, organisation hierarchy, provider activation, or Discord automation.
 - No redesign of every existing review or coaching screen.
+- No Free or Pro packaging, entitlement, navigation, or workflow change under this work order.
 
 ## Acceptance criteria
 
@@ -35,6 +38,7 @@ Teams can schedule, record games, review, and create coaching actions, but the p
 - Player/member/viewer permissions are explicit; unauthorised direct mutation attempts fail below the browser layer.
 - The workflow visibly distinguishes planned, evidenced, completed, blocked, and unavailable states.
 - An isolated hosted role/tenant matrix and RLS/function review prove the boundary.
+- Free and Pro role matrices retain their current visible workflow and are denied the new Elite development-loop mutations and screens below the browser layer.
 
 ## Relevant files, workflows, or data areas
 
@@ -90,8 +94,9 @@ Teams can schedule, record games, review, and create coaching actions, but the p
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Approve proposition and implementation | Theo | WO-032 decision and approval | Open |
-| Design/implementation | Core | Commit and validation | Open |
+| Approve proposition and implementation | Theo | Written founder decision | Complete (2026-08-03) |
+| Phase 1 tenant/RLS design | Core | Reviewed design contract | Complete (2026-08-03) |
+| Phase 2 migration/implementation | Core | Approved source migration, implementation commit, and local validation | Pending exact Phase 2 approval |
 | Hosted role/tenant QA | QA | Evidence pack | Open |
 
 ### Theo approval record
@@ -103,9 +108,18 @@ Teams can schedule, record games, review, and create coaching actions, but the p
 
 ## Decision and approval record
 
+### Approval correction - 2026-08-03
+
+The earlier `Implementation: Pending` table row predates Theo's subsequent approval and is superseded by the decision below: implementation is approved for the documented Elite-only, staff-controlled scope with authorised non-staff read-only visibility. Migration application, deployment, billing/price changes, public claims, and release remain separately approval-gated.
+
 - 2026-08-02 - Proposed as the first durable future Elite system; no implementation approval.
+- 2026-08-03 - Theo approved WO-033 as the first Elite build. It is Elite-only and staff-facing for control; other authorised workspace roles may view goals and permitted evidence/status read-only. This is the dedicated Core workstream before WOs 034 and 036. It does not approve migration application, deployment, billing/price changes, provider activation, customer-facing claims, or release.
+- 2026-08-03 - Theo confirmed the intended boundary: do not overcomplicate Free or Pro. The visible workflow remains Elite-only, but Core may use a shared internal foundation if it is the safer, simpler implementation. Any customer-visible cross-tier access or plan-rule change requires a separate founder-approved work order.
+- 2026-08-03 - Theo approved Phase 1. Core completed the source-inspected lifecycle, data, field-visibility, entitlement, RLS/RPC, UI, recovery, and validation design. This approval did not authorise a migration file, local application implementation, hosted mutation, deployment, activation, or release.
 
 ## Implementation and review evidence
 
 - Existing ScrimStats workflows provide the starting records, but no connected improvement-programme system exists.
-- **Highest evidence achieved:** Proposed.
+- [Phase 1 implementation contract](../WO-2026-033-PHASE-1-DESIGN.md) records the bounded design and exact approval gates. No schema or application source was changed under Phase 1.
+- Phase 1 preserves the existing Coaching Action lifecycle, uses a separate safe read projection for WO-033, defaults the proposed module to `planned/false`, and requires exact Elite + `live` + enabled server enforcement.
+- **Highest evidence achieved:** Source-inspected design; not implemented, locally tested, hosted verified, deployed, or release-ready.

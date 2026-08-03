@@ -1,8 +1,8 @@
 # WO-2026-038 - Restore an opaque notifications popover surface
 
 - **ID reservation:** [WO-2026-038 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
-- **Assigned owner:** Developer - Fast Lane
+- **Status:** Ready for QA
+- **Assigned owner:** QA and Release Auditor
 - **Size:** S
 - **Risk:** Low
 - **Priority:** High
@@ -87,29 +87,29 @@ This is a contained premium-quality regression in a frequent dashboard control. 
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Opaque, layered notification popover | `NotificationInbox.tsx` now supplies an explicit portalled surface, border, shadow, and `z-[60]`; local contract/build checks pass. Authenticated staging screenshots remain required. | Local / Hosted | Local pass; hosted open |
+| Opaque, layered notification popover | `NotificationInbox.tsx` supplies an explicit portalled surface, border, shadow, and `z-[60]`; candidate `6d644ac` is deployed. Authenticated staging screenshots remain required. | Local / Hosted deployment | Local pass and deployed; hosted browser open |
 | Existing notification and keyboard behaviour | Notification entries, read handlers, navigation, and dropdown primitives are unchanged; local type/lint/build checks pass. Authenticated desktop/mobile interaction and console evidence remain required. | Local / Hosted | Local pass; hosted open |
 | Workspace-selector regression boundary | `DashboardLayout.tsx`, `TenantContext`, and the workspace-selector path are unchanged. Same-candidate browser comparison remains required. | Local / Hosted | Local pass; hosted open |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** QA confirmed that the authenticated staging instance is still serving the pre-fix notification surface: it computes to a transparent background and `z-index: 50`, rather than the local patch's explicit `#111a23` surface and `z-[60]`. The local correction is implemented and the focused contract suite passes, but no patched hosted candidate exists to verify. Authenticated desktop/mobile browser evidence and the workspace-selector comparison therefore remain open before QA or release closure.
+- **Rationale:** Exact candidate `6d644ac` is deployed to staging, but authenticated desktop/mobile browser evidence, Escape/entry-or-empty behaviour, and the same-candidate workspace-selector comparison remain open before QA or release closure.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Isolated correction and local validation | Developer - Fast Lane | Source diff, focused contract test, lint, TypeScript, production build, and bundle-budget output | Closed |
-| Authenticated staging browser matrix | QA and Release Auditor | Screenshots, revision, console result on the exact patched staging candidate | Blocked: staging serves the pre-fix surface |
-| Deployment/release decision | Theo | Separate explicit approval if a hosted candidate is proposed | Open |
+| Authenticated staging browser matrix | QA and Release Auditor | Screenshots, revision, console result on exact candidate `6d644ac` | Open |
+| Deployment/release decision | Theo | Separate explicit approval for release after QA | Staging candidate complete; release open |
 
 ### Theo approval record
 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
 | Implementation | No | Approved | 2026-08-03 | Theo requested this contained S/Low visual-fix work order. |
-| Staging candidate exposure | Yes | Approved | 2026-08-03 | Theo approved exposing the reviewed local patch in staging for QA; this does not approve production release. |
+| Staging candidate exposure | Yes | Approved and completed | 2026-08-03 | Theo approved pushing `6d644ac` to `codex/Staging`; Vercel reports the exact candidate `READY` and aliased to staging. This does not approve production release. |
 | Release | Yes | Pending | - | Separate hosted deployment/release approval remains required. |
 
 ## Decision and approval record
@@ -128,7 +128,7 @@ This is a contained premium-quality regression in a frequent dashboard control. 
 - `scripts/workspace-console-contract.test.mjs` asserts the notification surface contract. `DashboardLayout.tsx`, `TenantContext`, and `src/components/ui/dropdown-menu.tsx` remain untouched for this order.
 - Local validation passed: workspace contract (6 tests), touched-file and full ESLint with zero warnings, TypeScript, Vite production build, bundle budget, and `git diff --check`.
 - No staging deployment or production/configuration/data change was performed. Authenticated staging screenshots, viewport sizes, candidate revision, and console output are still required from QA on the patched candidate.
-- **Highest evidence achieved:** Locally tested.
+- **Highest evidence achieved:** Exact application candidate deployed to staging; authenticated browser verification remains outstanding.
 
 ### QA audit - 2026-08-03
 
@@ -145,3 +145,12 @@ This is a contained premium-quality regression in a frequent dashboard control. 
 - QA reopened the authenticated non-customer owner workspace on the current staging URL and measured the open notification menu again: `background: rgba(0, 0, 0, 0)` and `z-index: 50`. This remains the pre-fix surface, not the local `#111a23` / `z-[60]` candidate.
 - The browser console again contained no warnings or errors. A programmatic Escape attempt did not provide a reliable dismissal observation on this pre-fix candidate, so keyboard behaviour remains unverified rather than failed.
 - **Disposition:** Keep status **Blocked**. The approved deployment owner must provide the deployed immutable revision before QA repeats the required hosted matrix.
+
+### Core deployment handoff - 2026-08-03
+
+- Theo explicitly approved pushing candidate `6d644aceced946e9d08877fd8c61b0cb4fd5f571` to `codex/Staging` and triggering the staging frontend deployment.
+- Vercel deployment `dpl_FyNLWAMgRCxXRS9g1gXRtLmUFibJ` reports `READY`, source `git`, branch `codex/Staging`, commit `6d644aceced946e9d08877fd8c61b0cb4fd5f571`, and aliases `staging.scrimstats.gg` without an alias error.
+- The hosted build produced entry asset `index-EcxpGt-o.js`, transformed 3,359 modules, completed successfully, and passed the bundle budget. The existing non-blocking `@vercel/node` type-resolution warning for `api/client-error.ts` remains outside WO-038.
+- Local validation before push: focused workspace contract 6/6, repository tests 233/233, zero-warning ESLint, TypeScript, production build, bundle budget, and scoped `git diff --check` passed.
+- The Core review strengthened the focused notification contract to assert the notification component's own `#111a23` background, border, shadow, `z-[60]`, and portal-safe variables. No shared primitive, workspace selector, notification data/read behavior, Supabase, configuration, or hosted data changed.
+- The earlier pre-fix QA observations remain valid historical evidence but no longer block candidate exposure. QA must now repeat the desktop, 390x844 mobile, entry-or-empty, Escape, console, and unchanged-workspace-selector matrix against the recorded candidate. The malformed notification separator remains separately triaged and is not claimed fixed.

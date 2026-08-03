@@ -105,7 +105,7 @@ Approval is not a prediction, recommendation, or claim that a tendency is true. 
 
 ## 5. Proposed data model
 
-The migration should create five private workflow tables. All use UUID primary keys, lowercase identifiers, bounded text checks, explicit timestamps, composite same-tenant foreign keys, and indexes for every foreign key and primary list/read path.
+The migration should create five private workflow-state tables plus one append-only audit-event table. All use UUID primary keys, lowercase identifiers, bounded text checks, explicit timestamps, composite same-tenant foreign keys, and indexes for every foreign key and primary list/read path.
 
 ### `public.opponent_preparation_playbooks`
 

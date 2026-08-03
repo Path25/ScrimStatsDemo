@@ -85,7 +85,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Phase 2B is locally implemented and validated, but the migration is not hosted, the frontend is not deployed, and the authenticated role/plan/tenant matrix has not been audited. External intelligence remains deliberately out of scope.
+- **Rationale:** Phase 2B is implemented and the additive schema is hosted without tenant activation, but the frontend is not deployed and the authenticated role/plan/tenant matrix has not been audited. External intelligence remains deliberately out of scope.
 
 ### Outstanding checks
 
@@ -94,6 +94,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 | Phase 1 design and tenant-safe boundary | Core / PM | Reviewed design and acceptance handoff | Complete (accepted 2026-08-03) |
 | Implementation approval | Theo | Written approval | Complete (2026-08-03) |
 | Phase 2B application projection and workflow | Core | Local implementation, contracts, build and responsive shell check | Complete locally (2026-08-03) |
+| Hosted additive schema and generated client contract | Core | Migration record, catalog/ACL checks, empty-table proof, generated types, Advisor review | Complete (2026-08-03) |
 | Hosted QA | QA | Evidence pack | Open |
 
 ### Theo approval record
@@ -101,6 +102,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
 | Implementation | Yes | Approved for bounded Phase 1 | 2026-08-03 | Existing tenant-owned evidence and explicit staff judgement only; hosted migration and deployment remain separate. |
+| Hosted migration and related validation | Yes | Approved | 2026-08-03 | Applied additively; no tenant activation, fixture, customer data, billing, deployment, or release action was performed. |
 | Release | Yes | Pending | — | Separate after QA. |
 
 ## Decision and approval record
@@ -114,6 +116,7 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - 2026-08-03 - Core completed the Phase 1 design checkpoint. It defines an Owner/Admin-only, exact Elite/live/enabled RPC boundary; immutable approved revisions; canonical Scouting/Draft/Coaching Action/Scrim review links; explicit insufficient and unavailable states; fail-closed module defaults; recovery; and the full role/plan/tenant/provenance QA matrix. No migration, hosted mutation, deployment, billing change, or customer activation occurred.
 - 2026-08-03 - Theo reviewed and accepted the Phase 1 design and approved local migration/security-boundary implementation. Hosted migration application and deployment remain separately approval-gated.
 - 2026-08-03 - Theo approved Phase 2B. Core implemented the staff projection, primary Scouting workflow, and bounded Draft/Coaching Action/Scrim breadcrumbs. No hosted migration, tenant activation, deployment, billing change, external source, or release occurred.
+- 2026-08-03 - Theo approved the hosted migration and related hosted validation. Core applied the additive migration and regenerated hosted types. No tenant module was activated, no fixture or customer record was created, and deployment and release remain separate.
 
 ## Implementation and review evidence
 
@@ -121,7 +124,7 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - Phase 1 design: [`WO-2026-036-PHASE-1-DESIGN.md`](../WO-2026-036-PHASE-1-DESIGN.md).
 - Design review established that existing Pro Scouting and Draft remain unchanged; WO-036 adds only a staff-only Elite orchestration layer with locked base tables and server-shaped access.
 - **Highest evidence achieved:** Phase 1 design accepted; local migration/security-boundary implementation is authorised and in progress. Hosted migration, deployment, and hosted evidence remain outstanding.
-- **Highest evidence achieved:** Phase 2B is locally implemented and database-behavior/build validated. Hosted migration, generated types, deployment, authenticated enabled-module browser evidence, Advisor review, and release approval remain outstanding.
+- **Highest evidence achieved:** Phase 2B is implemented and the additive schema/client contract is hosted and validated without activation. Deployment, authenticated enabled-module browser evidence, QA audit, and release approval remain outstanding.
 
 ### Phase 2A local database/security boundary - 2026-08-03
 
@@ -143,6 +146,15 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - Reapplied the exact final migration to a fresh isolated Supabase stack with a dependency-only baseline. Migration reset passed, warning-level database lint returned zero findings, and a disposable behavior fixture passed create/link/approve plus action/scrim breadcrumb projection, source-type separation, and fail-closed module disablement. The stack and fixtures were removed afterward.
 - Local browser checks at 1280px and 390px reached the app with no horizontal overflow or console warnings, then correctly redirected to sign-in. This verifies only the local unauthenticated shell, not the new enabled staff surface.
 - **Highest evidence achieved:** locally implemented, locally database-behavior verified, and compilation/build verified. WO-036 remains **In Progress** pending hosted migration approval/application, generated Supabase type regeneration, frontend deployment approval/deployment, authenticated Owner/Admin workflow and denial matrix, cross-tenant/direct mutation checks against the hosted candidate, Advisor review, and QA & Release Auditor verdict.
+
+### Hosted migration, security, and generated-type evidence - 2026-08-03
+
+- Theo approved the hosted migration and related validation. Supabase recorded the additive migration as `20260803221912 elite_opponent_preparation`; the repository source remains `20260803204749_elite_opponent_preparation.sql`.
+- All 115 existing tenant module rows remain `planned/false`; zero tenants report the feature available. The six new base tables use forced RLS, grant neither anonymous nor authenticated browser DML, and contain zero rows. No fixture, tenant activation, billing change, or customer-data mutation occurred.
+- The public RPC surface grants execution only to `authenticated`; helper functions grant neither browser role. All functions have a fixed empty search path, and an authenticated database role without an Auth identity returned `false` from the access predicate.
+- Hosted Supabase types were regenerated and the browser RPC adapter now uses the generated `Database["public"]["Functions"]` contract without an unsafe cast.
+- The hosted Security Advisor reports the six locked tables as RLS-without-policy and the authenticated shaped RPCs as executable `SECURITY DEFINER` functions. These findings are intentional for the locked-table/shaped-RPC design: browser tables have no DML grants, while every public RPC delegates to the exact Elite/live/enabled/Owner-or-Admin server guard. Performance Advisor reports new foreign-key and unused-index notices; the composite equality paths are indexed and unused-index notices are expected before activation. These findings must be re-audited if the access model or query paths change.
+- **Highest evidence achieved:** hosted schema, catalog, ACL, empty-state, fail-closed identity, generated-client, and Advisor inspected. This is not an authenticated enabled-module workflow test, staging deployment, QA verdict, or release approval.
 
 ### Reproducible QA handoff after approved hosted migration and deployment
 

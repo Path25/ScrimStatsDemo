@@ -10,10 +10,31 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      access_request_rate_limits: {
+        Row: {
+          attempts: number
+          fingerprint: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          attempts?: number
+          fingerprint: string
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          attempts?: number
+          fingerprint?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       access_requests: {
         Row: {
           contact_name: string
@@ -279,18 +300,74 @@ export type Database = {
           },
         ]
       }
+      coaching_action_templates: {
+        Row: {
+          archived_at: string | null
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          review_prompt: string | null
+          scope_type: string
+          success_evidence: string | null
+          suggested_duration_days: number | null
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category: string
+          created_at?: string
+          created_by: string
+          id?: string
+          review_prompt?: string | null
+          scope_type?: string
+          success_evidence?: string | null
+          suggested_duration_days?: number | null
+          tenant_id: string
+          title: string
+          unit_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          review_prompt?: string | null
+          scope_type?: string
+          success_evidence?: string | null
+          suggested_duration_days?: number | null
+          tenant_id?: string
+          title?: string
+          unit_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_action_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_actions: {
         Row: {
           acknowledged_at: string | null
           archived_at: string | null
           assignee_player_id: string | null
           assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
           completed_at: string | null
           completed_by: string | null
           completion_evidence: string | null
-          category: string
-          carried_from_action_id: string | null
-          checkpoint_scrim_ids: string[]
           created_at: string
           created_by: string
           description: string | null
@@ -329,12 +406,12 @@ export type Database = {
           archived_at?: string | null
           assignee_player_id?: string | null
           assignee_user_id?: string | null
+          carried_from_action_id?: string | null
+          category?: string
+          checkpoint_scrim_ids?: string[]
           completed_at?: string | null
           completed_by?: string | null
           completion_evidence?: string | null
-          category?: string
-          carried_from_action_id?: string | null
-          checkpoint_scrim_ids?: string[]
           created_at?: string
           created_by: string
           description?: string | null
@@ -373,12 +450,12 @@ export type Database = {
           archived_at?: string | null
           assignee_player_id?: string | null
           assignee_user_id?: string | null
+          carried_from_action_id?: string | null
+          category?: string
+          checkpoint_scrim_ids?: string[]
           completed_at?: string | null
           completed_by?: string | null
           completion_evidence?: string | null
-          category?: string
-          carried_from_action_id?: string | null
-          checkpoint_scrim_ids?: string[]
           created_at?: string
           created_by?: string
           description?: string | null
@@ -421,6 +498,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "coaching_actions_carried_from_action_id_fkey"
+            columns: ["carried_from_action_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_actions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "coaching_actions_feedback_id_fkey"
             columns: ["feedback_id"]
             isOneToOne: false
@@ -450,62 +534,6 @@ export type Database = {
           },
           {
             foreignKeyName: "coaching_actions_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      coaching_action_templates: {
-        Row: {
-          archived_at: string | null
-          category: string
-          created_at: string
-          created_by: string
-          id: string
-          review_prompt: string | null
-          scope_type: string
-          suggested_duration_days: number | null
-          success_evidence: string | null
-          tenant_id: string
-          title: string
-          unit_label: string | null
-          updated_at: string
-        }
-        Insert: {
-          archived_at?: string | null
-          category: string
-          created_at?: string
-          created_by: string
-          id?: string
-          review_prompt?: string | null
-          scope_type?: string
-          suggested_duration_days?: number | null
-          success_evidence?: string | null
-          tenant_id: string
-          title: string
-          unit_label?: string | null
-          updated_at?: string
-        }
-        Update: {
-          archived_at?: string | null
-          category?: string
-          created_at?: string
-          created_by?: string
-          id?: string
-          review_prompt?: string | null
-          scope_type?: string
-          suggested_duration_days?: number | null
-          success_evidence?: string | null
-          tenant_id?: string
-          title?: string
-          unit_label?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coaching_action_templates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -874,12 +902,52 @@ export type Database = {
           },
         ]
       }
+      discord_interaction_receipts: {
+        Row: {
+          guild_id: string
+          interaction_id: string
+          received_at: string
+          scrim_id: string
+          tenant_id: string
+        }
+        Insert: {
+          guild_id: string
+          interaction_id: string
+          received_at?: string
+          scrim_id: string
+          tenant_id: string
+        }
+        Update: {
+          guild_id?: string
+          interaction_id?: string
+          received_at?: string
+          scrim_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_interaction_receipts_scrim_id_fkey"
+            columns: ["scrim_id"]
+            isOneToOne: false
+            referencedRelation: "scrims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_interaction_receipts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discord_oauth_states: {
         Row: {
           consumed_at: string | null
           created_at: string
           expires_at: string
           id: string
+          return_url: string
           state_hash: string
           tenant_id: string
           user_id: string
@@ -889,6 +957,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          return_url?: string
           state_hash: string
           tenant_id: string
           user_id: string
@@ -898,6 +967,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          return_url?: string
           state_hash?: string
           tenant_id?: string
           user_id?: string
@@ -905,6 +975,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "discord_oauth_states_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discord_permitted_roles: {
+        Row: {
+          configured_by: string
+          created_at: string
+          id: string
+          installation_id: string
+          role_id: string
+          role_name: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          configured_by: string
+          created_at?: string
+          id?: string
+          installation_id: string
+          role_id: string
+          role_name?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          configured_by?: string
+          created_at?: string
+          id?: string
+          installation_id?: string
+          role_id?: string
+          role_name?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_permitted_roles_installation_id_fkey"
+            columns: ["installation_id"]
+            isOneToOne: false
+            referencedRelation: "discord_installations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_permitted_roles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1409,6 +1527,7 @@ export type Database = {
           id: string
           last_error: string | null
           payload: Json
+          provider: string
           status: string
           tenant_id: string
         }
@@ -1425,6 +1544,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           payload?: Json
+          provider?: string
           status?: string
           tenant_id: string
         }
@@ -1441,6 +1561,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           payload?: Json
+          provider?: string
           status?: string
           tenant_id?: string
         }
@@ -2135,6 +2256,382 @@ export type Database = {
         }
         Relationships: []
       }
+      opponent_preparation_action_links: {
+        Row: {
+          action_id: string
+          id: string
+          linked_at: string
+          linked_by: string
+          removed_at: string | null
+          removed_by: string | null
+          revision_id: string
+          tenant_id: string
+        }
+        Insert: {
+          action_id: string
+          id?: string
+          linked_at?: string
+          linked_by: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id: string
+          tenant_id: string
+        }
+        Update: {
+          action_id?: string
+          id?: string
+          linked_at?: string
+          linked_by?: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_action_links_action_tenant_fkey"
+            columns: ["action_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_actions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_action_links_revision_tenant_fkey"
+            columns: ["revision_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_revisions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_action_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opponent_preparation_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          event_type: string
+          id: string
+          playbook_id: string
+          resulting_version: number
+          revision_id: string | null
+          summary: string | null
+          tenant_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          playbook_id: string
+          resulting_version: number
+          revision_id?: string | null
+          summary?: string | null
+          tenant_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          playbook_id?: string
+          resulting_version?: number
+          revision_id?: string | null
+          summary?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_events_playbook_tenant_fkey"
+            columns: ["playbook_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_playbooks"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_events_revision_tenant_fkey"
+            columns: ["revision_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_revisions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opponent_preparation_evidence_links: {
+        Row: {
+          id: string
+          insufficient_reason: string | null
+          linked_at: string
+          linked_by: string
+          removed_at: string | null
+          removed_by: string | null
+          revision_id: string
+          source_id: string | null
+          source_label: string
+          source_patch_label: string | null
+          source_recorded_at: string
+          source_type: string
+          staff_relevance_note: string | null
+          tenant_id: string
+        }
+        Insert: {
+          id?: string
+          insufficient_reason?: string | null
+          linked_at?: string
+          linked_by: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id: string
+          source_id?: string | null
+          source_label: string
+          source_patch_label?: string | null
+          source_recorded_at: string
+          source_type: string
+          staff_relevance_note?: string | null
+          tenant_id: string
+        }
+        Update: {
+          id?: string
+          insufficient_reason?: string | null
+          linked_at?: string
+          linked_by?: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id?: string
+          source_id?: string | null
+          source_label?: string
+          source_patch_label?: string | null
+          source_recorded_at?: string
+          source_type?: string
+          staff_relevance_note?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_evidence_links_revision_tenant_fkey"
+            columns: ["revision_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_revisions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_evidence_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opponent_preparation_playbooks: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          opponent_team_id: string
+          tenant_id: string
+          title: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          opponent_team_id: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          opponent_team_id?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_playbooks_opponent_tenant_fkey"
+            columns: ["opponent_team_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_teams"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_playbooks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opponent_preparation_review_links: {
+        Row: {
+          id: string
+          linked_at: string
+          linked_by: string
+          removed_at: string | null
+          removed_by: string | null
+          revision_id: string
+          scrim_id: string
+          staff_outcome_summary: string
+          tenant_id: string
+        }
+        Insert: {
+          id?: string
+          linked_at?: string
+          linked_by: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id: string
+          scrim_id: string
+          staff_outcome_summary: string
+          tenant_id: string
+        }
+        Update: {
+          id?: string
+          linked_at?: string
+          linked_by?: string
+          removed_at?: string | null
+          removed_by?: string | null
+          revision_id?: string
+          scrim_id?: string
+          staff_outcome_summary?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_review_links_revision_tenant_fkey"
+            columns: ["revision_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_revisions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_review_links_scrim_tenant_fkey"
+            columns: ["scrim_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "scrims"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_review_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opponent_preparation_revisions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          context_label: string | null
+          created_at: string
+          created_by: string
+          fixture_scrim_id: string | null
+          id: string
+          patch_label: string | null
+          playbook_id: string
+          revision_number: number
+          staff_judgement: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          context_label?: string | null
+          created_at?: string
+          created_by: string
+          fixture_scrim_id?: string | null
+          id?: string
+          patch_label?: string | null
+          playbook_id: string
+          revision_number: number
+          staff_judgement?: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          context_label?: string | null
+          created_at?: string
+          created_by?: string
+          fixture_scrim_id?: string | null
+          id?: string
+          patch_label?: string | null
+          playbook_id?: string
+          revision_number?: number
+          staff_judgement?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opponent_preparation_revisions_fixture_tenant_fkey"
+            columns: ["fixture_scrim_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "scrims"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_revisions_playbook_tenant_fkey"
+            columns: ["playbook_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "opponent_preparation_playbooks"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "opponent_preparation_revisions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opponent_soloq_daily_snapshots: {
         Row: {
           captured_at: string
@@ -2813,6 +3310,265 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "players_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_development_action_links: {
+        Row: {
+          action_id: string
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          objective_id: string
+          tenant_id: string
+        }
+        Insert: {
+          action_id: string
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          objective_id: string
+          tenant_id: string
+        }
+        Update: {
+          action_id?: string
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          objective_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_development_action_links_action_tenant_fkey"
+            columns: ["action_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_actions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "practice_development_action_links_objective_tenant_fkey"
+            columns: ["objective_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "practice_development_objectives"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "practice_development_action_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_development_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          next_status: string | null
+          objective_id: string
+          previous_status: string | null
+          staff_note: string | null
+          team_summary: string | null
+          tenant_id: string
+          version: number
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          next_status?: string | null
+          objective_id: string
+          previous_status?: string | null
+          staff_note?: string | null
+          team_summary?: string | null
+          tenant_id: string
+          version: number
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          next_status?: string | null
+          objective_id?: string
+          previous_status?: string | null
+          staff_note?: string | null
+          team_summary?: string | null
+          tenant_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_development_events_objective_tenant_fkey"
+            columns: ["objective_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "practice_development_objectives"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "practice_development_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_development_evidence: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          id: string
+          linked_at: string
+          linked_by: string
+          objective_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_id: string | null
+          source_label: string
+          source_recorded_at: string
+          source_type: string
+          staff_note: string | null
+          state: string
+          team_summary: string | null
+          tenant_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          id?: string
+          linked_at?: string
+          linked_by: string
+          objective_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id?: string | null
+          source_label: string
+          source_recorded_at: string
+          source_type: string
+          staff_note?: string | null
+          state?: string
+          team_summary?: string | null
+          tenant_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          id?: string
+          linked_at?: string
+          linked_by?: string
+          objective_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id?: string | null
+          source_label?: string
+          source_recorded_at?: string
+          source_type?: string
+          staff_note?: string | null
+          state?: string
+          team_summary?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_development_evidence_objective_tenant_fkey"
+            columns: ["objective_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "practice_development_objectives"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "practice_development_evidence_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_development_objectives: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string
+          evidence_standard: string
+          id: string
+          scrim_id: string
+          staff_note: string | null
+          status: string
+          team_status_summary: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by: string
+          evidence_standard: string
+          id?: string
+          scrim_id: string
+          staff_note?: string | null
+          status?: string
+          team_status_summary?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string
+          evidence_standard?: string
+          id?: string
+          scrim_id?: string
+          staff_note?: string | null
+          status?: string
+          team_status_summary?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_development_objectives_scrim_tenant_fkey"
+            columns: ["scrim_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "scrims"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "practice_development_objectives_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -3552,8 +4308,8 @@ export type Database = {
           enemy_team_kills: number | null
           external_game_data: Json | null
           external_game_id: string | null
-          game_end_time: string | null
           game_classification: string | null
+          game_end_time: string | null
           game_number: number
           game_start_time: string | null
           grid_series_number: number | null
@@ -3567,8 +4323,8 @@ export type Database = {
           our_team_kills: number | null
           performance_rating: number | null
           performance_summary: string | null
-          replay_url: string | null
           quality_flags: string[]
+          replay_url: string | null
           result: string | null
           roster_coverage: number
           scrim_id: string
@@ -3590,8 +4346,8 @@ export type Database = {
           enemy_team_kills?: number | null
           external_game_data?: Json | null
           external_game_id?: string | null
-          game_end_time?: string | null
           game_classification?: string | null
+          game_end_time?: string | null
           game_number: number
           game_start_time?: string | null
           grid_series_number?: number | null
@@ -3605,8 +4361,8 @@ export type Database = {
           our_team_kills?: number | null
           performance_rating?: number | null
           performance_summary?: string | null
-          replay_url?: string | null
           quality_flags?: string[]
+          replay_url?: string | null
           result?: string | null
           roster_coverage?: number
           scrim_id: string
@@ -3628,8 +4384,8 @@ export type Database = {
           enemy_team_kills?: number | null
           external_game_data?: Json | null
           external_game_id?: string | null
-          game_end_time?: string | null
           game_classification?: string | null
+          game_end_time?: string | null
           game_number?: number
           game_start_time?: string | null
           grid_series_number?: number | null
@@ -3643,8 +4399,8 @@ export type Database = {
           our_team_kills?: number | null
           performance_rating?: number | null
           performance_summary?: string | null
-          replay_url?: string | null
           quality_flags?: string[]
+          replay_url?: string | null
           result?: string | null
           roster_coverage?: number
           scrim_id?: string
@@ -4363,6 +5119,71 @@ export type Database = {
           },
         ]
       }
+      stripe_mrr_daily_snapshots: {
+        Row: {
+          active_paid_subscription_count: number
+          business_date: string
+          currency: string
+          normalized_monthly_recurring_amount_minor: number
+          observed_at: string
+          snapshot_version: number
+        }
+        Insert: {
+          active_paid_subscription_count: number
+          business_date: string
+          currency: string
+          normalized_monthly_recurring_amount_minor: number
+          observed_at?: string
+          snapshot_version?: number
+        }
+        Update: {
+          active_paid_subscription_count?: number
+          business_date?: string
+          currency?: string
+          normalized_monthly_recurring_amount_minor?: number
+          observed_at?: string
+          snapshot_version?: number
+        }
+        Relationships: []
+      }
+      stripe_webhook_events: {
+        Row: {
+          error: string | null
+          event_id: string
+          event_type: string
+          processed_at: string | null
+          received_at: string
+          status: string
+          tenant_id: string | null
+        }
+        Insert: {
+          error?: string | null
+          event_id: string
+          event_type: string
+          processed_at?: string | null
+          received_at?: string
+          status: string
+          tenant_id?: string | null
+        }
+        Update: {
+          error?: string | null
+          event_id?: string
+          event_type?: string
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_webhook_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -4723,6 +5544,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          billing_updated_at: string | null
           created_at: string
           custom_domain: string | null
           deployment_status: string | null
@@ -4737,7 +5559,11 @@ export type Database = {
           settings: Json | null
           slug: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_past_due_started_at: string | null
+          subscription_period_end: string | null
           subscription_status: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
           updated_at: string
@@ -4745,6 +5571,7 @@ export type Database = {
           vercel_project_id: string | null
         }
         Insert: {
+          billing_updated_at?: string | null
           created_at?: string
           custom_domain?: string | null
           deployment_status?: string | null
@@ -4759,7 +5586,11 @@ export type Database = {
           settings?: Json | null
           slug: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_cancel_at_period_end?: boolean
+          subscription_past_due_started_at?: string | null
+          subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
@@ -4767,6 +5598,7 @@ export type Database = {
           vercel_project_id?: string | null
         }
         Update: {
+          billing_updated_at?: string | null
           created_at?: string
           custom_domain?: string | null
           deployment_status?: string | null
@@ -4781,7 +5613,11 @@ export type Database = {
           settings?: Json | null
           slug?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_cancel_at_period_end?: boolean
+          subscription_past_due_started_at?: string | null
+          subscription_period_end?: string | null
           subscription_status?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
@@ -4816,6 +5652,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      workspace_funnel_events: {
+        Row: {
+          actor_id: string | null
+          event_key: string
+          id: string
+          occurred_at: string
+          tenant_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          event_key: string
+          id?: string
+          occurred_at?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          event_key?: string
+          id?: string
+          occurred_at?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_funnel_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_notifications: {
         Row: {
@@ -4876,6 +5744,27 @@ export type Database = {
         Args: { invitation_token: string }
         Returns: Json
       }
+      approve_opponent_preparation_revision: {
+        Args: { p_expected_version: number; p_revision_id: string }
+        Returns: Json
+      }
+      archive_opponent_preparation_playbook: {
+        Args: {
+          p_expected_version: number
+          p_playbook_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      archive_practice_development_objective: {
+        Args: {
+          p_expected_version: number
+          p_objective_id: string
+          p_staff_note?: string
+          p_team_status_summary: string
+        }
+        Returns: Json
+      }
       archive_scrim_block: {
         Args: { p_restore?: boolean; p_scrim_id: string }
         Returns: {
@@ -4922,6 +5811,71 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assert_team_analytics_access: {
+        Args: { p_tenant_id: string }
+        Returns: undefined
+      }
+      attach_practice_development_follow_up: {
+        Args: {
+          p_action_id: string
+          p_expected_version: number
+          p_objective_id: string
+        }
+        Returns: Json
+      }
+      check_in_coaching_action: {
+        Args: { p_action_id: string; p_check_in: string; p_note?: string }
+        Returns: {
+          acknowledged_at: string | null
+          archived_at: string | null
+          assignee_player_id: string | null
+          assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
+          completed_at: string | null
+          completed_by: string | null
+          completion_evidence: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_at: string | null
+          feedback_id: string | null
+          follow_up_scrim_id: string | null
+          id: string
+          owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
+          priority: string
+          ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
+          scrim_game_id: string | null
+          scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
+          status: string
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coaching_actions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       check_trial_expired: { Args: { user_email: string }; Returns: boolean }
       claim_integration_events: {
         Args: { p_limit?: number }
@@ -4938,6 +5892,33 @@ export type Database = {
           id: string
           last_error: string | null
           payload: Json
+          provider: string
+          status: string
+          tenant_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "integration_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_integration_events_for_provider: {
+        Args: { p_limit?: number; p_provider: string }
+        Returns: {
+          aggregate_id: string | null
+          aggregate_type: string
+          attempt_count: number
+          available_at: string
+          claimed_at: string | null
+          created_at: string
+          dedupe_key: string
+          delivered_at: string | null
+          event_type: string
+          id: string
+          last_error: string | null
+          payload: Json
+          provider: string
           status: string
           tenant_id: string
         }[]
@@ -4998,6 +5979,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      collector_entitlement_active: {
+        Args: {
+          p_now?: string
+          p_past_due_started_at: string
+          p_period_end: string
+          p_status: string
+          p_tier: Database["public"]["Enums"]["subscription_tier"]
+        }
+        Returns: boolean
+      }
       configure_discord_channel: {
         Args: {
           p_channel_id: string
@@ -5007,8 +5998,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      configure_discord_test_worker_schedule: {
+        Args: never
+        Returns: undefined
+      }
       configure_soloq_cron: {
         Args: { p_project_url: string; p_publishable_key: string }
+        Returns: undefined
+      }
+      configure_stripe_mrr_snapshot_cron: {
+        Args: {
+          p_project_url: string
+          p_publishable_key: string
+          p_worker_secret: string
+        }
         Returns: undefined
       }
       coordinate_soloq_daily_runs: { Args: never; Returns: number }
@@ -5031,6 +6034,9 @@ export type Database = {
           archived_at: string | null
           assignee_player_id: string | null
           assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
           completed_at: string | null
           completed_by: string | null
           completion_evidence: string | null
@@ -5042,13 +6048,29 @@ export type Database = {
           follow_up_scrim_id: string | null
           id: string
           owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
           priority: string
           ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
           scrim_game_id: string | null
           scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
           status: string
           tenant_id: string
           title: string
+          unit_label: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -5060,11 +6082,74 @@ export type Database = {
       }
       create_coaching_action_cycle: {
         Args: { p_payload: Json }
-        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+        Returns: {
+          acknowledged_at: string | null
+          archived_at: string | null
+          assignee_player_id: string | null
+          assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
+          completed_at: string | null
+          completed_by: string | null
+          completion_evidence: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_at: string | null
+          feedback_id: string | null
+          follow_up_scrim_id: string | null
+          id: string
+          owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
+          priority: string
+          ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
+          scrim_game_id: string | null
+          scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
+          status: string
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coaching_actions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      check_in_coaching_action: {
-        Args: { p_action_id: string; p_check_in: string; p_note?: string }
-        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+      create_discord_scrim_block: {
+        Args: {
+          p_duration_minutes: number
+          p_format: string
+          p_guild_id: string
+          p_interaction_id: string
+          p_notes?: string
+          p_opponent_name: string
+          p_role_ids: string[]
+          p_starts_at: string
+          p_tenant_id: string
+          p_timezone: string
+        }
+        Returns: {
+          result: string
+          scrim_id: string
+        }[]
       }
       create_draft_match_plan: {
         Args: {
@@ -5103,6 +6188,33 @@ export type Database = {
           p_tenant_id: string
         }
         Returns: string
+      }
+      create_opponent_preparation_playbook: {
+        Args: {
+          p_context_label?: string
+          p_fixture_scrim_id?: string
+          p_opponent_team_id: string
+          p_patch_label?: string
+          p_revision_title: string
+          p_staff_judgement?: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: Json
+      }
+      create_opponent_preparation_revision: {
+        Args: { p_expected_version: number; p_playbook_id: string }
+        Returns: Json
+      }
+      create_practice_development_objective: {
+        Args: {
+          p_evidence_standard: string
+          p_scrim_id: string
+          p_staff_note?: string
+          p_tenant_id: string
+          p_title: string
+        }
+        Returns: Json
       }
       create_preparation_brief: {
         Args: {
@@ -5199,6 +6311,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_self_service_workspace: {
+        Args: { p_name: string; p_timezone?: string }
+        Returns: Json
+      }
       create_team_invitation: {
         Args: {
           p_email: string
@@ -5209,10 +6325,6 @@ export type Database = {
           expires_at: string
           token: string
         }[]
-      }
-      create_self_service_workspace: {
-        Args: { p_name: string; p_timezone?: string }
-        Returns: Json
       }
       create_tenant_with_owner: {
         Args: {
@@ -5229,6 +6341,15 @@ export type Database = {
       delete_workspace_calendar_event: {
         Args: { p_event_id: string; p_tenant_id: string }
         Returns: undefined
+      }
+      detach_practice_development_follow_up: {
+        Args: {
+          p_expected_version: number
+          p_objective_id: string
+          p_staff_note?: string
+          p_team_status_summary: string
+        }
+        Returns: Json
       }
       disconnect_discord_installation: {
         Args: { p_tenant_id: string }
@@ -5361,6 +6482,37 @@ export type Database = {
           webhook_url: string
         }[]
       }
+      get_founder_funnel_scorecard: {
+        Args: { p_since?: string }
+        Returns: {
+          event_key: string
+          milestone_count: number
+        }[]
+      }
+      get_opponent_preparation_breadcrumbs: {
+        Args: {
+          p_context_ids: string[]
+          p_context_type: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      get_opponent_preparation_playbook: {
+        Args: { p_opponent_team_id: string; p_tenant_id: string }
+        Returns: Json
+      }
+      get_practice_development_action_breadcrumbs: {
+        Args: { p_action_ids: string[]; p_tenant_id: string }
+        Returns: Json
+      }
+      get_practice_development_loop: {
+        Args: {
+          p_context_game_id?: string
+          p_scrim_id: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
       get_public_player_count: { Args: never; Returns: number }
       get_public_scrim_count: { Args: never; Returns: number }
       get_public_tenant_count: { Args: never; Returns: number }
@@ -5392,6 +6544,14 @@ export type Database = {
         Args: { user_email: string }
         Returns: undefined
       }
+      has_opponent_preparation_access: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
+      has_practice_development_access: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
       insert_external_draft_tool: {
         Args: {
           p_api_endpoint?: string
@@ -5404,7 +6564,66 @@ export type Database = {
         }
         Returns: string
       }
+      link_opponent_preparation_action: {
+        Args: {
+          p_action_id: string
+          p_expected_version: number
+          p_revision_id: string
+        }
+        Returns: Json
+      }
+      link_opponent_preparation_evidence: {
+        Args: {
+          p_expected_version: number
+          p_insufficient_reason?: string
+          p_revision_id: string
+          p_source_id?: string
+          p_source_type: string
+          p_staff_relevance_note?: string
+        }
+        Returns: Json
+      }
+      link_opponent_preparation_review: {
+        Args: {
+          p_revision_id: string
+          p_scrim_id: string
+          p_staff_outcome_summary: string
+        }
+        Returns: Json
+      }
+      link_practice_development_evidence: {
+        Args: {
+          p_expected_version: number
+          p_objective_id: string
+          p_source_id: string
+          p_source_type: string
+        }
+        Returns: Json
+      }
+      provision_pilot_workspace: {
+        Args: {
+          p_name: string
+          p_owner_email: string
+          p_request_id?: string
+          p_slug: string
+        }
+        Returns: Json
+      }
       publish_preparation_brief: { Args: { p_brief_id: string }; Returns: Json }
+      queue_workspace_notification: {
+        Args: {
+          p_body: string
+          p_category: string
+          p_dedupe_key: string
+          p_href: string
+          p_payload?: Json
+          p_template_key?: string
+          p_tenant_id: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       reconcile_scrim_participant: {
         Args: {
           p_ignore?: boolean
@@ -5412,6 +6631,7 @@ export type Database = {
           p_player_id: string
         }
         Returns: {
+          advanced_stats: Json
           assists: number | null
           champion_name: string | null
           created_at: string
@@ -5423,6 +6643,7 @@ export type Database = {
           id: string
           identity_source: string | null
           identity_status: string
+          is_bot: boolean
           is_our_team: boolean
           items: Json | null
           kills: number | null
@@ -5446,6 +6667,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      record_practice_development_unavailable: {
+        Args: {
+          p_expected_version: number
+          p_objective_id: string
+          p_staff_note?: string
+          p_team_summary: string
+        }
+        Returns: Json
+      }
+      record_workspace_funnel_milestone: {
+        Args: { p_event_key: string; p_tenant_id: string }
+        Returns: undefined
       }
       refresh_soloq_run_progress: {
         Args: { p_run_id: string }
@@ -5501,6 +6735,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      replace_discord_permitted_roles: {
+        Args: { p_actor_user_id: string; p_roles: Json; p_tenant_id: string }
+        Returns: {
+          role_id: string
+          role_name: string
+        }[]
+      }
       resolve_game_reconciliation: {
         Args: {
           p_accepted_game_id?: string
@@ -5532,9 +6773,118 @@ export type Database = {
         Args: { p_local_date: string; p_local_time: string; p_timezone: string }
         Returns: string
       }
+      restore_opponent_preparation_playbook: {
+        Args: {
+          p_expected_version: number
+          p_playbook_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      restore_practice_development_objective: {
+        Args: {
+          p_expected_version: number
+          p_objective_id: string
+          p_staff_note?: string
+          p_team_status_summary: string
+        }
+        Returns: Json
+      }
+      review_coaching_action: {
+        Args: {
+          p_action_id: string
+          p_evidence?: string
+          p_next_action?: string
+          p_observation: string
+          p_outcome: string
+        }
+        Returns: {
+          acknowledged_at: string | null
+          archived_at: string | null
+          assignee_player_id: string | null
+          assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
+          completed_at: string | null
+          completed_by: string | null
+          completion_evidence: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_at: string | null
+          feedback_id: string | null
+          follow_up_scrim_id: string | null
+          id: string
+          owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
+          priority: string
+          ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
+          scrim_game_id: string | null
+          scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
+          status: string
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coaching_actions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_practice_development_evidence: {
+        Args: {
+          p_evidence_id: string
+          p_expected_version: number
+          p_staff_note?: string
+          p_team_summary: string
+        }
+        Returns: Json
+      }
       revise_draft_item: {
         Args: { p_id: string; p_kind: string }
         Returns: string
+      }
+      save_coaching_action_template: {
+        Args: { p_payload: Json }
+        Returns: {
+          archived_at: string | null
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          review_prompt: string | null
+          scope_type: string
+          success_evidence: string | null
+          suggested_duration_days: number | null
+          tenant_id: string
+          title: string
+          unit_label: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coaching_action_templates"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       save_draft_sequence_action: {
         Args: {
@@ -5581,6 +6931,7 @@ export type Database = {
           enemy_team_kills: number | null
           external_game_data: Json | null
           external_game_id: string | null
+          game_classification: string | null
           game_end_time: string | null
           game_number: number
           game_start_time: string | null
@@ -5595,8 +6946,10 @@ export type Database = {
           our_team_kills: number | null
           performance_rating: number | null
           performance_summary: string | null
+          quality_flags: string[]
           replay_url: string | null
           result: string | null
+          roster_coverage: number
           scrim_id: string
           side: string | null
           status: string
@@ -5826,6 +7179,9 @@ export type Database = {
           archived_at: string | null
           assignee_player_id: string | null
           assignee_user_id: string | null
+          carried_from_action_id: string | null
+          category: string
+          checkpoint_scrim_ids: string[]
           completed_at: string | null
           completed_by: string | null
           completion_evidence: string | null
@@ -5837,13 +7193,29 @@ export type Database = {
           follow_up_scrim_id: string | null
           id: string
           owner_user_id: string
+          participant_player_ids: string[]
+          pattern_label: string | null
+          player_check_in: string | null
+          player_check_in_note: string | null
+          player_checked_in_at: string | null
           priority: string
           ready_for_review_at: string | null
+          review_evidence: string | null
+          review_next_action: string | null
+          review_observation: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope_type: string
           scrim_game_id: string | null
           scrim_id: string | null
+          source_note: string | null
+          source_timestamp_seconds: number | null
+          source_type: string
           status: string
           tenant_id: string
           title: string
+          unit_label: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -5853,23 +7225,53 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      review_coaching_action: {
+      transition_practice_development_objective: {
         Args: {
-          p_action_id: string
-          p_outcome: string
-          p_observation: string
-          p_evidence?: string
-          p_next_action?: string
+          p_expected_version: number
+          p_next_status: string
+          p_objective_id: string
+          p_staff_note?: string
+          p_team_status_summary?: string
         }
-        Returns: Database["public"]["Tables"]["coaching_actions"]["Row"]
+        Returns: Json
       }
-      save_coaching_action_template: {
-        Args: { p_payload: Json }
-        Returns: Database["public"]["Tables"]["coaching_action_templates"]["Row"]
+      unlink_opponent_preparation_action: {
+        Args: { p_expected_version: number; p_link_id: string }
+        Returns: Json
+      }
+      unlink_opponent_preparation_evidence: {
+        Args: { p_expected_version: number; p_link_id: string }
+        Returns: Json
+      }
+      unlink_opponent_preparation_review: {
+        Args: { p_link_id: string; p_reason: string }
+        Returns: Json
       }
       update_draft_item_details: {
         Args: { p_id: string; p_kind: string; p_payload: Json }
         Returns: string
+      }
+      update_opponent_preparation_draft: {
+        Args: {
+          p_context_label?: string
+          p_expected_version: number
+          p_fixture_scrim_id?: string
+          p_patch_label?: string
+          p_revision_id: string
+          p_staff_judgement?: string
+          p_title: string
+        }
+        Returns: Json
+      }
+      update_practice_development_objective: {
+        Args: {
+          p_evidence_standard: string
+          p_expected_version: number
+          p_objective_id: string
+          p_staff_note?: string
+          p_title: string
+        }
+        Returns: Json
       }
       update_roster_player: {
         Args: {
@@ -6037,6 +7439,10 @@ export type Database = {
           }
       user_is_tenant_admin: { Args: { tenant_uuid: string }; Returns: boolean }
       verify_soloq_worker_secret: {
+        Args: { p_secret: string }
+        Returns: boolean
+      }
+      verify_stripe_mrr_snapshot_worker_secret: {
         Args: { p_secret: string }
         Returns: boolean
       }

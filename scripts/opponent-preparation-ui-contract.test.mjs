@@ -13,6 +13,8 @@ const scouting = read("src/pages/ScoutingTeamReport.tsx");
 const draft = read("src/pages/Draft.tsx");
 const actions = read("src/pages/CoachingActions.tsx");
 const scrim = read("src/components/scrims/ScrimBlockView.tsx");
+const rpc = read("src/lib/opponent-preparation-rpc.ts");
+const generatedTypes = read("src/integrations/supabase/types.ts");
 
 test("the browser gate stays fail-closed and staff-only", () => {
   assert.match(modules, /opponent_preparation: \{ key: "opponent_preparation", state: "planned", enabled: false \}/);
@@ -50,4 +52,9 @@ test("new workflow records remain RPC-only in the browser", () => {
   assert.match(hook, /callOpponentPreparationRpc\("get_opponent_preparation_playbook"/);
   assert.doesNotMatch(hook, /\.from\("opponent_preparation_/);
   assert.doesNotMatch(breadcrumbs, /\.from\("opponent_preparation_/);
+  assert.match(rpc, /Database\["public"\]\["Functions"\]/);
+  assert.match(rpc, /supabase\.rpc\(name, args\)/);
+  assert.doesNotMatch(rpc, /as unknown/);
+  assert.match(generatedTypes, /opponent_preparation_playbooks:/);
+  assert.match(generatedTypes, /get_opponent_preparation_breadcrumbs:/);
 });

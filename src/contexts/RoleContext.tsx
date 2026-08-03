@@ -15,7 +15,9 @@ interface RoleContextType {
     canViewIntelligence: boolean;
     canManageIntegrations: boolean;
     canManagePracticeDevelopment: boolean;
+    canManageOpponentPreparation: boolean;
     canViewPracticeDevelopment: boolean;
+    canViewOpponentPreparation: boolean;
     // Helper to check if user has at least this level of access
     hasAccess: (role: UserRole) => boolean;
 }
@@ -46,6 +48,14 @@ export function RoleProvider({ children }: { children: ReactNode }) {
                 queryKey: ['practice-development-breadcrumbs', previous.tenantId],
                 predicate: (query) => query.queryKey[2] === previous.role,
             });
+            queryClient.removeQueries({
+                queryKey: ['opponent-preparation', previous.tenantId],
+                predicate: (query) => query.queryKey[3] === previous.role,
+            });
+            queryClient.removeQueries({
+                queryKey: ['opponent-preparation-breadcrumbs', previous.tenantId],
+                predicate: (query) => query.queryKey[3] === previous.role,
+            });
         }
         previousSecurityScope.current = { role: activeRole, tenantId: tenant?.id };
     }, [activeRole, queryClient, tenant?.id]);
@@ -65,7 +75,9 @@ export function RoleProvider({ children }: { children: ReactNode }) {
             canViewIntelligence: capabilities.viewIntelligence,
             canManageIntegrations: capabilities.manageIntegrations,
             canManagePracticeDevelopment: capabilities.managePracticeDevelopment,
+            canManageOpponentPreparation: capabilities.manageOpponentPreparation,
             canViewPracticeDevelopment: capabilities.viewPracticeDevelopment,
+            canViewOpponentPreparation: capabilities.viewOpponentPreparation,
             hasAccess: (requiredRole: UserRole) => hierarchyLevel >= ROLE_HIERARCHY[requiredRole]
         };
     }, [activeRole]);

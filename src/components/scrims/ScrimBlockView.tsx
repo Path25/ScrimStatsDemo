@@ -25,6 +25,7 @@ import { ReviewChecklist } from "@/components/scrims/ReviewChecklist";
 import { ReviewStatusBadge } from "@/components/scrims/ReviewStatusBadge";
 import { PracticeDevelopmentGameEvidenceChip } from "@/components/practice-development/PracticeDevelopmentGameEvidenceChip";
 import { PracticeDevelopmentPanel } from "@/components/practice-development/PracticeDevelopmentPanel";
+import { OpponentPreparationBreadcrumb } from "@/components/opponent-preparation/OpponentPreparationBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataSurface } from "@/components/workspace/DataSurface";
@@ -35,6 +36,7 @@ import { useScrimBlock } from "@/hooks/useScrimBlock";
 import { useScrimGames } from "@/hooks/useScrimGames";
 import type { Scrim } from "@/hooks/useOptimizedScrimsData";
 import { useScrimParticipants } from "@/hooks/useScrimParticipants";
+import { useOpponentPreparationBreadcrumbs } from "@/hooks/useOpponentPreparationBreadcrumbs";
 import {
   blockScoreLabel,
   buildReviewChecklist,
@@ -87,6 +89,7 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
   } = useScrimGames(scrimId);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const opponentPreparation = useOpponentPreparationBreadcrumbs("scrim", [scrimId]);
   const selectedGame = scrimGames.find((game) => game.id === selectedGameId) || null;
   const selectedGameIndex = selectedGame
     ? scrimGames.findIndex((game) => game.id === selectedGame.id)
@@ -176,6 +179,7 @@ export function ScrimBlockView({ scrimId, onClose }: { scrimId: string; onClose:
               <p className="mt-1 text-sm text-[var(--workspace-muted)]">
                 {localDateTime(block.starts_at)} · {block.format || "Format not recorded"}
               </p>
+              <OpponentPreparationBreadcrumb breadcrumb={opponentPreparation.get(scrimId)} />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 pl-12 lg:pl-0">

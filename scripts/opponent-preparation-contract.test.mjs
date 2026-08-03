@@ -11,6 +11,7 @@ const design = read("docs/agent-work-orders/WO-2026-036-PHASE-1-DESIGN.md");
 
 const publicRpcNames = [
   "get_opponent_preparation_playbook",
+  "get_opponent_preparation_breadcrumbs",
   "create_opponent_preparation_playbook",
   "update_opponent_preparation_draft",
   "link_opponent_preparation_evidence",
@@ -94,6 +95,16 @@ test("revision history is immutable, versioned, and provenance constrained", () 
   assert.match(migration, /brief\.status in \('published', 'archived'\)/);
   assert.match(migration, /scrim\.review_status = 'complete'/);
   assert.doesNotMatch(migration, /leaguepedia|https?:\/\/|external_source|provider_payload/i);
+});
+
+test("breadcrumbs are staff-scoped, bounded, and restricted to known canonical contexts", () => {
+  assert.match(migration, /create or replace function public\.get_opponent_preparation_breadcrumbs/);
+  assert.match(migration, /cardinality\(p_context_ids\) > 100/);
+  assert.match(migration, /p_context_type not in \(\s*'action', 'scrim', 'preparation_brief', 'draft_playbook'\s*\)/);
+  assert.match(migration, /security\.require_opponent_preparation_staff\(p_tenant_id\)/);
+  assert.match(migration, /action_link\.action_id = any\(p_context_ids\)/);
+  assert.match(migration, /review_link\.scrim_id = any\(p_context_ids\)/);
+  assert.match(migration, /evidence_link\.source_id = any\(p_context_ids\)/);
 });
 
 test("the accepted design keeps Phase 1 staff-only and external-source free", () => {

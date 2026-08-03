@@ -10,7 +10,9 @@ export type WorkspaceCapabilities = {
   manageIntegrations: boolean;
   manageMemberships: boolean;
   managePracticeDevelopment: boolean;
+  manageOpponentPreparation: boolean;
   viewIntelligence: boolean;
+  viewOpponentPreparation: boolean;
   viewPracticeDevelopment: boolean;
   viewPublishedIntelligence: boolean;
 };
@@ -23,7 +25,9 @@ const readOnly: WorkspaceCapabilities = {
   manageIntegrations: false,
   manageMemberships: false,
   managePracticeDevelopment: false,
+  manageOpponentPreparation: false,
   viewIntelligence: true,
+  viewOpponentPreparation: false,
   viewPracticeDevelopment: false,
   viewPublishedIntelligence: true,
 };
@@ -44,6 +48,8 @@ export function getWorkspaceCapabilities(role: string | null | undefined): Works
       manageIntegrations: true,
       manageMemberships: true,
       managePracticeDevelopment: true,
+      manageOpponentPreparation: true,
+      viewOpponentPreparation: true,
       viewPracticeDevelopment: true,
     };
   }
@@ -58,6 +64,8 @@ export function getWorkspaceCapabilities(role: string | null | undefined): Works
       manageIntegrations: true,
       manageMemberships: true,
       managePracticeDevelopment: true,
+      manageOpponentPreparation: true,
+      viewOpponentPreparation: true,
       viewPracticeDevelopment: true,
     };
   }

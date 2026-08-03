@@ -17,6 +17,7 @@ import { Link, useParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { OpponentSoloQDialog } from "@/components/scouting/OpponentSoloQDialog";
 import { LeaguepediaDraftHistory } from "@/components/scouting/LeaguepediaDraftHistory";
+import { OpponentPreparationPanel } from "@/components/scouting/OpponentPreparationPanel";
 import {
   Dialog,
   DialogContent,
@@ -259,6 +260,8 @@ export default function ScoutingTeamReport() {
           ) : undefined
         }
       />
+
+      <OpponentPreparationPanel module={modules.opponent_preparation} opponentId={team.id} />
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="space-y-6">

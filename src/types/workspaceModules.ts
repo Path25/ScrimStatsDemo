@@ -5,7 +5,8 @@ export type WorkspaceModuleKey =
   | "draft_preparation"
   | "collector"
   | "discord"
-  | "practice_development";
+  | "practice_development"
+  | "opponent_preparation";
 
 export type WorkspaceReleaseState = "planned" | "beta" | "live";
 
@@ -23,4 +24,5 @@ export const defaultWorkspaceModules: Record<WorkspaceModuleKey, WorkspaceModule
   collector: { key: "collector", state: "live", enabled: true },
   discord: { key: "discord", state: "planned", enabled: true },
   practice_development: { key: "practice_development", state: "planned", enabled: false },
+  opponent_preparation: { key: "opponent_preparation", state: "planned", enabled: false },
 };

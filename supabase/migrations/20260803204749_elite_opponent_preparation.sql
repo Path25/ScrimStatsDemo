@@ -2300,9 +2300,163 @@ begin
 end;
 $$;
 
+create or replace function public.get_opponent_preparation_breadcrumbs(
+  p_tenant_id uuid,
+  p_context_type text,
+  p_context_ids uuid[]
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_result jsonb;
+begin
+  perform security.require_opponent_preparation_staff(p_tenant_id);
+
+  if p_context_type not in (
+    'action', 'scrim', 'preparation_brief', 'draft_playbook'
+  ) then
+    raise sqlstate '22023'
+      using message = 'Unsupported opponent preparation breadcrumb context';
+  end if;
+
+  if coalesce(cardinality(p_context_ids), 0) = 0 then
+    return '[]'::jsonb;
+  end if;
+
+  if cardinality(p_context_ids) > 100 then
+    raise sqlstate '22023'
+      using message = 'Too many opponent preparation breadcrumb contexts';
+  end if;
+
+  if p_context_type = 'action' then
+    select coalesce(jsonb_agg(to_jsonb(candidate) order by candidate.context_id), '[]'::jsonb)
+    into v_result
+    from (
+      select distinct on (action_link.action_id)
+        action_link.action_id as context_id,
+        'action'::text as context_type,
+        playbook.id as playbook_id,
+        playbook.opponent_team_id as opponent_id,
+        opponent.name as opponent_name,
+        revision.title as revision_title,
+        revision.status as revision_status
+      from public.opponent_preparation_action_links action_link
+      join public.opponent_preparation_revisions revision
+        on revision.id = action_link.revision_id
+       and revision.tenant_id = action_link.tenant_id
+      join public.opponent_preparation_playbooks playbook
+        on playbook.id = revision.playbook_id
+       and playbook.tenant_id = revision.tenant_id
+      join public.opponent_teams opponent
+        on opponent.id = playbook.opponent_team_id
+       and opponent.tenant_id = playbook.tenant_id
+      where action_link.tenant_id = p_tenant_id
+        and action_link.action_id = any(p_context_ids)
+        and action_link.removed_at is null
+        and playbook.archived_at is null
+      order by action_link.action_id, revision.revision_number desc
+    ) candidate;
+  elsif p_context_type = 'scrim' then
+    select coalesce(jsonb_agg(to_jsonb(candidate) order by candidate.context_id), '[]'::jsonb)
+    into v_result
+    from (
+      select distinct on (matched.context_id)
+        matched.context_id,
+        'scrim'::text as context_type,
+        matched.playbook_id,
+        matched.opponent_id,
+        matched.opponent_name,
+        matched.revision_title,
+        matched.revision_status
+      from (
+        select
+          revision.fixture_scrim_id as context_id,
+          playbook.id as playbook_id,
+          playbook.opponent_team_id as opponent_id,
+          opponent.name as opponent_name,
+          revision.title as revision_title,
+          revision.status as revision_status,
+          revision.revision_number
+        from public.opponent_preparation_revisions revision
+        join public.opponent_preparation_playbooks playbook
+          on playbook.id = revision.playbook_id
+         and playbook.tenant_id = revision.tenant_id
+        join public.opponent_teams opponent
+          on opponent.id = playbook.opponent_team_id
+         and opponent.tenant_id = playbook.tenant_id
+        where revision.tenant_id = p_tenant_id
+          and revision.fixture_scrim_id = any(p_context_ids)
+          and playbook.archived_at is null
+        union all
+        select
+          review_link.scrim_id as context_id,
+          playbook.id as playbook_id,
+          playbook.opponent_team_id as opponent_id,
+          opponent.name as opponent_name,
+          revision.title as revision_title,
+          revision.status as revision_status,
+          revision.revision_number
+        from public.opponent_preparation_review_links review_link
+        join public.opponent_preparation_revisions revision
+          on revision.id = review_link.revision_id
+         and revision.tenant_id = review_link.tenant_id
+        join public.opponent_preparation_playbooks playbook
+          on playbook.id = revision.playbook_id
+         and playbook.tenant_id = revision.tenant_id
+        join public.opponent_teams opponent
+          on opponent.id = playbook.opponent_team_id
+         and opponent.tenant_id = playbook.tenant_id
+        where review_link.tenant_id = p_tenant_id
+          and review_link.scrim_id = any(p_context_ids)
+          and review_link.removed_at is null
+          and playbook.archived_at is null
+      ) matched
+      order by matched.context_id, matched.revision_number desc
+    ) candidate;
+  else
+    select coalesce(jsonb_agg(to_jsonb(candidate) order by candidate.context_id), '[]'::jsonb)
+    into v_result
+    from (
+      select distinct on (evidence_link.source_id)
+        evidence_link.source_id as context_id,
+        p_context_type as context_type,
+        playbook.id as playbook_id,
+        playbook.opponent_team_id as opponent_id,
+        opponent.name as opponent_name,
+        revision.title as revision_title,
+        revision.status as revision_status
+      from public.opponent_preparation_evidence_links evidence_link
+      join public.opponent_preparation_revisions revision
+        on revision.id = evidence_link.revision_id
+       and revision.tenant_id = evidence_link.tenant_id
+      join public.opponent_preparation_playbooks playbook
+        on playbook.id = revision.playbook_id
+       and playbook.tenant_id = revision.tenant_id
+      join public.opponent_teams opponent
+        on opponent.id = playbook.opponent_team_id
+       and opponent.tenant_id = playbook.tenant_id
+      where evidence_link.tenant_id = p_tenant_id
+        and evidence_link.source_type = p_context_type
+        and evidence_link.source_id = any(p_context_ids)
+        and evidence_link.removed_at is null
+        and playbook.archived_at is null
+      order by evidence_link.source_id, revision.revision_number desc
+    ) candidate;
+  end if;
+
+  return v_result;
+end;
+$$;
+
 -- PostgreSQL grants new functions to PUBLIC by default. Lock every signature
 -- before exposing only the authenticated RPC surface.
 revoke all on function public.get_opponent_preparation_playbook(uuid, uuid)
+  from public, anon, authenticated;
+revoke all on function public.get_opponent_preparation_breadcrumbs(uuid, text, uuid[])
   from public, anon, authenticated;
 revoke all on function public.create_opponent_preparation_playbook(
   uuid, uuid, text, text, uuid, text, text, text
@@ -2336,6 +2490,8 @@ revoke all on function public.restore_opponent_preparation_playbook(
 
 grant execute on function public.get_opponent_preparation_playbook(uuid, uuid)
   to authenticated;
+grant execute on function public.get_opponent_preparation_breadcrumbs(uuid, text, uuid[])
+  to authenticated;
 grant execute on function public.create_opponent_preparation_playbook(
   uuid, uuid, text, text, uuid, text, text, text
 ) to authenticated;
@@ -2368,6 +2524,8 @@ grant execute on function public.restore_opponent_preparation_playbook(
 
 comment on function public.get_opponent_preparation_playbook(uuid, uuid) is
   'Returns the staff-v1 opponent-preparation projection after exact Elite/live/enabled Owner/Admin access checks.';
+comment on function public.get_opponent_preparation_breadcrumbs(uuid, text, uuid[]) is
+  'Returns bounded staff-only links from canonical Draft, Coaching Action, or Scrim contexts to active opponent preparation revisions.';
 comment on function public.create_opponent_preparation_playbook(
   uuid, uuid, text, text, uuid, text, text, text
 ) is

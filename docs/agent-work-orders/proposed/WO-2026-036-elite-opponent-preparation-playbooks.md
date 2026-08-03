@@ -85,7 +85,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** Phase 1 is approved for development, but no implementation, migration, hosted QA, customer activation, or release evidence exists. External intelligence remains deliberately out of scope.
+- **Rationale:** Phase 2B is locally implemented and validated, but the migration is not hosted, the frontend is not deployed, and the authenticated role/plan/tenant matrix has not been audited. External intelligence remains deliberately out of scope.
 
 ### Outstanding checks
 
@@ -93,6 +93,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 |---|---|---|---|
 | Phase 1 design and tenant-safe boundary | Core / PM | Reviewed design and acceptance handoff | Complete (accepted 2026-08-03) |
 | Implementation approval | Theo | Written approval | Complete (2026-08-03) |
+| Phase 2B application projection and workflow | Core | Local implementation, contracts, build and responsive shell check | Complete locally (2026-08-03) |
 | Hosted QA | QA | Evidence pack | Open |
 
 ### Theo approval record
@@ -112,6 +113,7 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - 2026-08-03 - Theo approved Phase 1 implementation. The scope is narrowed to an Elite-only staff workflow over existing tenant-owned evidence and explicit staff judgement; WO-035 remains parked, so all external source/provider/resource capabilities are excluded.
 - 2026-08-03 - Core completed the Phase 1 design checkpoint. It defines an Owner/Admin-only, exact Elite/live/enabled RPC boundary; immutable approved revisions; canonical Scouting/Draft/Coaching Action/Scrim review links; explicit insufficient and unavailable states; fail-closed module defaults; recovery; and the full role/plan/tenant/provenance QA matrix. No migration, hosted mutation, deployment, billing change, or customer activation occurred.
 - 2026-08-03 - Theo reviewed and accepted the Phase 1 design and approved local migration/security-boundary implementation. Hosted migration application and deployment remain separately approval-gated.
+- 2026-08-03 - Theo approved Phase 2B. Core implemented the staff projection, primary Scouting workflow, and bounded Draft/Coaching Action/Scrim breadcrumbs. No hosted migration, tenant activation, deployment, billing change, external source, or release occurred.
 
 ## Implementation and review evidence
 
@@ -119,6 +121,7 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - Phase 1 design: [`WO-2026-036-PHASE-1-DESIGN.md`](../WO-2026-036-PHASE-1-DESIGN.md).
 - Design review established that existing Pro Scouting and Draft remain unchanged; WO-036 adds only a staff-only Elite orchestration layer with locked base tables and server-shaped access.
 - **Highest evidence achieved:** Phase 1 design accepted; local migration/security-boundary implementation is authorised and in progress. Hosted migration, deployment, and hosted evidence remain outstanding.
+- **Highest evidence achieved:** Phase 2B is locally implemented and database-behavior/build validated. Hosted migration, generated types, deployment, authenticated enabled-module browser evidence, Advisor review, and release approval remain outstanding.
 
 ### Phase 2A local database/security boundary - 2026-08-03
 
@@ -129,3 +132,22 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 - The repository's historical migration chain cannot currently reset from zero because older migrations rely on a remote-era baseline and include legacy filenames the current CLI skips. To validate this change without rewriting history, Core applied the exact migration to an isolated local Supabase stack with a temporary dependency-only baseline. Migration application passed; warning-level database lint returned no findings; and a rolled-back behavior matrix passed Elite Owner access, Member/Pro/cross-tenant denial, direct-table denial, create/link/approve/read/review behavior, explicit insufficient evidence, and revision/event immutability.
 - Focused contract tests passed 5/5; the full repository passed 238/238 tests, ESLint with zero warnings, TypeScript, the production Vite build, and bundle budget.
 - **Highest evidence achieved:** locally implemented and database-behavior verified. WO-036 remains **In Progress** because the application projection/UI, generated hosted types, authenticated browser matrix, hosted migration/Advisor evidence, deployment, and QA audit are not part of this checkpoint and remain outstanding.
+
+### Phase 2B application projection and workflow - 2026-08-03
+
+- Added the exact browser-side gate for a currently entitled Elite workspace, `live/enabled` `opponent_preparation` module, and Owner/Admin role. Unknown, loading, failed, Free, Pro, Member, and Viewer states fail closed; tenant/role/module changes invalidate preparation caches.
+- Added a strict `opponent-preparation-v1` / `staff-v1` projection parser, a narrow RPC adapter pending hosted type regeneration, and tenant/opponent/role/module-safe React Query hooks. New playbook tables remain RPC-only in browser code; option lists read only existing canonical tenant-owned Scouting, immutable Draft, Coaching Action, and Scrim records.
+- Added the primary staff surface to the opponent Scouting report: create/edit draft, dated evidence and explicit insufficiency, staff judgement, canonical preparation actions, approval blockers, immutable approved history, later completed-review outcomes, revision creation, and archive/restore. Unavailable/superseded sources and failed option loads are explicit and retryable; database-aligned input limits are enforced in the UI.
+- Added a bounded shaped breadcrumb RPC and compact staff-only breadcrumbs from linked Draft preparation briefs/playbooks, Coaching Actions, and Scrim Blocks back to the opponent preparation report. The RPC accepts only four closed context types and at most 100 IDs.
+- Focused security/UI contracts pass 10/10. Full repository validation passes ESLint with zero warnings, TypeScript, 243/243 tests, production Vite build, and bundle budget.
+- Reapplied the exact final migration to a fresh isolated Supabase stack with a dependency-only baseline. Migration reset passed, warning-level database lint returned zero findings, and a disposable behavior fixture passed create/link/approve plus action/scrim breadcrumb projection, source-type separation, and fail-closed module disablement. The stack and fixtures were removed afterward.
+- Local browser checks at 1280px and 390px reached the app with no horizontal overflow or console warnings, then correctly redirected to sign-in. This verifies only the local unauthenticated shell, not the new enabled staff surface.
+- **Highest evidence achieved:** locally implemented, locally database-behavior verified, and compilation/build verified. WO-036 remains **In Progress** pending hosted migration approval/application, generated Supabase type regeneration, frontend deployment approval/deployment, authenticated Owner/Admin workflow and denial matrix, cross-tenant/direct mutation checks against the hosted candidate, Advisor review, and QA & Release Auditor verdict.
+
+### Reproducible QA handoff after approved hosted migration and deployment
+
+1. Use isolated Elite tenant A with `opponent_preparation = live/enabled`, Owner and Admin accounts, and existing same-opponent Scouting evidence, an immutable preparation brief or Draft playbook, a nonarchived Coaching Action, and Scrim Blocks. Keep Pro/Free, Member/Viewer, and tenant B controls.
+2. In the opponent Scouting report, create a draft; verify optional fixture/context/patch remain “not recorded” unless entered. Link dated tenant-owned evidence and a canonical action, record explicit staff judgement, approve, create a new revision, and confirm the approved revision cannot be edited.
+3. Exercise explicit insufficient evidence, unavailable/superseded evidence, option-load failure/retry, archive/restore, and a completed same-opponent Scrim review outcome. Confirm the UI never substitutes external or inferred claims.
+4. Verify breadcrumbs from the linked Draft record, Coaching Action, fixture Scrim, and completed review Scrim return to the correct opponent report and disappear when the playbook is archived or the link is removed.
+5. Verify Owner/Admin positive paths on desktop and mobile. Verify Elite Member/Viewer, all Free/Pro roles, disabled/non-live module, other tenant, unauthenticated, direct-table, cross-tenant-ID, stale-version, invalid-source, and oversized breadcrumb requests fail below the browser layer.

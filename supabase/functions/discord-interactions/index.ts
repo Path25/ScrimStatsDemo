@@ -7,6 +7,33 @@ const ephemeral = (content: string) => json({ type: 4, data: { content, flags: 6
 const snowflake = (value: unknown) => typeof value === "string" && /^[0-9]{17,20}$/.test(value);
 const exactReplayHeader = "X-ScrimStats-Exact-Replay";
 const exactReplayMarker = "WO-040 EXACT REPLAY";
+const supportedFormats = new Set(["BO1", "BO2", "BO3", "BO4", "BO5", "1G", "2G", "3G", "4G", "5G"]);
+
+function logRejection(reason: string, code = "none") {
+  console.warn("Discord scrim request rejected", {
+    reason,
+    code,
+    execution_id: Deno.env.get("SB_EXECUTION_ID") ?? "unknown",
+  });
+}
+
+function rpcRejectionReason(error: { code?: string; message?: string } | null) {
+  if (!error) return "empty_rpc_result";
+  const knownMessages: Record<string, string> = {
+    "Server authorization is required": "server_authorization_required",
+    "Invalid interaction identity": "invalid_interaction_identity",
+    "Discord automation is unavailable for this workspace": "workspace_unavailable",
+    "A permitted Discord role is required": "permitted_role_required",
+    "Opponent name must be between 1 and 120 characters": "invalid_opponent",
+    "Choose a valid start time and duration": "invalid_schedule",
+    "Choose a supported IANA timezone": "invalid_timezone",
+    "A practice block already overlaps that time": "schedule_overlap",
+  };
+  if (error.message && knownMessages[error.message]) return knownMessages[error.message];
+  if (error.code === "23514") return "constraint_violation";
+  if (error.code?.startsWith("PGRST")) return "rpc_unavailable";
+  return "rpc_rejected";
+}
 
 async function verified(request: Request, rawBody: string) {
   const timestamp = request.headers.get("X-Signature-Timestamp");
@@ -127,17 +154,26 @@ serve(async (request) => {
   const timezone = typeof options.get("timezone") === "string" ? options.get("timezone") : "";
   const duration = options.get("duration_minutes");
   const durationMinutes = typeof duration === "number" ? duration : typeof duration === "string" && /^\d+$/.test(duration) ? Number(duration) : Number.NaN;
-  const format = typeof options.get("format") === "string" ? options.get("format") : "BO5";
+  const requestedFormat = options.get("format");
+  const format = typeof requestedFormat === "string" ? requestedFormat.trim().toUpperCase() : "BO5";
   const notes = typeof options.get("notes") === "string" ? options.get("notes") : null;
   const parsedStartsAt = parseLocalStart(startDate, startTime, timezone);
   if (!opponent || !parsedStartsAt || !Number.isInteger(durationMinutes) || durationMinutes < 15 || durationMinutes > 720) {
+    logRejection("invalid_schedule_input");
     return ephemeral("Use the required opponent, date YYYY-MM-DD, time HH:MM (24-hour), valid timezone, and duration.");
+  }
+  if (!supportedFormats.has(format)) {
+    logRejection("invalid_format");
+    return ephemeral("Use a supported format: BO1, BO2, BO3, BO4, BO5, 1G, 2G, 3G, 4G, or 5G.");
   }
 
   const db = serviceClient();
   const { data: installation } = await db.from("discord_installations")
     .select("tenant_id").eq("guild_id", interaction.guild_id).eq("status", "active").maybeSingle();
-  if (!installation) return ephemeral("Discord scheduling is not available for this server.");
+  if (!installation) {
+    logRejection("installation_unavailable");
+    return ephemeral("Discord scheduling is not available for this server.");
+  }
   const { data, error } = await db.rpc("create_discord_scrim_block", {
     p_interaction_id: interaction.id,
     p_tenant_id: installation.tenant_id,
@@ -150,7 +186,10 @@ serve(async (request) => {
     p_format: format,
     p_notes: notes,
   }).maybeSingle();
-  if (error || !data) return ephemeral(error?.code === "23P01" ? "A practice block already overlaps that time." : "This command is not authorised for this workspace.");
+  if (error || !data) {
+    logRejection(rpcRejectionReason(error), error?.code ?? "none");
+    return ephemeral(error?.code === "23P01" ? "A practice block already overlaps that time." : "This command is not authorised for this workspace.");
+  }
   const replayGuildId = Deno.env.get("DISCORD_QA_REPLAY_GUILD_ID");
   if (
     data.result === "created"

@@ -68,6 +68,20 @@ test("Discord /scrim provider payload uses explicit local start options", () => 
   assert.doesNotMatch(source, /options\.get\("starts_at"\)/);
 });
 
+test("Discord /scrim normalizes supported formats and logs only redacted rejection reasons", () => {
+  const source = read("supabase/functions/discord-interactions/index.ts");
+
+  assert.match(source, /new Set\(\["BO1", "BO2", "BO3", "BO4", "BO5", "1G", "2G", "3G", "4G", "5G"\]\)/);
+  assert.match(source, /requestedFormat\.trim\(\)\.toUpperCase\(\)/);
+  assert.match(source, /if \(!supportedFormats\.has\(format\)\)/);
+  assert.match(source, /Use a supported format: BO1, BO2, BO3, BO4, BO5, 1G, 2G, 3G, 4G, or 5G\./);
+  assert.match(source, /function rpcRejectionReason/);
+  assert.match(source, /permitted_role_required/);
+  assert.match(source, /constraint_violation/);
+  assert.match(source, /execution_id: Deno\.env\.get\("SB_EXECUTION_ID"\)/);
+  assert.doesNotMatch(source, /console\.(?:warn|error|info)\([^\n]*(?:rawBody|signature|interaction\.guild_id|installation\.tenant_id|roleIds)/);
+});
+
 test("Discord interaction creation is service-only, tenant-safe, idempotent, and overlap-aware", () => {
   const migration = read("supabase/migrations/20260802173000_discord_interaction_scheduling.sql");
   const interaction = read("supabase/functions/discord-interactions/index.ts");

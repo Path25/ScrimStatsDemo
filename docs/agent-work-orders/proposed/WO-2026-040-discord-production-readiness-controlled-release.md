@@ -283,3 +283,80 @@ Pre-QA baseline for the isolated `clash` fixture is 5 scrims, 2 Discord interact
 5. Return the evidence to Core immediately so `DISCORD_QA_REPLAY_GUILD_ID` and the temporary replay source can be removed and the clean handler redeployed before any further matrix or activation work.
 
 The work order is **Ready for QA** for this fixture-only exact-replay scenario. The overall release verdict remains **HOLD**; provider delivery, worker activation, customer data, production smoke, pilot, and customer/release claims remain unapproved and unverified.
+
+## Independent QA exact-replay preflight - 2026-08-04
+
+### 1. Release verdict: HOLD
+
+The temporary replay fixture is correctly bounded for one private staging QA invocation. It is not production readiness evidence and must be removed immediately after the proof is captured.
+
+### 2. What was verified
+
+- Deployed `discord-interactions` version 8 has SHA-256 `5ad1d92d79cfd65d87fcbe0cf8cdd130d9a0c6dde68e1778a9f82f931c5eed1a`, the exact marker, private-guild environment gate, original signed-envelope reuse, and no raw body/signature/timestamp persistence path.
+- Independent local focused contracts passed 14/14; scoped ESLint and TypeScript passed.
+- Baseline is 5 scrims, 2 receipts, 7 Discord events, 1 pending event, 6 attempts, and both workers inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** The exact replay has not yet been invoked or observed; customer, production, and delivery/retry evidence remains absent.
+
+### 4. Important risks
+
+- **Important:** This is temporary test-only source on an active hosted project. It must be removed and the clean interaction handler redeployed after the one fixture run, regardless of outcome.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One permitted, non-overlapping private `/scrim` with notes exactly `WO-040 EXACT REPLAY`, resulting replay confirmation, and final count invariants.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo: submit exactly one private-guild command with the exact marker; do not submit a second command.
+2. QA: inspect the returned response, Function log, and count invariants, then return the result to Core for immediate fixture removal.
+
+## Independent QA exact-replay execution - 2026-08-04
+
+### 1. Release verdict: HOLD
+
+The exact-replay fixture did not complete its required positive path. It failed safely without a mutation, but remains a release-blocking Core defect until the handler can both complete the authorised fixture path and provide a redacted diagnostic for any denied server-side guard.
+
+### 2. What was verified
+
+- One permitted private-guild invocation using the exact `WO-040 EXACT REPLAY` marker reached deployed `discord-interactions` v8 and returned HTTP 200 to Discord with `This command is not authorised for this workspace.`
+- No fixture data changed: counts remain 5 scrims, 2 receipts, 7 Discord events, 1 pending event, and 6 delivery attempts; no marker scrim or marker receipt exists.
+- Read-only hosted configuration remains internally consistent: one Elite `clash` tenant, live/enabled Discord module, one active installation, one permitted role, and that role is attached to the active installation.
+
+### 3. Blocking issues
+
+- **Blocking:** The marked permitted command is rejected before canonical creation, so the exact replay has not occurred.
+- **Blocking:** The handler maps every non-overlap RPC error to the same safe provider response and emits no redacted reason code. QA cannot distinguish role, guild, module, entitlement, or RPC-authorisation denial without unsafe probing.
+
+### 4. Important risks
+
+- **Important:** The fail-closed response prevented unauthorised schedule/outbox writes; do not weaken the guards or repeat the command as a diagnostic substitute.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Exact replay confirmation, identifier/count invariants, fixture removal, and all remaining denial/recovery/delivery checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** inspect the v8 request/RPC failure and correct the fixture's authorised path. Add a redacted internal reason code/log after signature verification and before the generic ephemeral response; it must not expose request bodies, signatures, provider secrets, tenant identifiers, or role IDs.
+2. **QA:** re-run only after Core records the deployed correction and a new baseline. Do not invoke the marker command again on the current candidate.
+
+**QA routing update:** WO-040 is **Blocked** and returned to Core. Remove the temporary replay fixture after diagnosis or correction; keep workers paused and preserve the failed no-mutation evidence.
+
+## Core authorised-path correction and QA re-handoff - 2026-08-04
+
+Theo approved the narrow correction and hosted Function deployment. Hosted request evidence showed the failed v8 command passed signature verification and active-installation lookup, then received HTTP 400 from `create_discord_scrim_block`; the failure class was consistent with validation or an insert constraint rather than the RPC's role/module authorization guards. The original signed body was correctly not retained, so the exact failing option cannot be reconstructed safely.
+
+Core candidate `7aaea05` now trims and uppercases the optional series format, allows only the canonical hosted `scrims.format` values (`BO1`-`BO5` and `1G`-`5G`), and rejects any unsupported format before tenant lookup. Post-signature rejections now emit only a bounded reason, PostgreSQL/PostgREST code, `SB_EXECUTION_ID`, and Function-version context. The handler does not log the request body, signature, timestamp, tenant or guild identifier, role identifiers, or secret values; provider-facing authorization responses remain generic.
+
+Validation passed zero-warning ESLint, TypeScript, 249/249 repository tests, production build, and bundle budget. `discord-interactions` version 9 is active with `verify_jwt = false`, SHA-256 `da2e049e59572496c3247cd7aa738527d036e0adcf774ae7d40c63bdc6b0abbb`, and retrieved hosted source containing the reviewed normalization and redacted diagnostics. Cron jobs 4 and 5 remain inactive.
+
+The new pre-QA baseline remains 5 scrims, 2 receipts, 7 Discord events, 1 pending Discord event, 6 delivery attempts, and 0 active workers. QA may perform exactly one new private-guild invocation with a non-overlapping future time, a canonical supported format such as `BO5`, and notes exactly `WO-040 EXACT REPLAY`:
+
+- On success, verify two Function invocations, `replay_confirmed: true`, and final counts of 6 scrims, 3 receipts, 8 Discord events, 2 pending events, 6 attempts, and 0 active workers, with one shared interaction/receipt/scrim/outbox identity and no duplicate row.
+- On failure, record only the redacted reason, code, execution ID, Function version, provider response, and unchanged aggregate counts. Do not retry.
+- In either outcome, return immediately to Core to remove `DISCORD_QA_REPLAY_GUILD_ID`, remove the temporary replay source, and deploy the clean handler before any further matrix work.
+
+WO-040 is **Ready for QA** for that single non-customer exact-replay retry only. The release verdict remains **HOLD**; workers, outbound delivery, production configuration, customers, smoke/pilot work, and release remain unapproved.

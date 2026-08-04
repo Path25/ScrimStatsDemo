@@ -48,6 +48,12 @@ function eventMessage(event: IntegrationEvent, appUrl: string) {
   };
 }
 
+async function deliveryNonce(eventId: string, channelId: string) {
+  const input = new TextEncoder().encode(`${eventId}:${channelId}`);
+  const digest = await crypto.subtle.digest("SHA-256", input);
+  return Array.from(new Uint8Array(digest).slice(0, 12), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405 });
@@ -116,29 +122,70 @@ Deno.serve(async (request) => {
     }
     let failed = false;
     for (const subscription of subscriptions) {
+      const { data: deliveredAttempt, error: deliveredAttemptError } = await admin
+        .from("integration_delivery_attempts")
+        .select("id")
+        .eq("tenant_id", event.tenant_id)
+        .eq("event_id", event.id)
+        .eq("provider", "discord")
+        .eq("delivery_target_id", subscription.channel_id)
+        .eq("outcome", "delivered")
+        .limit(1)
+        .maybeSingle();
+
+      if (deliveredAttemptError) {
+        failed = true;
+        await admin.from("integration_delivery_attempts").insert({
+          tenant_id: event.tenant_id,
+          event_id: event.id,
+          provider: "discord",
+          delivery_target_id: subscription.channel_id,
+          outcome: event.attempt_count >= 4 ? "failed" : "retry",
+          error_message: "Unable to inspect prior Discord delivery evidence",
+        });
+        continue;
+      }
+      if (deliveredAttempt) continue;
+
+      const nonce = await deliveryNonce(event.id, subscription.channel_id);
       const response = await fetch(`https://discord.com/api/v10/channels/${subscription.channel_id}/messages`, {
         method: "POST",
         headers: {
           Authorization: `Bot ${botToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(eventMessage(event, appUrl)),
+        body: JSON.stringify({
+          ...eventMessage(event, appUrl),
+          nonce,
+          enforce_nonce: true,
+        }),
       });
       const body = await response.json().catch(() => ({}));
       if (response.ok) {
-        await admin.from("integration_delivery_attempts").insert({
+        const { error: deliveredEvidenceError } = await admin.from("integration_delivery_attempts").insert({
           tenant_id: event.tenant_id,
           event_id: event.id,
           provider: "discord",
+          delivery_target_id: subscription.channel_id,
           outcome: "delivered",
           provider_reference: typeof body.id === "string" ? body.id : null,
         });
+        if (deliveredEvidenceError && deliveredEvidenceError.code !== "23505") {
+          failed = true;
+          console.error("Unable to record Discord delivery evidence", {
+            event_id: event.id,
+            tenant_id: event.tenant_id,
+            channel_id: subscription.channel_id,
+            code: deliveredEvidenceError.code,
+          });
+        }
       } else {
         failed = true;
         await admin.from("integration_delivery_attempts").insert({
           tenant_id: event.tenant_id,
           event_id: event.id,
           provider: "discord",
+          delivery_target_id: subscription.channel_id,
           outcome: event.attempt_count >= 4 ? "failed" : "retry",
           error_message: `Discord returned ${response.status}`,
         });

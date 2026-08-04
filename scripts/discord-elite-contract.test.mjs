@@ -88,7 +88,7 @@ test("Discord owner controls use server-enforced Functions and bounded prompt ty
   assert.match(manifest, /## Test-only Discord delivery functions/);
   assert.doesNotMatch(manifest, /Roadmap-preview Discord delivery/);
   const support = read("docs/operations/DISCORD_DELIVERY_SUPPORT.md");
-  assert.match(support, /Server connected — delivery not configured/);
+  assert.match(support, /Server connected .* delivery not configured/);
   assert.match(support, /Delivery active/);
 });
 

@@ -14,7 +14,7 @@
 ## Excluded
 
 - Native collector resilience, signing, packaging, and update delivery.
-- Interactive Discord delivery until its complete support path is verified.
+- Interactive Discord delivery until WO-2026-040 verifies its complete support path and Theo separately approves release. A source-only production candidate is not customer availability.
 - Unsupported analytics inferred from missing evidence.
 
 ## Preserved compatibility

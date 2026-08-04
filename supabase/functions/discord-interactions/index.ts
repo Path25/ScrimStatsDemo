@@ -1,8 +1,12 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { json, serviceClient } from "../_shared/collector.ts";
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
 const ephemeral = (content: string) => json({ type: 4, data: { content, flags: 64 } });
 const snowflake = (value: unknown) => typeof value === "string" && /^[0-9]{17,20}$/.test(value);
+const exactReplayHeader = "X-ScrimStats-Exact-Replay";
+const exactReplayMarker = "WO-040 EXACT REPLAY";
 
 async function verified(request: Request, rawBody: string) {
   const timestamp = request.headers.get("X-Signature-Timestamp");
@@ -15,6 +19,37 @@ async function verified(request: Request, rawBody: string) {
     return crypto.subtle.verify({ name: "Ed25519" }, key, hex(signature), new TextEncoder().encode(timestamp + rawBody));
   } catch {
     return false;
+  }
+}
+
+async function runExactReplay(request: Request, rawBody: string, interactionId: string) {
+  const timestamp = request.headers.get("X-Signature-Timestamp");
+  const signature = request.headers.get("X-Signature-Ed25519");
+  if (!timestamp || !signature) return;
+
+  try {
+    const response = await fetch(request.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Signature-Timestamp": timestamp,
+        "X-Signature-Ed25519": signature,
+        [exactReplayHeader]: "1",
+      },
+      body: rawBody,
+    });
+    const body = await response.json().catch(() => null) as Record<string, unknown> | null;
+    const responseData = body?.data && typeof body.data === "object" ? body.data as Record<string, unknown> : null;
+    console.info("Discord exact replay fixture completed", {
+      interaction_id: interactionId,
+      status: response.status,
+      replay_confirmed: response.ok && responseData?.content === "That /scrim request was already recorded.",
+    });
+  } catch (error) {
+    console.error("Discord exact replay fixture failed", {
+      interaction_id: interactionId,
+      error: error instanceof Error ? error.name : "unknown",
+    });
   }
 }
 
@@ -116,5 +151,15 @@ serve(async (request) => {
     p_notes: notes,
   }).maybeSingle();
   if (error || !data) return ephemeral(error?.code === "23P01" ? "A practice block already overlaps that time." : "This command is not authorised for this workspace.");
+  const replayGuildId = Deno.env.get("DISCORD_QA_REPLAY_GUILD_ID");
+  if (
+    data.result === "created"
+    && replayGuildId
+    && interaction.guild_id === replayGuildId
+    && notes === exactReplayMarker
+    && request.headers.get(exactReplayHeader) !== "1"
+  ) {
+    EdgeRuntime.waitUntil(runExactReplay(request, rawBody, interaction.id));
+  }
   return ephemeral(data.result === "replay" ? "That /scrim request was already recorded." : "Practice block added to ScrimStats.");
 });

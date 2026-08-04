@@ -27,6 +27,23 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.match(config, /\[functions\.discord-interactions\]\s+verify_jwt = false/);
 });
 
+test("Discord exact replay fixture reuses one signed envelope without persisting it", () => {
+  const source = read("supabase/functions/discord-interactions/index.ts");
+
+  assert.match(source, /DISCORD_QA_REPLAY_GUILD_ID/);
+  assert.match(source, /WO-040 EXACT REPLAY/);
+  assert.match(source, /X-ScrimStats-Exact-Replay/);
+  assert.match(source, /interaction\.guild_id === replayGuildId/);
+  assert.match(source, /notes === exactReplayMarker/);
+  assert.match(source, /request\.headers\.get\(exactReplayHeader\) !== "1"/);
+  assert.match(source, /EdgeRuntime\.waitUntil\(runExactReplay\(request, rawBody, interaction\.id\)\)/);
+  assert.match(source, /"X-Signature-Timestamp": timestamp/);
+  assert.match(source, /"X-Signature-Ed25519": signature/);
+  assert.match(source, /body: rawBody/);
+  assert.match(source, /replay_confirmed/);
+  assert.doesNotMatch(source, /insert\([\s\S]{0,160}(rawBody|signature|timestamp)/);
+});
+
 test("Discord /scrim provider payload uses explicit local start options", () => {
   const source = read("supabase/functions/discord-interactions/index.ts");
   const payload = {

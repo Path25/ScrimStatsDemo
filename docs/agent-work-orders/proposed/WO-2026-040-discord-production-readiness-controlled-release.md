@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer / QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -267,3 +267,19 @@ The source reuses the original request body, timestamp, and signature once throu
 Local evidence: zero-warning ESLint, TypeScript, 248/248 tests, production build, and bundle budget all passed. Hosted source retrieval confirms the fixture exists in active version 7. Cron jobs 4 and 5 remain inactive, and the read-only receipt/event/attempt check was completed without invoking the fixture.
 
 The fixture is intentionally inert until the server-only environment name `DISCORD_QA_REPLAY_GUILD_ID` is set to the approved private non-customer guild. Core resolved the allowlist value from the active fixture installation but could not configure it because the available Supabase Dashboard browser session is signed out and the connected Supabase tooling does not expose environment-secret mutation. No credentials were entered or inferred. Keep the work order **Blocked** until an authorised Dashboard session is available, then configure only that name, verify workers remain paused, and hand the exact marker scenario back to QA. Provider activation, worker activation, outbound delivery, customer data, smoke/pilot work, and release remain out of scope.
+
+## Core fixture configuration and QA handoff - 2026-08-04
+
+Theo authenticated to the correct Supabase project and authorised completion. Core configured only the server-side environment name `DISCORD_QA_REPLAY_GUILD_ID` through the Edge Function Secrets page; its value is intentionally not recorded. Dashboard confirmation showed one custom-secret row with that name and cleared input fields after save.
+
+The secret update produced active `discord-interactions` version 8 with the unchanged reviewed source SHA-256 `5ad1d92d79cfd65d87fcbe0cf8cdd130d9a0c6dde68e1778a9f82f931c5eed1a` and `verify_jwt = false` retained for Discord Ed25519 authentication. Cron jobs 4 and 5 remain inactive. No interaction was invoked and no outbound provider delivery was attempted during configuration.
+
+Pre-QA baseline for the isolated `clash` fixture is 5 scrims, 2 Discord interaction receipts, 7 Discord events, 1 pending Discord event, 6 delivery attempts, and 0 active workers. QA must now:
+
+1. Record the same six baseline counts and active Function version.
+2. From the permitted role in the approved private guild, submit exactly one non-overlapping future `/scrim` whose notes value is exactly `WO-040 EXACT REPLAY`.
+3. Verify the provider response reports one new practice block, Function evidence shows the original signed request and one internal exact replay, and the replay log records `replay_confirmed: true` without exposing the body, timestamp, or signature.
+4. Verify final counts are exactly 6 scrims, 3 receipts, 8 Discord events, 2 pending Discord events, 6 delivery attempts, and 0 active workers. Confirm the original and replay resolve to the same interaction, receipt, scrim, and outbox identifiers with no duplicate canonical or outbox row.
+5. Return the evidence to Core immediately so `DISCORD_QA_REPLAY_GUILD_ID` and the temporary replay source can be removed and the clean handler redeployed before any further matrix or activation work.
+
+The work order is **Ready for QA** for this fixture-only exact-replay scenario. The overall release verdict remains **HOLD**; provider delivery, worker activation, customer data, production smoke, pilot, and customer/release claims remain unapproved and unverified.

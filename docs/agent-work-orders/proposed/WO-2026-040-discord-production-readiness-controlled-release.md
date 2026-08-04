@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Blocked
 - **Assigned owner:** Core Features Developer / QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -189,3 +189,81 @@ Theo requested the normal **staging-first branch promotion** path and returned d
 ### Core completion update
 
 Core completed the approved staging-first promotion against shared project `tvcgjehreaayfazlhvps`. Candidate `e268298`, hosted migration `20260804134309`, dispatcher version 15, inactive cron jobs 4/5, fixed operator ACLs, and the HTTP 401 fail-closed check are recorded above. The order is handed back to QA and Release Auditor. Provider configuration, worker activation, outbound delivery, customer enablement, smoke/pilot work, and release remain unapproved.
+
+## Independent QA hosted re-audit - 2026-08-04
+
+### 1. Release verdict: HOLD
+
+The approved staging-first candidate is hosted-verified and safe to enter its controlled hosted QA matrix. It is not production-ready: no worker or provider path has been activated and all mutation/denial, recovery, smoke, and pilot requirements remain outstanding.
+
+### 2. What was verified
+
+- **Hosted migration:** `20260804134309_discord_production_delivery_controls` is present. `integration_delivery_attempts.delivery_target_id` is nullable text, and the delivered event/channel partial unique index is present with the reviewed predicate.
+- **Hosted function:** `discord-dispatch` is active at version 15, SHA-256 `79a753cd181637fd6bfc2644651c8f9218f737028309db6f67b6b2925d471f4f`. Retrieved deployed source matches the reviewed worker-secret check, per-target delivered lookup, deterministic nonce, and `enforce_nonce` path.
+- **Authorization:** Both `security` operator routines and the retired public test-activation routine are `SECURITY DEFINER` with fixed empty search paths and deny execute to `anon`, `authenticated`, and `service_role`.
+- **Safe inactive state:** Discord reminder job 4 and dispatch job 5 are both inactive. An independent unauthenticated `POST` to the deployed dispatcher returned HTTP 401 before outbox/provider processing.
+- **Advisor:** Current Security Advisor output contains no finding naming the new index, target column, or operator routines. Its Discord finding remains the documented intentional no-policy/service-only `discord_oauth_states` informational item.
+
+### 3. Blocking issues
+
+- **Blocking:** The signed replay and all required hosted denial cases are still unverified.
+- **Blocking:** Production provider configuration, worker activation, any outbound message, non-customer production smoke, named customer pilot, and release are not approved or verified.
+
+### 4. Important risks
+
+- **Important:** Paused workers mean no delivery/retry/recovery behaviour has been tested on this deployed revision.
+- **Important:** The current shared project deployment is staging-first evidence only. It does not establish a production branch, production provider configuration, or production customer readiness.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Controlled exact signed replay; invalid signature/payload; wrong-guild; missing-role; Free/Pro; disabled/revoked module; overlap; member/viewer; and cross-tenant matrix with before/after receipt, scrim, outbox, and attempt counts.
+- **Unverified:** Authenticated owner/admin configuration and unavailable/retrying/failed/disconnected browser states at desktop and real mobile viewport.
+
+### 6. Suggested fixes or next validation steps
+
+1. Keep workers paused and use only the approved non-customer staging fixtures for the remaining provider matrix.
+2. Return any failed matrix case to Core with redacted request ID, function version, and count deltas; do not repeat mutation-capable requests.
+3. Do not request production configuration or activation until the staging matrix and operational recovery evidence pass.
+
+## Independent QA hosted positive-path recheck - 2026-08-04
+
+### 1. Release verdict: HOLD
+
+The deployed staging candidate passes one newly created, isolated provider-to-canonical positive path with workers intentionally paused. This advances the controlled matrix but does not verify replay, denials, delivery, recovery, production smoke, pilot, or release.
+
+### 2. What was verified
+
+- The authenticated `clash` owner browser shows Discord delivery active for `ScrimStats Integration Test`, one saved permitted command role, four selected prompt types, and no browser warnings/errors on the resulting scrim list.
+- Before counts were 4 scrims, 1 Discord interaction receipt, 6 Discord events, and 6 delivery attempts. One permitted private-guild `/scrim` returned `Practice block added to ScrimStats.`
+- The labelled `WO-040 QA replay fixture` created exactly one new canonical scrim and one linked receipt. Counts became 5 scrims and 2 receipts. It created one linked `schedule_created` Discord outbox event in `pending`; delivery attempts remain 6 because both workers are deliberately inactive.
+- The authenticated scrim list renders the labelled scheduled block (`BO5`, Wed 5 Aug, 19:00) without captured console warnings/errors.
+
+### 3. Blocking issues
+
+- **Blocking:** A normal second `/scrim` is a new Discord interaction, not an exact provider replay. Do not use it to test idempotency.
+- **Blocking:** The remaining replay/denial matrix, worker delivery/retry/disable evidence, production configuration, smoke, pilot, and release remain unverified.
+
+### 4. Important risks
+
+- **Important:** The pending event is expected while workers are paused; it is not message-delivery evidence.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Core must provide an approved, fixture-only mechanism to submit the exact retained signed provider interaction for replay verification without exposing a key or manufacturing a different interaction.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** provide the bounded exact-replay test mechanism and handoff, with no worker activation and no customer data.
+2. **QA:** then compare the same receipt, scrim, and outbox identifiers/counts before and after that replay; only after that proceed with non-mutating denial cases.
+
+**QA routing update:** The work order is **Blocked** on Core's bounded exact-replay test mechanism. The current Discord UI cannot submit an exact replay; a second normal `/scrim` would be a new interaction and would invalidate the idempotency test.
+
+## Core exact-replay fixture update - 2026-08-04
+
+Theo approved a temporary, private-fixture-only exact signed replay path. Core committed candidate `0db1a9b` and deployed `discord-interactions` version 7 (SHA-256 `5ad1d92d79cfd65d87fcbe0cf8cdd130d9a0c6dde68e1778a9f82f931c5eed1a`) with `verify_jwt = false` retained for the endpoint's existing Discord Ed25519 authentication.
+
+The source reuses the original request body, timestamp, and signature once through the same hosted signature-verifying endpoint only when all existing installation, guild, permitted-role, Elite/module, and tenant checks pass, the RPC reports a newly created record, the notes value exactly matches `WO-040 EXACT REPLAY`, and the request is not already the internal replay. The envelope remains memory-only; raw request bodies, signatures, and timestamps are neither logged nor persisted. An internal header prevents recursion, and the provider response is returned before the background replay completes.
+
+Local evidence: zero-warning ESLint, TypeScript, 248/248 tests, production build, and bundle budget all passed. Hosted source retrieval confirms the fixture exists in active version 7. Cron jobs 4 and 5 remain inactive, and the read-only receipt/event/attempt check was completed without invoking the fixture.
+
+The fixture is intentionally inert until the server-only environment name `DISCORD_QA_REPLAY_GUILD_ID` is set to the approved private non-customer guild. Core resolved the allowlist value from the active fixture installation but could not configure it because the available Supabase Dashboard browser session is signed out and the connected Supabase tooling does not expose environment-secret mutation. No credentials were entered or inferred. Keep the work order **Blocked** until an authorised Dashboard session is available, then configure only that name, verify workers remain paused, and hand the exact marker scenario back to QA. Provider activation, worker activation, outbound delivery, customer data, smoke/pilot work, and release remain out of scope.

@@ -28,7 +28,7 @@
 
 These Functions are deployed for the isolated Discord test workflow only. They remain server-gated by Elite plus a `live` and enabled Discord module; no customer workspace is enabled until the separate QA and release gates pass.
 
-WO-2026-040 adds a source-only production release candidate with per-channel delivery evidence, provider nonce enforcement, and explicit operator-only worker enable/disable routines. The candidate is not hosted or active merely because this source exists. Applying its migration pauses the current Discord cron jobs by default; later activation requires separately approved migration application, exact Function deployment, provider configuration, non-customer smoke, QA evidence, and release approval.
+WO-2026-040 candidate `e268298` is deployed to the shared Supabase project for staging QA: migration history records `20260804134309_discord_production_delivery_controls` and `discord-dispatch` is version 15. Both Discord cron jobs remain inactive, so this is not provider or customer activation. Re-enabling workers still requires separately approved provider configuration, non-customer smoke, QA evidence, and release approval.
 
 ## Retired with HTTP 410 tombstones
 

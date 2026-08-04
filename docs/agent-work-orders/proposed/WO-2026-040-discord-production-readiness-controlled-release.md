@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer / QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -120,6 +120,7 @@ Discord is a credible Elite operational capability only if it is dependable when
 | Approval | Required? | Decision | Date | Notes |
 |---|---|---|---|---|
 | Implementation / production-readiness remediation | Yes | Approved | 2026-08-04 | Theo approved Phase 1 source-only remediation. This did not authorise hosted migration application, Function deployment, secrets/configuration, provider registration, outbound smoke messages, customer activation, or release. |
+| Shared-project staging migration and dispatcher deployment | Yes | Approved | 2026-08-04 | Theo approved the exact bounded sequence: scoped commit/push, apply `discord_production_delivery_controls` to `tvcgjehreaayfazlhvps`, deploy only `discord-dispatch`, keep workers paused, and perform no provider configuration, outbound message, customer activation, or release. |
 | Production provider/secret/worker configuration | Yes | Pending | 2026-08-04 | Must name the production Discord application, endpoint/command scope, operator, non-customer smoke boundary, and rollback owner; do not provide secrets in chat. |
 | Named customer pilot | Yes | Pending | 2026-08-04 | Requires completed matrix and smoke, named consented Elite tenant(s), monitoring window, support/rollback owner, and no public claim. |
 | Release / broader activation | Yes | Pending | 2026-08-04 | Requires QA production-ready verdict and the documented support/claim boundary. |
@@ -128,6 +129,7 @@ Discord is a credible Elite operational capability only if it is dependable when
 
 - 2026-08-04 - PM created this successor to WO-025 after production-readiness review. WO-025 remains conditionally closed as staging-only evidence; this order does not reinterpret that acceptance as production approval.
 - 2026-08-04 - Theo approved Phase 1 source-only production-readiness remediation with every hosted/provider/customer/release gate retained.
+- 2026-08-04 - Theo approved the shared-project staging migration and `discord-dispatch` deployment while requiring both workers to remain paused and retaining every provider, outbound-message, customer, and release gate.
 
 ## Implementation and review evidence
 
@@ -139,7 +141,12 @@ Discord is a credible Elite operational capability only if it is dependable when
 - 2026-08-04 - Manifest, release boundary, and Discord support runbook now agree that the candidate remains test-only. The support handoff records per-target evidence interpretation, bounded retry, global/workspace disable paths, retained cron history, redaction, and no-customer-claim gates.
 - 2026-08-04 - Local validation passed: 11 focused Discord contracts; full 247-test suite; ESLint with zero warnings; TypeScript; production Vite build; bundle budget; and scoped `git diff --check`. Supabase CLI migration lint/reset was unavailable because this checkout has no Supabase CLI package. No hosted database, Function, secret, provider, customer, or outbound-message mutation was performed.
 - 2026-08-04 - Core source phase is complete and handed to QA and Release Auditor for independent source review. Hosted QA remains blocked until Theo separately approves the exact migration application and Function deployment scope.
-- **Highest evidence achieved:** Hosted verified (isolated staging positive path only)
+- 2026-08-04 - Scoped candidate commit `e268298` was pushed to `origin/codex/Staging`; unrelated dirty work was not staged. The shared-project migration applied successfully as `20260804134309_discord_production_delivery_controls`.
+- 2026-08-04 - Hosted schema verification confirms nullable text `delivery_target_id`, the validated 17–20 digit target constraint, and the partial unique delivered event/channel index. Operator configure/disable routines and the retired test routine are `SECURITY DEFINER`, have fixed empty search paths, and deny execute to `anon`, `authenticated`, and `service_role`.
+- 2026-08-04 - `discord-dispatch` deployed as active version 15 with `verify_jwt=false`, SHA-256 `79a753cd181637fd6bfc2644651c8f9218f737028309db6f67b6b2925d471f4f`, and deployed source confirmation for the custom dispatch secret, per-target lookup, and enforced nonce. An unauthenticated POST returned HTTP 401 before any outbox/provider work.
+- 2026-08-04 - Cron jobs 4 (`scrimstats-discord-reminders`) and 5 (`scrimstats-discord-dispatch`) are both inactive. Their last successful starts were 2026-08-04 13:30:00 UTC and 13:43:00 UTC respectively, before migration history time 13:43:09. No worker was invoked or re-enabled.
+- 2026-08-04 - Post-application Advisors show no finding for the new delivered-target index or the revoked operator routines. Existing project-wide findings remain outside this order; `discord_oauth_states` continues to report the intentional service-only RLS/no-policy informational item.
+- **Highest evidence achieved:** Hosted verified (inactive staging-QA candidate plus earlier isolated positive path; full QA matrix outstanding)
 
 ## Independent QA source audit - 2026-08-04
 
@@ -178,3 +185,7 @@ The source candidate is suitable for the separately approved hosted-QA stage onl
 ## Core deployment handoff - 2026-08-04
 
 Theo requested the normal **staging-first branch promotion** path and returned deployment/migration handling to Core. Core must prepare the exact staging candidate, named Supabase target, migration sequence, Function revisions, expected cron pause, rollback evidence, and post-deployment QA handoff. This does **not** authorise a production database migration, production Discord configuration, worker activation, outbound delivery, customer enablement, or production release. Obtain a separate exact approval before any such action.
+
+### Core completion update
+
+Core completed the approved staging-first promotion against shared project `tvcgjehreaayfazlhvps`. Candidate `e268298`, hosted migration `20260804134309`, dispatcher version 15, inactive cron jobs 4/5, fixed operator ACLs, and the HTTP 401 fail-closed check are recorded above. The order is handed back to QA and Release Auditor. Provider configuration, worker activation, outbound delivery, customer enablement, smoke/pilot work, and release remain unapproved.

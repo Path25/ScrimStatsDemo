@@ -843,3 +843,30 @@ The source-only timing correction is a credible remedy for the observed 3.184-se
 
 1. Core must provide the exact commit and hosted deployment plan for the reviewed source-only correction. Theo must separately approve that deployment.
 2. After hosted verification, Theo must separately approve a fresh ≤15-minute arm and one new, non-overlapping private-fixture command. Do not repeat or reactivate the prior run.
+
+## Core scoped commit and hosted timing-correction deployment - 2026-08-05
+
+### 1. Outcome and approval boundary
+
+Theo approved the exact scoped commit/push and deployment of only the reviewed `discord-interactions` timing correction. Core created commit `dd354f8` (`Return Discord response before replay evidence`), pushed it to `origin/codex/Staging`, and deployed only `discord-interactions` to shared project `tvcgjehreaayfazlhvps`. No migration, secret/configuration, replay arm, provider interaction, worker, dispatch, customer, billing/entitlement, or release action occurred.
+
+### 2. Exact committed and deployed revisions
+
+- Scoped commit: `dd354f8`; seven WO-040 files only. The assignment-board index contained only the WO-040 row move, while unrelated dirty board/worktree changes remained unstaged.
+- Active Function: `discord-interactions` v13, SHA `0346de39082a99ecc2a8aa874e58608d1316d405120e71cb71b4b9028e456fdb`, status `ACTIVE`, intentional `verify_jwt=false` with Discord Ed25519 request verification retained.
+- Retrieved v13 entrypoint is an exact normalized match for the committed local entrypoint. Retrieved `_shared/collector.ts` is an exact normalized match for the unchanged pinned shared helper.
+- Hosted source contains the reviewed `EdgeRuntime.waitUntil(recordExactReplay(...))` path and contains neither self-fetch (`fetch(request.url`) nor the retired `DISCORD_QA_REPLAY_GUILD_ID` name.
+
+### 3. Post-deployment hosted verification
+
+- One unsigned direct POST returned HTTP `401`, confirming the deployed endpoint still fails closed before parsing or tenant lookup.
+- Active replay runs: **0**.
+- Active Discord workers: **0**.
+- Private-fixture counts remain unchanged from the completed v12 case: 7 scrims, 4 interaction receipts, 9 Discord events, and 6 Discord delivery attempts.
+- No signed provider request was submitted, so this deployment does not prove acknowledgement timing or background replay completion.
+
+### 4. QA handoff and remaining gate
+
+The exact timing candidate is now hosted and inert. WO-040 remains **In Progress** and release **HOLD**. Assign v13 to the QA and Release Auditor for independent deployed-source, authentication, and inert-state review.
+
+After QA accepts the hosted revision, Theo must separately approve a fresh tenant-bound arm for no more than fifteen minutes and exactly one new non-overlapping command in the approved private fixture. That later result must show both HTTP acknowledgement below Discord's three-second deadline (2.5-second target) and terminal durable `created`/`replay` evidence with exactly one receipt/scrim/outbox delta. Workers, delivery, customers, production configuration, later phases, and release remain outside this approval.

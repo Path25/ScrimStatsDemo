@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer / QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -475,3 +475,11 @@ The temporary exact-replay source path has been removed and the clean Discord in
 - Delete only the temporary server-side environment name `DISCORD_QA_REPLAY_GUILD_ID` in the Supabase Function secrets dashboard; never record its value.
 - After deletion, QA and Release Auditor must confirm the name is absent, version 10 remains active with clean source, workers remain inactive, and aggregate fixture counts remain unchanged before deciding the next WO-040 evidence step.
 - Exact signed replay remains unverified. Do not retry the provider command, activate workers, send outbound messages, use customer data, or make release claims.
+
+## Core final cleanup handoff - 2026-08-05
+
+- Theo confirmed deletion of the temporary server-side environment name `DISCORD_QA_REPLAY_GUILD_ID`. The secrets-list UI could not be independently inspected because the in-app browser controller failed before page access, so this is recorded as operator-confirmed rather than browser-verified.
+- Supabase reports active `discord-interactions` version 11 after the configuration change, retaining reviewed clean SHA-256 `0181e9d3c3e763fe3b7c5fff9560b647c7dcecb963a6c46648ff1ad3d03864e6`, intentional `verify_jwt = false`, the exact `2.57.4` dependency pin, supported-format validation, and redacted rejection diagnostics.
+- Retrieved hosted source still contains no replay environment lookup, marker, or background replay path.
+- Post-cleanup read-only evidence remains 6 scrims, 3 receipts, 8 Discord events, 2 pending Discord events, 6 delivery attempts, and 0 active workers.
+- Core cleanup is complete and WO-040 is **Ready for QA**. QA and Release Auditor should confirm the temporary secret name is absent in the dashboard, reconcile v11 and the unchanged counts, and decide the remaining release-matrix route. Exact replay remains unverified; release remains **HOLD**.

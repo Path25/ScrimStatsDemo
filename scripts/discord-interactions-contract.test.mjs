@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("Discord interaction source verifies signatures before command parsing or lookup", () => {
   const source = read("supabase/functions/discord-interactions/index.ts");
+  const shared = read("supabase/functions/_shared/collector.ts");
   const config = read("supabase/config.toml");
   assert.match(source, /X-Signature-Timestamp/);
   assert.match(source, /X-Signature-Ed25519/);
@@ -24,6 +25,7 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.match(source, /interaction\.type === 1/);
   assert.match(source, /command\.name !== "scrim"/);
   assert.match(source, /flags: 64/);
+  assert.match(shared, /@supabase\/supabase-js@2\.57\.4/);
   assert.match(config, /\[functions\.discord-interactions\]\s+verify_jwt = false/);
 });
 

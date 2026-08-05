@@ -1,9 +1,33 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { json, serviceClient } from "../_shared/collector.ts";
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
 const ephemeral = (content: string) => json({ type: 4, data: { content, flags: 64 } });
 const snowflake = (value: unknown) => typeof value === "string" && /^[0-9]{17,20}$/.test(value);
 const supportedFormats = new Set(["BO1", "BO2", "BO3", "BO4", "BO5", "1G", "2G", "3G", "4G", "5G"]);
+
+type EvaluationResult = "created" | "replay" | "rejected" | "error";
+type Evaluation = {
+  response: Response;
+  result: EvaluationResult;
+  interactionId?: string;
+  qaRunId?: string;
+};
+type ReplayEnvelope = {
+  url: string;
+  contentType: string;
+  timestamp: string;
+  signature: string;
+  rawBody: string;
+};
+
+const evaluation = (
+  response: Response,
+  result: EvaluationResult,
+  interactionId?: string,
+  qaRunId?: string,
+): Evaluation => ({ response, result, interactionId, qaRunId });
 
 function logRejection(reason: string, code = "none") {
   console.warn("Discord scrim request rejected", {
@@ -93,23 +117,23 @@ function parseLocalStart(startDate: string, startTime: string, timezone: string)
   }
 }
 
-serve(async (request) => {
-  if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
-  const rawBody = await request.text();
-  if (!(await verified(request, rawBody))) return json({ error: "Invalid request signature." }, 401);
+async function evaluateInteraction(request: Request, rawBody: string, allowQaClaim: boolean): Promise<Evaluation> {
+  if (request.method !== "POST") return evaluation(json({ error: "Method not allowed." }, 405), "rejected");
+  if (!(await verified(request, rawBody))) return evaluation(json({ error: "Invalid request signature." }, 401), "rejected");
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawBody);
   } catch {
-    return ephemeral("This interaction is not available.");
+    return evaluation(ephemeral("This interaction is not available."), "rejected");
   }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return ephemeral("This interaction is not available.");
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return evaluation(ephemeral("This interaction is not available."), "rejected");
   const interaction = parsed as Record<string, unknown>;
-  if (interaction.type === 1) return json({ type: 1 });
-  if (interaction.type !== 2 || !snowflake(interaction.id) || !snowflake(interaction.guild_id)) return ephemeral("This interaction is not available.");
+  if (interaction.type === 1) return evaluation(json({ type: 1 }), "rejected");
+  if (interaction.type !== 2 || !snowflake(interaction.id) || !snowflake(interaction.guild_id)) return evaluation(ephemeral("This interaction is not available."), "rejected");
+  const interactionId = interaction.id as string;
 
   const command = interaction.data && typeof interaction.data === "object" ? interaction.data as Record<string, unknown> : {};
-  if (command.name !== "scrim") return ephemeral("Only /scrim is available here.");
+  if (command.name !== "scrim") return evaluation(ephemeral("Only /scrim is available here."), "rejected", interactionId);
   const member = interaction.member && typeof interaction.member === "object" ? interaction.member as Record<string, unknown> : {};
   const roleIds = Array.isArray(member.roles) ? member.roles.filter(snowflake) : [];
   const options = optionMap(command);
@@ -125,11 +149,11 @@ serve(async (request) => {
   const parsedStartsAt = parseLocalStart(startDate, startTime, timezone);
   if (!opponent || !parsedStartsAt || !Number.isInteger(durationMinutes) || durationMinutes < 15 || durationMinutes > 720) {
     logRejection("invalid_schedule_input");
-    return ephemeral("Use the required opponent, date YYYY-MM-DD, time HH:MM (24-hour), valid timezone, and duration.");
+    return evaluation(ephemeral("Use the required opponent, date YYYY-MM-DD, time HH:MM (24-hour), valid timezone, and duration."), "rejected", interactionId);
   }
   if (!supportedFormats.has(format)) {
     logRejection("invalid_format");
-    return ephemeral("Use a supported format: BO1, BO2, BO3, BO4, BO5, 1G, 2G, 3G, 4G, or 5G.");
+    return evaluation(ephemeral("Use a supported format: BO1, BO2, BO3, BO4, BO5, 1G, 2G, 3G, 4G, or 5G."), "rejected", interactionId);
   }
 
   const db = serviceClient();
@@ -137,10 +161,25 @@ serve(async (request) => {
     .select("tenant_id").eq("guild_id", interaction.guild_id).eq("status", "active").maybeSingle();
   if (!installation) {
     logRejection("installation_unavailable");
-    return ephemeral("Discord scheduling is not available for this server.");
+    return evaluation(ephemeral("Discord scheduling is not available for this server."), "rejected", interactionId);
+  }
+
+  let qaRunId: string | undefined;
+  if (allowQaClaim) {
+    const { data: qaClaim, error: qaClaimError } = await db.rpc("claim_discord_qa_replay_run", {
+      p_tenant_id: installation.tenant_id,
+      p_interaction_id: interactionId,
+    }).maybeSingle();
+    if (qaClaimError) {
+      // The QA control is additive: an unavailable or unapplied control must
+      // never prevent the normal, server-authorized scheduling path.
+      logRejection("qa_replay_claim_unavailable", qaClaimError.code ?? "none");
+    } else if (qaClaim && typeof qaClaim.run_id === "string") {
+      qaRunId = qaClaim.run_id;
+    }
   }
   const { data, error } = await db.rpc("create_discord_scrim_block", {
-    p_interaction_id: interaction.id,
+    p_interaction_id: interactionId,
     p_tenant_id: installation.tenant_id,
     p_guild_id: interaction.guild_id,
     p_role_ids: roleIds,
@@ -153,7 +192,89 @@ serve(async (request) => {
   }).maybeSingle();
   if (error || !data) {
     logRejection(rpcRejectionReason(error), error?.code ?? "none");
-    return ephemeral(error?.code === "23P01" ? "A practice block already overlaps that time." : "This command is not authorised for this workspace.");
+    return evaluation(
+      ephemeral(error?.code === "23P01" ? "A practice block already overlaps that time." : "This command is not authorised for this workspace."),
+      error ? "rejected" : "error",
+      interactionId,
+      qaRunId,
+    );
   }
-  return ephemeral(data.result === "replay" ? "That /scrim request was already recorded." : "Practice block added to ScrimStats.");
+  const result: EvaluationResult = data.result === "replay" ? "replay" : "created";
+  return evaluation(
+    ephemeral(result === "replay" ? "That /scrim request was already recorded." : "Practice block added to ScrimStats."),
+    result,
+    interactionId,
+    qaRunId,
+  );
+}
+
+async function recordExactReplay(first: Evaluation, envelope: ReplayEnvelope, startedAt: number) {
+  let replayResult: EvaluationResult | "not_run" = "not_run";
+  if (first.result === "created") {
+    try {
+      const replayHeaders = new Headers();
+      replayHeaders.set("content-type", envelope.contentType);
+      replayHeaders.set("X-Signature-Timestamp", envelope.timestamp);
+      replayHeaders.set("X-Signature-Ed25519", envelope.signature);
+      const replayRequest = new Request(envelope.url, { method: "POST", headers: replayHeaders, body: envelope.rawBody });
+      const replay = await evaluateInteraction(replayRequest, envelope.rawBody, false);
+      replayResult = replay.result;
+    } catch {
+      replayResult = "error";
+    }
+  }
+
+  const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
+  const functionVersion = Deno.env.get("DENO_DEPLOYMENT_ID") ?? "source-local";
+  let evidenceWrite = "failed";
+  try {
+    const db = serviceClient();
+    const { error } = await db.rpc("complete_discord_qa_replay_run", {
+      p_run_id: first.qaRunId,
+      p_interaction_id: first.interactionId,
+      p_first_result: first.result,
+      p_replay_result: replayResult,
+      p_elapsed_ms: elapsedMs,
+      p_function_version: functionVersion,
+    });
+    evidenceWrite = error ? "failed" : "recorded";
+  } catch {
+    evidenceWrite = "failed";
+  }
+
+  console.info("Discord exact-replay QA result", {
+    run_id: first.qaRunId,
+    first_result: first.result,
+    replay_result: replayResult,
+    elapsed_ms: elapsedMs,
+    function_version: functionVersion,
+    evidence_write: evidenceWrite,
+    execution_id: Deno.env.get("SB_EXECUTION_ID") ?? "unknown",
+  });
+}
+
+serve(async (request) => {
+  const startedAt = performance.now();
+  const rawBody = await request.text();
+  const first = await evaluateInteraction(request, rawBody, true);
+
+  if (first.qaRunId && first.interactionId) {
+    const acknowledgementMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const envelope: ReplayEnvelope = {
+      url: request.url,
+      contentType: request.headers.get("content-type") ?? "application/json",
+      timestamp: request.headers.get("X-Signature-Timestamp") ?? "",
+      signature: request.headers.get("X-Signature-Ed25519") ?? "",
+      rawBody,
+    };
+    EdgeRuntime.waitUntil(recordExactReplay(first, envelope, startedAt));
+    console.info("Discord exact-replay QA scheduled", {
+      run_id: first.qaRunId,
+      first_result: first.result,
+      acknowledgement_ms: acknowledgementMs,
+      execution_id: Deno.env.get("SB_EXECUTION_ID") ?? "unknown",
+    });
+  }
+
+  return first.response;
 });

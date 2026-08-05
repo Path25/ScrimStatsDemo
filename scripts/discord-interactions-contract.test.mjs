@@ -12,9 +12,9 @@ test("Discord interaction source verifies signatures before command parsing or l
   assert.match(source, /X-Signature-Ed25519/);
   assert.match(source, /DISCORD_PUBLIC_KEY/);
   assert.match(source, /name: "Ed25519"/);
-  assert.match(source, /if \(!\(await verified\(request, rawBody\)\)\) return json/);
+  assert.match(source, /if \(!\(await verified\(request, rawBody\)\)\) return evaluation\(json/);
   assert.ok(source.indexOf("await verified(request, rawBody)") < source.indexOf("JSON.parse(rawBody)"));
-  assert.match(source, /try \{\s+parsed = JSON\.parse\(rawBody\);\s+\} catch \{\s+return ephemeral\("This interaction is not available\."\);\s+\}/);
+  assert.match(source, /try \{\s+parsed = JSON\.parse\(rawBody\);\s+\} catch \{\s+return evaluation\(ephemeral\("This interaction is not available\."\), "rejected"\);\s+\}/);
   assert.match(source, /typeof parsed !== "object" \|\| Array\.isArray\(parsed\)/);
   assert.match(source, /options\.get\("start_date"\)/);
   assert.match(source, /options\.get\("start_time"\)/);
@@ -90,6 +90,48 @@ test("Discord interaction creation is service-only, tenant-safe, idempotent, and
   assert.match(migration, /grant execute on function public\.create_discord_scrim_block[\s\S]*to service_role/);
   assert.match(interaction, /rpc\("create_discord_scrim_block"/);
   assert.doesNotMatch(interaction, /from\("scrims"\)\.insert/);
+});
+
+test("WO-040 exact replay is one-use, acknowledged before bounded background evidence, signature-verified twice, and redacted", () => {
+  const migration = read("supabase/migrations/20260805134134_discord_qa_replay_controls.sql");
+  const interaction = read("supabase/functions/discord-interactions/index.ts");
+
+  assert.match(migration, /create table security\.discord_qa_replay_runs/);
+  assert.match(migration, /expires_at <= armed_at \+ interval '15 minutes'/);
+  assert.match(migration, /where state in \('armed', 'claimed'\)/);
+  assert.match(migration, /for update skip locked/);
+  assert.match(migration, /set search_path = pg_catalog, security/);
+  assert.match(migration, /coalesce\(auth\.jwt\(\) ->> 'role', ''\) <> 'service_role'/);
+  assert.match(migration, /revoke all on table security\.discord_qa_replay_runs from public, anon, authenticated, service_role/);
+  assert.match(migration, /revoke all on function security\.arm_discord_qa_replay[\s\S]*from public, anon, authenticated, service_role/);
+  assert.match(migration, /grant execute on function public\.claim_discord_qa_replay_run[\s\S]*to service_role/);
+  assert.match(migration, /and state = 'claimed'/);
+  assert.match(migration, /p_first_result = 'created' and p_replay_result = 'replay'/);
+
+  const signatureCheck = interaction.indexOf("await verified(request, rawBody)");
+  const installationLookup = interaction.indexOf('.from("discord_installations")');
+  const qaClaim = interaction.indexOf('rpc("claim_discord_qa_replay_run"');
+  assert.ok(signatureCheck >= 0 && signatureCheck < installationLookup);
+  assert.ok(installationLookup < qaClaim);
+  assert.match(interaction, /evaluateInteraction\(request, rawBody, true\)/);
+  assert.match(interaction, /new Request\(envelope\.url, \{ method: "POST", headers: replayHeaders, body: envelope\.rawBody \}\)/);
+  assert.match(interaction, /evaluateInteraction\(replayRequest, envelope\.rawBody, false\)/);
+  assert.match(interaction, /timestamp: request\.headers\.get\("X-Signature-Timestamp"\) \?\? ""/);
+  assert.match(interaction, /signature: request\.headers\.get\("X-Signature-Ed25519"\) \?\? ""/);
+  assert.match(interaction, /rpc\("complete_discord_qa_replay_run"/);
+  assert.match(interaction, /qa_replay_claim_unavailable/);
+  assert.match(interaction, /EdgeRuntime\.waitUntil\(recordExactReplay\(first, envelope, startedAt\)\)/);
+  assert.doesNotMatch(interaction, /await recordExactReplay/);
+  assert.ok(interaction.indexOf("EdgeRuntime.waitUntil(recordExactReplay") < interaction.lastIndexOf("return first.response"));
+  assert.match(interaction, /acknowledgement_ms: acknowledgementMs/);
+  assert.doesNotMatch(interaction, /fetch\(request\.url/);
+
+  const evidenceLogs = [...interaction.matchAll(/console\.info\("Discord exact-replay QA (?:result|scheduled)", \{([\s\S]*?)\n\s*\}\);/g)]
+    .map((match) => match[1]);
+  assert.equal(evidenceLogs.length, 2);
+  for (const evidenceLog of evidenceLogs) {
+    assert.doesNotMatch(evidenceLog, /rawBody|signature|timestamp|guild|roleIds|tenant_id/);
+  }
 });
 
 test("Only a workspace manager can discover and persist permitted Discord roles", () => {

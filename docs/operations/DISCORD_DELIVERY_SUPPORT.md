@@ -36,16 +36,8 @@ Use `security.disable_discord_production_worker_schedule()` for the immediate gl
 4. For `retry`, check the bounded outbox attempt count and `available_at`; do not manually duplicate or delete the event. At five attempts the event becomes `failed` and retained evidence must be reviewed before any recovery.
 5. For worker incidents, disable the production schedule, retain redacted Function request IDs and cron run history, and follow `INCIDENT_RECOVERY.md`. Re-enable only after the cause is corrected and the same approval boundary is restored.
 
+For a signed `/scrim` rejection, correlate the Function invocation with the redacted `Discord scrim request rejected` entry. Record only its `reason`, PostgreSQL/PostgREST `code`, Function version, and execution ID. Never copy the interaction body, signature, timestamp, tenant or guild identifier, role identifiers, or secret values into support evidence. Provider responses remain generic for authorization failures; internal reason codes exist only to distinguish input, installation, role/module, constraint, overlap, and unavailable-RPC paths safely.
+
 ## Release and customer-claim boundary
 
 Until WO-2026-040 completes independent hosted QA, a non-customer production smoke, a named consented pilot, and Theo's separate release approval, Discord remains test-only and excluded from the customer release boundary. Do not describe it as generally available or production-ready.
-
-## Temporary exact-replay fixture
-
-WO-2026-040 may temporarily configure the server-only environment name `DISCORD_QA_REPLAY_GUILD_ID` for the approved private QA guild. When a permitted `/scrim` in that guild uses the exact notes marker `WO-040 EXACT REPLAY`, the interaction handler returns the normal provider response and submits the same signed body, timestamp, and signature once more through its own signature-verifying HTTP endpoint in a background task.
-
-The replay envelope remains memory-only: never log or persist its body, signature, or timestamp. The internal replay header prevents recursion, while the private-guild allowlist, exact marker, installation, Elite/module, and permitted-role checks bound activation. Keep delivery workers paused. QA must verify two Function invocations for one interaction identity, one receipt, one scrim, one pending outbox event, and no additional delivery attempt.
-
-Remove `DISCORD_QA_REPLAY_GUILD_ID` immediately after evidence capture and redeploy the clean handler without the temporary replay path. A successful fixture is replay evidence only; it is not worker, outbound-delivery, customer, or release approval.
-
-For a signed `/scrim` rejection, correlate the Function invocation with the redacted `Discord scrim request rejected` entry. Record only its `reason`, PostgreSQL/PostgREST `code`, Function version, and execution ID. Never copy the interaction body, signature, timestamp, tenant or guild identifier, role identifiers, or secret values into support evidence. Provider responses remain generic for authorization failures; internal reason codes exist only to distinguish input, installation, role/module, constraint, overlap, and unavailable-RPC paths safely.

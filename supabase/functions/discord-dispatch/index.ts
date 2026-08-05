@@ -17,6 +17,26 @@ type IntegrationEvent = {
 
 const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
 const DISCORD_SUPPRESS_EMBEDS = 1 << 2;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseDispatchRequest(rawBody: string) {
+  if (!rawBody.trim()) return { qaRunId: null as string | null };
+
+  let body: unknown;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return null;
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+
+  const record = body as Record<string, unknown>;
+  if (Object.keys(record).some((key) => key !== "qa_run_id")) return null;
+  if (!("qa_run_id" in record)) return { qaRunId: null as string | null };
+  if (typeof record.qa_run_id !== "string" || !UUID_PATTERN.test(record.qa_run_id)) return null;
+
+  return { qaRunId: record.qa_run_id };
+}
 
 function discordTime(payload: Record<string, unknown>) {
   const scheduledTime = typeof payload.scheduled_time === "string"
@@ -64,6 +84,12 @@ Deno.serve(async (request) => {
     return Response.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
 
+  const dispatchRequest = parseDispatchRequest(await request.text());
+  if (!dispatchRequest) {
+    return Response.json({ error: "Invalid dispatch request" }, { status: 400, headers: corsHeaders });
+  }
+  const qaRunId = dispatchRequest.qaRunId;
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? (() => {
     try {
@@ -89,11 +115,16 @@ Deno.serve(async (request) => {
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: events, error } = await admin.rpc("claim_integration_events_for_provider", {
-    p_provider: "discord",
-    p_limit: 25,
-  });
+  const { data: events, error } = qaRunId
+    ? await admin.rpc("claim_discord_qa_dispatch_event", { p_run_id: qaRunId })
+    : await admin.rpc("claim_integration_events_for_provider", {
+        p_provider: "discord",
+        p_limit: 25,
+      });
   if (error) return Response.json({ error: "Unable to read the delivery outbox" }, { status: 500, headers: corsHeaders });
+  if (qaRunId && events?.length !== 1) {
+    return Response.json({ error: "QA dispatch run is unavailable" }, { status: 409, headers: corsHeaders });
+  }
 
   let delivered = 0;
   for (const event of (events || []) as IntegrationEvent[]) {
@@ -173,9 +204,7 @@ Deno.serve(async (request) => {
         if (deliveredEvidenceError && deliveredEvidenceError.code !== "23505") {
           failed = true;
           console.error("Unable to record Discord delivery evidence", {
-            event_id: event.id,
-            tenant_id: event.tenant_id,
-            channel_id: subscription.channel_id,
+            delivery_correlation: nonce,
             code: deliveredEvidenceError.code,
           });
         }
@@ -212,5 +241,39 @@ Deno.serve(async (request) => {
     }
   }
 
-  return Response.json({ processed: events?.length || 0, delivered }, { headers: corsHeaders });
+  let qaEvidence: "not_applicable" | "recorded" | "failed" = "not_applicable";
+  if (qaRunId) {
+    qaEvidence = "failed";
+    const qaEvent = (events as IntegrationEvent[])[0];
+    const { data: statusRow, error: statusError } = await admin
+      .from("integration_events")
+      .select("status")
+      .eq("id", qaEvent.id)
+      .eq("tenant_id", qaEvent.tenant_id)
+      .maybeSingle();
+    const finalStatus = typeof statusRow?.status === "string" ? statusRow.status : null;
+    if (!statusError && finalStatus && ["pending", "failed", "delivered", "cancelled"].includes(finalStatus)) {
+      const { data: completed, error: completionError } = await admin.rpc("complete_discord_qa_dispatch_run", {
+        p_run_id: qaRunId,
+        p_event_id: qaEvent.id,
+        p_result_status: finalStatus,
+        p_function_version: Deno.env.get("DENO_DEPLOYMENT_ID") ?? "source-local",
+      });
+      if (!completionError && completed === true) qaEvidence = "recorded";
+    }
+
+    console.info("Discord exact-event QA result", {
+      run_id: qaRunId,
+      event_id: qaEvent.id,
+      result_status: finalStatus ?? "unavailable",
+      evidence_write: qaEvidence,
+      function_version: Deno.env.get("DENO_DEPLOYMENT_ID") ?? "source-local",
+      execution_id: Deno.env.get("SB_EXECUTION_ID") ?? "unknown",
+    });
+  }
+
+  return Response.json(
+    { processed: events?.length || 0, delivered, ...(qaRunId ? { qa_evidence: qaEvidence } : {}) },
+    { headers: corsHeaders },
+  );
 });

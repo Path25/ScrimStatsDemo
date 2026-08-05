@@ -30,6 +30,8 @@ These Functions are deployed for the isolated Discord test workflow only. They r
 
 WO-2026-040 delivery controls from candidate `e268298` remain hosted in the shared Supabase project: migration history records `20260804134309_discord_production_delivery_controls`, and the Discord workers remain inactive. The exact-replay migration is hosted as `20260805134134_discord_qa_replay_controls`. Timing-correction commit `dd354f8` is deployed as `discord-interactions` v13, SHA `0346de39082a99ecc2a8aa874e58608d1316d405120e71cb71b4b9028e456fdb`; retrieved entrypoint and shared helper match the committed candidate. One earlier v12 replay run is terminal and zero runs are active. This is not a new provider invocation or customer activation. Arming a private replay run, submitting a Discord interaction, re-enabling workers, smoke/pilot work, and release each retain their recorded separate approval gates.
 
+The WO-040 Phase C exact-event dispatch isolation migration and `discord-dispatch` source change remain local source candidates only. They are not present in hosted migration history or the active dispatcher revision. The deployed dispatcher therefore remains global and must not be invoked as a QA retry/recovery harness; hosted migration, Function deployment, exact-event arm/invocation, outbound delivery, and worker activation each retain separate approval gates.
+
 ## Retired with HTTP 410 tombstones
 
 - Legacy billing: `check-subscription`, `cancel-subscription`, `sync-subscription`.

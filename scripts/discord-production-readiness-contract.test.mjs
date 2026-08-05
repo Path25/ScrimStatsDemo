@@ -41,8 +41,8 @@ test("Discord production candidate remains outside the customer release boundary
   const support = read("docs/operations/DISCORD_DELIVERY_SUPPORT.md");
 
   assert.match(manifest, /## Test-only Discord delivery functions/);
-  assert.match(manifest, /candidate `e268298` is deployed.*staging QA/);
-  assert.match(manifest, /Both Discord cron jobs remain inactive/);
+  assert.match(manifest, /candidate `e268298` remain hosted.*Discord workers remain inactive/);
+  assert.match(manifest, /re-enabling workers.*retain their recorded separate approval gates/);
   assert.match(boundary, /Interactive Discord delivery until WO-2026-040/);
   assert.match(boundary, /source-only production candidate is not customer availability/);
   assert.match(support, /security\.configure_discord_production_worker_schedule\(\)/);

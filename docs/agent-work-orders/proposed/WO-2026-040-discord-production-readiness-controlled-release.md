@@ -95,7 +95,7 @@ Discord is a credible Elite operational capability only if it is dependable when
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
 | Existing staging end-to-end path | One private Discord interaction, receipt, canonical scrim, one delivered outbox event | Hosted staging | Pass (bounded) |
-| Replay and denial matrix | Controlled signed replay and negative hosted evidence | Hosted staging | Outstanding |
+| Replay and denial matrix | v13 controlled exact-replay case plus negative hosted evidence | Hosted staging | Partial pass: exact replay passed; denial matrix outstanding |
 | Production-safe worker and release path | Per-channel retry evidence, provider nonce enforcement, inactive-by-default production scheduler, manifest and support controls | Source | Pass (source candidate only; hosted application/deployment outstanding) |
 | Production smoke and controlled pilot | Redacted non-customer smoke, then named pilot evidence | Hosted production | Outstanding |
 | Honest support and claim boundary | Updated operational/release documentation and approved claim review | Documentation / production | Pass at source; production verification outstanding |
@@ -103,14 +103,14 @@ Discord is a credible Elite operational capability only if it is dependable when
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** WO-025 is strong staging-positive-path evidence, not production evidence. The current manifest and scheduler are explicitly test-only, and the required replay, denial, operational-recovery, production configuration, smoke, and controlled-pilot gates have not been passed.
+- **Rationale:** The bounded v13 provider case now passes acknowledgement timing and exact-replay idempotency, but the denial, operational-recovery, worker-delivery, production configuration, smoke, and controlled-pilot gates have not been passed.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Production release-candidate and scheduler design review | QA and Release Auditor | Independently review the source candidate, then record deployed revision IDs and hosted function auth/RLS/grant evidence after separate deployment approval | Source complete; hosted review blocked |
-| Staging replay and denial matrix | QA and Release Auditor | Redacted request IDs and before/after receipt, scrim, outbox, and attempt counts | Open |
+| Staging replay and denial matrix | QA and Release Auditor | Independently audit the recorded v13 replay evidence, then provide redacted before/after counts for the remaining denial cases | Replay evidence ready for QA; denials open |
 | Production provider/configuration activation | Theo / authorised operator | Written scope approval and redacted configured-state confirmation; no secrets | Blocked on Theo |
 | Non-customer smoke then named controlled pilot | QA and Release Auditor / Theo | Hosted evidence and rollback/monitoring handoff | Blocked on prior gates |
 | Customer availability claim | Theo / Lead Marketer and Growth | Theo release approval plus verified support path and Message Ledger review | Blocked on release |
@@ -870,3 +870,258 @@ Theo approved the exact scoped commit/push and deployment of only the reviewed `
 The exact timing candidate is now hosted and inert. WO-040 remains **In Progress** and release **HOLD**. Assign v13 to the QA and Release Auditor for independent deployed-source, authentication, and inert-state review.
 
 After QA accepts the hosted revision, Theo must separately approve a fresh tenant-bound arm for no more than fifteen minutes and exactly one new non-overlapping command in the approved private fixture. That later result must show both HTTP acknowledgement below Discord's three-second deadline (2.5-second target) and terminal durable `created`/`replay` evidence with exactly one receipt/scrim/outbox delta. Workers, delivery, customers, production configuration, later phases, and release remain outside this approval.
+
+## Independent QA hosted v13 timing-correction review - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+The reviewed timing correction is deployed as the active hosted candidate and is safely inert. It has not yet been verified against a signed Discord provider interaction, so WO-040 remains **In Progress** and is not production-ready.
+
+### 2. What was verified
+
+- Active `discord-interactions` is v13, `ACTIVE`, `verify_jwt=false`, with SHA-256 `0346de39082a99ecc2a8aa874e58608d1316d405120e71cb71b4b9028e456fdb`.
+- Retrieved hosted source contains the reviewed `EdgeRuntime.waitUntil(recordExactReplay(...))` ordering, retains Ed25519 verification before parsing and tenant lookup, and has no retired replay-guild secret or self-fetch path.
+- An independent unsigned malformed POST returned HTTP `401` and `Invalid request signature.`, confirming the hosted endpoint fails closed before a scheduling mutation.
+- The replay control has one historical terminal run and **0** active (`armed`/`claimed`) runs. Discord workers 4 and 5 are inactive.
+- The non-customer fixture baseline is unchanged: 7 scrims, 4 interaction receipts, 9 Discord events, and 6 delivery attempts. No provider message or delivery was sent during this review.
+
+### 3. Blocking issues
+
+- **Blocking:** No signed provider request has exercised v13. The provider acknowledgement time and durable background `created`/`replay` completion remain unverified.
+- **Blocking:** A fresh arm and command are a new state-changing provider test. Theo's previous one-run approval was consumed by v12 and does not authorise this test.
+
+### 4. Important risks
+
+- **Important:** `waitUntil` changes execution order but source/deployment inspection cannot prove Discord receives the acknowledgement inside the 2.5-second target and three-second deadline, or prove hosted background completion.
+- **Important:** The one-use arm is tenant-bound. Keep the isolated fixture quiet and the approved arm window no longer than fifteen minutes so another eligible fixture interaction cannot consume it.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One newly approved non-overlapping private-fixture `/scrim` command, with pre/post aggregate counts, acknowledgement below 2.5 seconds, terminal durable `created` then `replay` evidence, exactly one receipt/scrim/outbox delta, no delivery attempt, and immediate expiry/cleanup.
+- **Unverified:** The remaining denial, retry/recovery, worker-delivery, role/guild/plan/tenant, production smoke, pilot, and release matrix.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must approve the exact fixture, no-more-than-fifteen-minute arm, one new non-overlapping provider command, pre/post aggregate capture, and cleanup boundary. Core may then arm the private replay run and hand the single command to QA.
+2. Keep workers inactive and do not send delivery, touch customers, change production configuration, or advance later release phases. Record the one-run result before deciding whether another source correction is required.
+
+## v13 controlled provider-retest approval - 2026-08-05
+
+Theo approved the following bounded QA action only: arm the existing non-customer private fixture for no more than fifteen minutes; record redacted aggregate pre-state; submit exactly one new, non-overlapping signed `/scrim` command; capture acknowledgement and terminal durable replay evidence; and immediately expire or disable the run. Core Features Developer must arm the run and provide the redacted handoff before QA submits the single command. No worker activation, delivery, customer action, configuration/secret change, migration, production release, or later phase is approved.
+
+## Core v13 controlled provider-retest outcome - 2026-08-05
+
+### 1. Outcome and user-visible result
+
+The single approved signed `/scrim` command was submitted once in the existing non-customer private fixture and was not retried. Discord displayed **"Practice block added to ScrimStats."** Supabase Edge Function logs record HTTP `200` from active `discord-interactions` v13 in **2,075 ms**, inside both Discord's three-second acknowledgement deadline and the work order's 2.5-second target.
+
+### 2. Durable replay and canonical mutation evidence
+
+- Opaque replay-run reference: `4fb91d22-40d2-4df4-a8c3-c5da3b328c9b`.
+- The private run reached immutable `completed` state with `first_result=created`, `replay_result=replay`, interaction recorded, Function version 13, and total internal evidence time **2,573 ms**. The provider response was returned before the background exact-replay evidence completed, as designed.
+- Counts moved exactly once from 7 to 8 scrims, 4 to 5 interaction receipts, 9 to 10 Discord integration events, and 3 to 4 pending Discord events. Delivery attempts remained 6.
+- Exactly one receipt matched the approved command's opponent, date/time, `Europe/London` timezone, 120-minute duration, `BO5` format, and notes. That receipt resolved to exactly one canonical scrim and exactly one Discord outbox event; the exact second evaluation created no duplicate receipt, scrim, or event.
+- No signed body, signature, timestamp header, interaction token, guild ID, role ID, provider credential, or secret value was retained in this evidence.
+
+### 3. Cleanup and safety state
+
+- The operator disable routine returned `false` because the run was already immutable and terminal, which is the expected safe result.
+- A post-cleanup hosted query confirms **0 active replay runs** and **0 active Discord workers**. The unchanged delivery-attempt count confirms the newly queued private-fixture event was not dispatched.
+- No worker, outbound delivery, customer tenant, configuration/secret, migration, billing/entitlement, production-release, or later-phase state was changed.
+
+### 4. Validation verdict and QA handoff
+
+The v13 correction passes this bounded hosted provider-acknowledgement, exact-replay idempotency, canonical-data integrity, and cleanup case. This result resolves the specific v12 timing failure; it does not complete WO-040's production-readiness acceptance criteria.
+
+WO-040 is **Ready for QA** and assigned to the **QA and Release Auditor** for independent review of the v13 log row, terminal replay evidence, exact count deltas, canonical identity checks, and inactive cleanup state. The release verdict remains **HOLD**. The remaining denial, retry/recovery, worker-delivery, role/guild/plan/module/tenant, production smoke, controlled pilot, customer availability, and release gates remain unverified and require their recorded separate approvals. Do not repeat this command.
+
+## Independent QA v13 controlled provider-retest audit - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+The bounded v13 acknowledgement and exact-replay case passes. WO-040 is not production-ready: its remaining authorization, recovery, delivery, pilot, and release gates have not been exercised.
+
+### 2. What was verified
+
+- Hosted Edge Function logs independently record one active `discord-interactions` v13 HTTP `200` execution in **2,075 ms**, below the 2.5-second target and Discord's three-second deadline.
+- The approved replay run is terminal `completed` with an interaction recorded, `first_result=created`, `replay_result=replay`, `elapsed_ms=2,573`, and the v13 deployment identifier.
+- Compared with the independently recorded pre-run baseline, the isolated non-customer tenant now has exactly one additional scrim (8), receipt (5), and Discord event (10); delivery attempts remain 6. The replay result and receipt count rule out a duplicate canonical receipt/scrim/event for this case.
+- Replay controls are inert: **0** active (`armed`/`claimed`) runs. Discord workers 4 and 5 remain inactive; no delivery was dispatched.
+
+### 3. Blocking issues
+
+- **Blocking:** The acceptance criteria for denial paths, retry/recovery, worker delivery, role/guild/Elite/module/tenant enforcement, production smoke, pilot, and customer availability are still unverified. This one private case cannot approve a controlled production release.
+
+### 4. Important risks
+
+- **Important:** The 2,075 ms log verifies hosted Function completion inside the provider budget, but QA did not independently observe the Discord client acknowledgement; the recorded visible success is developer handoff evidence.
+- **Important:** Delivery is intentionally not tested because workers remain inactive. Do not infer outbox creation from this fixture as proof of provider delivery or customer-facing reliability.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The approved negative authorization and schedule cases, retry/recovery handling, worker/outbound delivery with safe non-customer controls, role/guild/Elite/module/tenant matrices, production smoke, controlled pilot, and release criteria.
+
+### 6. Suggested fixes or next validation steps
+
+1. Return WO-040 to **In Progress** under Core Features Developer / QA and Release Auditor. Plan the next smallest non-customer validation gate with its own acceptance criteria and Theo approval; do not repeat this command.
+2. Keep the release **HOLD** and workers inactive. Any delivery test, worker activation, customer exposure, production configuration, or production release needs its separately scoped approval and a new QA plan.
+
+## Independent QA production-path reconciliation - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+WO-040 has resolved the bounded inbound `/scrim` acknowledgement and replay defect in staging. Discord remains test-only and excluded from the customer release boundary because outbound dispatch, recovery, production configuration, smoke, and pilot evidence are incomplete.
+
+### 2. What was verified
+
+- The isolated v13 provider case is hosted-verified: valid signed input returned HTTP 200 in 2,075 ms and produced one canonical result plus terminal `created`/`replay` evidence without delivery.
+- The inbound path remains fail-closed for an invalid signature, server-gated by installation and Elite/live-enabled Discord module checks, and its one-use replay control is inactive after use.
+- The production-dispatch safety design, manifest, release boundary, and support runbook agree that Discord workers are inactive and Discord is not customer available.
+
+### 3. Blocking issues
+
+- **Blocking:** The current dispatcher can claim globally eligible Discord events. It must not be used as a QA harness while retained private-fixture events exist; Core must first provide a reviewed, service-only exact-event isolation path for a named non-customer event.
+- **Blocking:** There is no hosted evidence for dispatch retry/backoff, terminal failure, provider receipt, global disable, workspace disable, or recovery. Enabling workers or customer Discord before this would expose unverified outbound communication.
+- **Blocking:** Production Discord application/configuration, non-customer production smoke, consented Elite pilot, support monitoring, and Theo's final release approval are absent.
+
+### 4. Important risks
+
+- **Important:** A passing inbound command/outbox row is not proof that Discord can deliver reliably, deduplicate per target, recover safely, or be disabled during an incident.
+- **Important:** The release references still correctly label Discord test-only. Changing customer copy, a module to available, or worker state before the evidence below would create an unsupported Elite claim.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Hosted negative matrix: wrong guild, missing role, Free/Pro, disabled/revoked module, overlap, member/viewer configuration access, and cross-tenant cases—all with zero canonical/outbox/delivery deltas.
+- **Unverified:** A separately approved target-isolated dispatch test using a deliberately non-postable private channel: bounded retry/backoff to terminal failure, delivered-target deduplication/nonce behaviour, audit-write recovery, global disable, and workspace disable with evidence retained.
+- **Unverified:** Approved production configuration review (names/presence only, no secrets), non-customer production smoke, named consented Elite pilot, monitoring/support ownership, rollback rehearsal, and final release decision.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core:** propose the smallest Phase C source change: a server-only, one-use exact-event dispatcher claim bound to one non-customer tenant/event, with tests proving it cannot claim any other event or tenant. Do not deploy, invoke it, or activate workers without its own approval.
+2. **QA:** independently review that candidate, then run the agreed denial matrix and isolated retry/recovery test only after Theo approves their exact fixture, Function invocations, and cleanup.
+3. **Theo:** after staging gates pass, approve a separately named production configuration/smoke plan; then a named consented Elite pilot; then a final release decision. Broader client availability is the final step, not the next step.
+
+## Core Phase C source-only exact-event dispatch candidate - 2026-08-05
+
+### 1. Outcome and approved scope
+
+Theo approved the smallest source-only Phase C correction requested by QA. The candidate provides a server-only, one-use dispatcher claim bound to one exact non-customer tenant/event so a later retry/recovery test cannot consume any other pending Discord event. No hosted migration, Function deployment, provider invocation, delivery, worker activation, secret/configuration change, customer action, or release action occurred.
+
+### 2. Implementation and security boundary
+
+- Migration `20260805170753_wo040_discord_qa_dispatch_controls.sql` creates private `security.discord_qa_dispatch_runs` evidence with RLS, no API-role table/schema access, a global one-active-run partial uniqueness guard, indexed tenant/event foreign keys, and bounded non-sensitive result metadata.
+- `security.arm_discord_qa_dispatch(tenant,event,expiry)` and `security.disable_discord_qa_dispatch(run)` are database-operator-only. Arming requires an exact eligible Discord event, matching tenant, availability now, fewer than five attempts, and expiry within fifteen minutes. Service role cannot arm or disable a run.
+- `public.claim_discord_qa_dispatch_event(run)` and `public.complete_discord_qa_dispatch_run(...)` use fixed empty search paths, fully qualified relations, explicit server-role checks, revoked default/browser execution, and narrow service-role grants. Claiming locks and updates only the armed run's exact tenant/event and consumes the run once.
+- `discord-dispatch` accepts only an empty object or the single field `qa_run_id`. Malformed JSON, unknown fields, invalid UUIDs, unavailable controls, and zero/multiple claim results fail closed. A QA request calls only the exact-event RPC and cannot fall back to `claim_integration_events_for_provider`.
+- The existing empty-body/`{}` global production path remains unchanged. Each later retry attempt requires a separately operator-armed one-use run after `available_at`; the source change does not create a reusable dispatcher bypass.
+- Completion evidence records only run ID, event ID, bounded result status, Function deployment/execution metadata, and evidence-write state. It stores no provider request, channel, receipt, credential, secret, tenant identifier in logs, or customer content.
+
+### 3. Validation evidence
+
+- Focused Discord/Phase C contracts: **16/16 passed**.
+- Full repository suite: **253/253 passed**.
+- Rollback-only Phase C pgTAP contract: **28/28 passed**.
+- Supabase database lint for `public,security`: **zero errors**.
+- Scoped ESLint: **passed with zero warnings**.
+- TypeScript `--noEmit`: **passed**.
+- Production Vite build: **passed** (`3365` modules transformed); only the existing stale Browserslist-data advisory was emitted.
+- Bundle budget: **passed**.
+- The database migration and pgTAP test ran in a disposable database-only Supabase stack on isolated local ports because the separate ClimbLab stack occupied ScrimStats' configured defaults. Only minimal validation prerequisites plus the exact candidate migration were applied; the temporary containers and files were removed afterward. No hosted database was used.
+- Current Supabase guidance confirms that `SECURITY DEFINER` functions require a controlled search path and explicit execution revocation/grants. The 2026 breaking-change index contains no change that alters this candidate's RPC or private-schema design: <https://supabase.com/docs/guides/database/functions>, <https://supabase.com/changelog?types=breaking-change>.
+- UI desktop/mobile validation is not applicable because this source-only candidate changes no browser surface.
+
+### 4. QA handoff and remaining gates
+
+WO-040 is **Ready for QA** for an independent source audit of the exact migration, table/RLS/index design, operator/service grants, fail-closed Function routing, exact-event claim/completion behavior, and rollback-only evidence. The release verdict remains **HOLD**.
+
+The source candidate is not hosted and cannot yet be invoked. Any commit/push, hosted migration, `discord-dispatch` deployment, event selection, arm, provider call, retry/recovery sequence, worker activation, outbound delivery, customer use, production configuration, smoke, pilot, or release requires its separately named approval. QA should not use the current deployed v15 global dispatcher as a test harness.
+
+## Independent QA Phase C source audit - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+The exact-event isolation design is suitable for the next gated non-customer delivery/recovery test after one narrow logging correction. It is source-only, unhosted, and cannot make Discord customer-ready.
+
+### 2. What was verified
+
+- The new private RLS-enabled `security.discord_qa_dispatch_runs` control is one-use, fifteen-minutes-or-less, globally single-active, and binds an exact tenant/event only. API roles lack schema/table access; only operator routines arm/disable it, while service role has only narrow claim/completion RPC execution.
+- The claim RPC locks and verifies the armed tenant/event, then changes only that exact event to `processing`; it cannot invoke the global provider-queue claim. Invalid, malformed, unknown, or unavailable `qa_run_id` Function input fails closed and does not fall back to the global dispatcher.
+- Completion is constrained to a claimed run, its bound event, a bounded terminal status, and a function-version token. A retry therefore needs a separate one-use arm after the event is eligible again.
+- Independent focused contracts passed **7/7**, project-local TypeScript `--noEmit` passed, and scoped ESLint completed with zero warnings. Core's disposable-database pgTAP/database-lint evidence remains local-test evidence, not hosted proof.
+
+### 3. Blocking issues
+
+- **Blocking:** The candidate is not committed, deployed, or migration-applied. No exact-event retry/recovery, worker, provider-delivery, customer, production-configuration, smoke, pilot, or release action is authorised or verified.
+
+### 4. Important risks
+
+- **Important:** `discord-dispatch` still logs `event_id`, `tenant_id`, and `channel_id` when a provider success cannot be recorded in `integration_delivery_attempts`. This contradicts the Phase C no-tenant-identifier-in-logs boundary. Core must replace those identifiers with a bounded redacted correlation value before any delivery-oriented deployment or test.
+- **Important:** The later deliberately non-postable-target test may produce a provider HTTP failure but must not be described as a delivered message. It is retry/recovery evidence only.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Hosted migration/RLS/grant/Function revision verification and a signed worker-secret rejection check for the deployed candidate.
+- **Unverified:** The separately approved exact-event retry/backoff, terminal-failure, deduplication/nonce, completion-evidence, global/workspace-disable, and retained-history matrix.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core:** redact the existing delivery-evidence failure log at `discord-dispatch/index.ts` before handing the source candidate back. Add a focused contract proving tenant/channel identifiers are absent from that log payload.
+2. After QA rechecks the correction, Core must provide an exact commit and hosted migration/Function deployment plan. Theo must separately approve it. Only then can QA assess the hosted inert state and request a later exact-event test approval.
+
+## Core Phase C delivery-log redaction correction - 2026-08-05
+
+### 1. Outcome and users
+
+Theo approved the narrow source-only correction returned by independent QA. The delivery-evidence write-failure log now retains only the existing hashed delivery correlation and the bounded database error code; it no longer emits the event, tenant, or channel identifiers. This is an operator/QA observability correction with no customer-visible or browser change.
+
+### 2. Acceptance criteria and scoped changes
+
+- `discord-dispatch/index.ts` replaces the `event_id`, `tenant_id`, and `channel_id` log fields with `delivery_correlation: nonce`. The nonce was already derived as a truncated SHA-256 digest of the event/target pair for provider deduplication, so the correction adds no new identifier or provider data.
+- `discord-qa-dispatch-contract.test.mjs` extracts the exact `Unable to record Discord delivery evidence` payload, requires the correlation and bounded error-code fields, and rejects all three identifier keys.
+- Dispatch selection, authorization, exact-event claims, delivery attempts, provider requests, retry behavior, migrations, and browser surfaces are unchanged.
+
+### 3. Validation evidence
+
+- Focused Discord production/Phase C contracts: **8/8 passed**.
+- Full repository suite: **254/254 passed**.
+- Scoped ESLint: **passed with zero warnings**.
+- TypeScript `--noEmit`: **passed**.
+- The current Supabase breaking-change index was checked; no Edge Function logging/runtime change affects this local payload-redaction correction.
+- Production build and desktop/mobile browser checks are not applicable because this correction changes only a server log payload and a source contract.
+
+### 4. Risks, non-goals, and QA handoff
+
+WO-040 is **Ready for QA** for independent re-audit of the exact failure-log payload and focused regression contract. The release verdict remains **HOLD**.
+
+No commit, push, hosted migration, Function deployment, provider invocation, exact-event arm, retry/recovery sequence, worker activation, outbound delivery, customer action, production configuration, smoke, pilot, or release action occurred or is authorised by this correction. After QA accepts the source, Core must provide the exact commit and hosted migration/Function deployment plan for Theo's separate approval.
+
+## Independent QA Phase C redaction re-audit - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+The returned privacy correction resolves the Phase C source-review finding. The candidate is suitable for Core to prepare a separately approved hosted migration and Function deployment plan; it remains unhosted and cannot establish customer readiness.
+
+### 2. What was verified
+
+- The delivery-evidence write-failure payload now contains only `delivery_correlation: nonce` and the bounded database error code. It no longer contains `event_id`, `tenant_id`, or `channel_id`; the correlation reuses the existing deterministic truncated SHA-256 provider nonce.
+- The focused regression extracts the exact log payload and rejects the three identifier keys.
+- Independent focused contracts passed **8/8**. Project-local TypeScript `--noEmit` and scoped ESLint passed with zero warnings.
+
+### 3. Blocking issues
+
+- **Blocking:** The Phase C migration and `discord-dispatch` source are not committed/deployed to the shared project. Hosted RLS/grant/function-authentication evidence and all retry/recovery/delivery checks are absent.
+
+### 4. Important risks
+
+- **Important:** A hashed correlation is safe operational evidence only when it remains bounded to server logs; it is not customer-facing data and must not be surfaced in browser responses or support copy.
+- **Important:** The normal global dispatch route remains deliberately unchanged. Do not invoke it as a test harness or activate workers while unrelated private-fixture events exist.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Hosted application of the migration, active dispatcher revision, fail-closed worker-secret check, private-control ACL/RLS review, and inert-state verification.
+- **Unverified:** Separately approved exact-event retry/backoff, terminal failure, deduplication, disable/recovery, production smoke, pilot, and release evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core:** provide the exact commit, scoped hosted migration/`discord-dispatch` deployment sequence, expected inactive worker state, rollback evidence, and no-provider/no-delivery boundary.
+2. **Theo:** approve that exact hosted scope only after reviewing the plan. QA will then verify the deployed revision and inert state before any later event-arm or delivery test is proposed.

@@ -21,7 +21,7 @@ Workers remain inactive throughout every Phase D step. Never invoke the global d
 
 ## B. Global disable and rollback-only recovery
 
-The corrected source candidate is migration `20260806141005_wo040_discord_worker_reactivation.sql`. Applying it only replaces the operator-only configure routine; it does not call that routine or activate a job. Commit/push, hosted application, and the rehearsal below require a new exact Theo approval.
+The corrected source candidate is hosted migration `20260806142907_wo040_discord_worker_reactivation.sql`. Applying it only replaced the operator-only configure routine; it did not call that routine or activate a job. Theo separately approved and Core completed the rollback-only rehearsal below on 2026-08-06.
 
 After the separately approved migration is hosted and inert verification confirms both jobs are still inactive, use one explicit rollback-only transaction against the approved project:
 

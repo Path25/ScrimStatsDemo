@@ -38,7 +38,7 @@ test("Discord production controls apply inactive and remain operator-only", () =
 });
 
 test("Discord worker reactivation verifies the actual pg_cron state", () => {
-  const migration = read("supabase/migrations/20260806141005_wo040_discord_worker_reactivation.sql");
+  const migration = read("supabase/migrations/20260806142907_wo040_discord_worker_reactivation.sql");
 
   assert.match(migration, /create or replace function security\.configure_discord_production_worker_schedule\(\)/);
   assert.match(migration, /security definer\s+set search_path = ''/);

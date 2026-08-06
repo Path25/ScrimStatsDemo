@@ -1687,7 +1687,7 @@ Do not return this order from Core to QA merely because source tests pass. QA re
 
 ### 1. Outcome
 
-Theo approved the source-only correction and disposable proof. Core prepared forward migration `20260806141005_wo040_discord_worker_reactivation.sql`; it changes only `security.configure_discord_production_worker_schedule()`. The routine now reconciles both named jobs, explicitly activates each returned job ID through `cron.alter_job`, re-reads both actual states, and raises transactionally unless both are active. The established `security.disable_discord_production_worker_schedule()` routine remains unchanged.
+Theo approved the source-only correction and disposable proof. Core prepared forward migration `20260806142907_wo040_discord_worker_reactivation.sql`; it changes only `security.configure_discord_production_worker_schedule()`. The routine now reconciles both named jobs, explicitly activates each returned job ID through `cron.alter_job`, re-reads both actual states, and raises transactionally unless both are active. The established `security.disable_discord_production_worker_schedule()` routine remains unchanged.
 
 No commit, push, hosted migration, Function deployment, provider action, committed worker activation, fixture/customer change, Phase D-C action, or release action occurred.
 
@@ -1704,10 +1704,36 @@ This plan is **not yet approved**:
 
 1. Commit and push only the correction migration, focused contract/proof, Phase D runbook/proof record, and the narrow WO/board handoff changes after verifying the final diff excludes unrelated dirty files.
 2. Preflight the shared project read-only: exact migration absent; both existing Discord job IDs inactive; active nonce/exact controls zero; record only job IDs/schedules/active flags plus cron-history, HTTP-queue, event, and attempt counts. Never select cron command text or Vault values.
-3. Apply only migration `20260806141005_wo040_discord_worker_reactivation.sql`. It must leave both jobs inactive because it does not invoke configure. Verify the hosted function definition, fixed search path, revokes, unchanged disable definition, inactive jobs, protected counts, and security/performance Advisors.
+3. Apply only migration `20260806142907_wo040_discord_worker_reactivation.sql`. It must leave both jobs inactive because it does not invoke configure. Verify the hosted function definition, fixed search path, revokes, unchanged disable definition, inactive jobs, protected counts, and security/performance Advisors.
 4. In one explicit transaction, capture the inactive baseline; call configure and retain only returned IDs/booleans; verify both existing rows active; immediately call disable and verify both inactive; compare every protected count; then roll back. Never commit an active job state.
 5. Recheck both original IDs inactive and every protected count unchanged. Stop on any mismatch, unexpected HTTP/provider activity, active control, or unrelated mutation. If migration application fails, rely on its transaction rollback. Any later source reversal must be a separately approved forward migration restoring the prior configure definition while both jobs remain inactive.
 
 ### 4. Status and handoff
 
 WO-2026-040 remains **Blocked — Core Features Developer** and release remains **HOLD**. Theo must separately approve the exact commit/push, hosted migration, inert verification, and rollback-only rehearsal above. Do not assign QA until the hosted active-then-inactive evidence passes. Phase D-C, denial matrices, production configuration, smoke, pilot, customers, and release remain separate gates.
+
+## Core Phase D-B corrected hosted rehearsal - 2026-08-06
+
+### 1. Outcome
+
+Theo approved the exact commit/push, hosted migration, inert verification, and one rollback-only rehearsal. Core committed the six WO-040-owned correction/evidence files as `fe77294` and pushed `codex/Staging`. Shared-board and unrelated dirty files were excluded from that commit.
+
+Hosted migration `20260806142907_wo040_discord_worker_reactivation` applied successfully to project `tvcgjehreaayfazlhvps`. The first application request contained command-wrapper text and failed at SQL parsing before any statement could execute; Core corrected the tool input and applied the exact committed SQL once. No partial migration or scheduler state resulted from the rejected request.
+
+### 2. Inert hosted verification
+
+- Immediately after migration, jobs 4/5 remained inactive with schedules `*/15 * * * *` and `* * * * *`; HTTP queue, active nonce runs, and active exact-dispatch runs were zero; Discord events/attempts remained **11/13**.
+- The hosted configure routine is `SECURITY DEFINER` with `search_path=''`, contains two explicit `cron.alter_job(..., active := true)` calls and both actual-state checks, and remains non-executable by `anon`, `authenticated`, and `service_role`.
+- The existing disable routine still contains both explicit `active := false` operations. Security Advisors returned 37 INFO / 56 WARN and performance Advisors 222 INFO / 20 WARN, with zero ERROR and no finding referencing the corrected function, cron job control, or migration. Existing unrelated warnings remain outside WO-040.
+
+### 3. Rollback-only rehearsal evidence
+
+Core ran one explicit transaction. Its fail-closed assertions verified that configure returned `active=true`, `dispatch_active=true`, and `reminder_active=true`; preserved existing job IDs 5 and 4; and made both actual rows active only inside the transaction. The unchanged disable routine then returned `active=false` and both rows reported inactive before rollback. Controlled Discord history, HTTP queue, events, and attempts did not change inside the transaction.
+
+The transaction rolled back. Final hosted state: jobs 4/5 inactive; Discord-specific cron history **7,407**; HTTP queue **0**; Discord events/attempts **11/13**; active nonce/exact controls **0/0**. Global cron history was **40,170** at the final read and may continue to change because it includes unrelated scheduled jobs. No Vault value or cron command text was selected or recorded.
+
+### 4. Boundaries and QA handoff
+
+No active worker state was committed, no provider request or message occurred, no customer/fixture/module row changed, no Function or frontend deployment occurred, and Phase D-C, denial matrices, production configuration, smoke, pilot, customer availability, and release were not started.
+
+The corrected Phase D-B acceptance criterion now passes. WO-2026-040 is **Ready for QA** and assigned to the **QA and Release Auditor** for independent audit of commit `fe77294`, hosted migration `20260806142907`, function/ACL evidence, the successful active-then-inactive transaction, and final inactive/no-mutation state. Release remains **HOLD**.

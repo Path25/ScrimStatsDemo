@@ -15,3 +15,19 @@ Customer-facing claims are allowed only when their evidence and release boundary
 
 - No bulk email, automated trigger, pricing/plan pressure, discount, Elite/Discord/Collector claim, or customer send is authorised by this ledger.
 - Every send still needs Theo's specific recipient and copy approval under WO-2026-026.
+
+## Elite improvement programme
+
+| Statement | Evidence | Allowed use | Prohibited interpretation |
+|---|---|---|---|
+| Elite is being defined as a staff-owned improvement programme: objective, practice evidence, accountable follow-up, and next-session review. | Founder-approved internal proposition under WO-2026-032. | Internal roadmap, work-order, and design discussion. | Do not use in public marketing, Billing, checkout, sales, outreach, or customer support as an available capability. |
+| The practice-development loop has been verified on a named non-customer Elite QA fixture. | WO-2026-033 conditional fixture-only evidence. | Internal QA and release planning. | Do not call it generally available, supported for customers, retention-proven, or a performance-improvement system. |
+| Customer-visible Elite availability requires its own verified support, entitlement, billing, and claim boundary. | WO-2026-031. | Internal release planning. | Do not infer availability from an Elite price, checkout route, tier label, or QA fixture. |
+
+## League knowledge, patch, and learning resources
+
+| Statement | Evidence | Allowed use | Prohibited interpretation |
+|---|---|---|---|
+| `Official patch source` may identify a dated, canonical Riot link once its version/date and source review are recorded. | [League knowledge source boundary](LEAGUE_KNOWLEDGE_SOURCE_BOUNDARY.md), WO-2026-035. | Internal planning only until Theo and PM/Marketing approve a customer surface. | Do not reproduce patch content, imply current coverage without a cycle check, or claim Riot endorsement. |
+| `Curated external resource` means a staff-selected outbound link with publisher and date provenance. | WO-2026-035 source register; exact resource-level review remains required. | Internal planning only. | Do not treat it as an official fact, a hosted ScrimStats resource, a partnership, or evidence of player improvement. |
+| `Unavailable` or `stale` is the required state when no approved, fresh, attributable source is available. | WO-2026-035 source register. | Future product unavailable state after separate approval. | Do not substitute inferred tactical advice, community claims, or outdated content. |

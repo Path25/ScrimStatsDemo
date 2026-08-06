@@ -1,7 +1,7 @@
 # WO-2026-037 - Restore membership-first workspace entry and owner creation access
 
 - **ID reservation:** [WO-2026-037 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done
 - **Assigned owner:** QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -88,15 +88,15 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Membership-first post-login entry | Fail-closed current-user resolver, focused state tests, and exact deployed release marker | Local / hosted deployment | Pass locally and deployed; authenticated browser open |
-| Explicit owner creation entry and selection preservation | Selector/create-route source contract and exact deployed release marker | Local / hosted deployment | Pass locally and deployed; hosted desktop/mobile open |
+| Membership-first post-login entry | Fail-closed current-user resolver, focused state tests, and exact deployed release marker | Local / hosted deployment | Pass locally; authenticated single-membership browser remains open |
+| Explicit owner creation entry and selection preservation | Selector/create-route source contract and exact deployed release marker | Local / hosted deployment | Failed on current staging: owner selector contains no creation action |
 | No-membership / non-owner boundaries | Resolver tests plus read-only deployed RPC inspection | Local / hosted read-only | Source/server boundary passes; controlled browser/direct matrix open |
 | No billing or tenant-isolation regression | RPC unchanged; no hosted mutation performed | Source / hosted read-only | No scoped change; creation exercise open |
 
 ### Final verdict
 
 - **Verdict:** HOLD
-- **Rationale:** The contained source fix is deployed as the exact reviewed candidate, but no authenticated staging role/tenant/browser matrix exists. Ready for QA is not release approval.
+- **Rationale:** Local implementation evidence is positive, but authenticated staging is not serving the claimed application candidate. An owner with three memberships sees the selector without the required `Create workspace` action, and the served bundle differs from the handoff's claimed bundle. This is a deployment/candidate mismatch; the required hosted role/tenant/browser matrix cannot proceed.
 
 ### Outstanding checks
 
@@ -105,7 +105,7 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 | Reproduce and identify route/loading state | Core / QA | Source-state reproduction plus controlled staging account evidence | Source failure mode confirmed; hosted reproduction open |
 | Approve implementation | Theo | Written approval after reviewed remediation scope | Complete (2026-08-03) |
 | Implement and validate | Core Features Developer | Commit and local validation | Complete locally |
-| Hosted role/tenant regression matrix | QA | Evidence pack and verdict | Open |
+| Hosted role/tenant regression matrix | QA | Evidence pack and verdict | Blocked: current staging fails the owner selector acceptance criterion |
 | Release approval | Theo | Separate approval after hosted QA | Open |
 
 ### Theo approval record
@@ -173,3 +173,18 @@ Reliable workspace entry is a core team-operations expectation. The prior WO-202
 - The served entry bundle `index-kxix4OQm.js` embeds release `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb`, proving the exact approved revision is served. This is deployment evidence only; it does not prove authenticated membership, role denial, tenant selection, desktop/mobile rendering, or browser console health.
 - The subsequent documentation-only evidence deployment reported `READY` and retained the `staging.scrimstats.gg` alias. Its Vercel build completed and the bundle budget passed; the logs also contain a non-blocking TypeScript resolution warning for `@vercel/node` in `api/client-error.ts`, which is outside WO-037 and remains a separate build-hygiene concern.
 - No Supabase migration, Edge Function, Auth, membership, tenant, billing, configuration, secret, or customer-data mutation was performed.
+
+### QA audit - 2026-08-03
+
+- **Release verdict:** HOLD. This is not production-ready evidence.
+- **What was verified:** The focused resolver and self-service provisioning contracts pass 10/10; source review confirms the client change is fail-closed on unresolved/error membership state and does not modify the `SECURITY DEFINER` owner-only RPC, RLS, billing, or migrations. `git diff --check` passed. In authenticated staging as a non-customer owner with three selectable workspaces, the workspace selector opens and browser console capture contains no warnings/errors.
+- **Blocking:** The deployed selector contains only the three workspace items and no required `Create workspace` action. The current served asset is `index-w2od3QoS.js`, while the handoff identifies `index-kxix4OQm.js` as the candidate asset. The claimed deployment evidence therefore does not establish the tested application revision, and acceptance criterion two fails on the live candidate.
+- **Important:** No authenticated evidence is available for the single-membership owner, confirmed no-membership, member-only, admin-only, viewer-only, second-tenant, or direct server-denial paths. The handoff also records that its supplied accounts cannot prove those roles; do not substitute browser ownership or source inspection for them.
+- **Unverified:** Fresh-login loading behaviour, A-to-B-to-A selection preservation, creation-route return behaviour, 390x844 selector, Free/independence checks after an explicitly approved creation, and role/RPC denial matrix.
+- **Required next action:** The deployment owner must reconcile staging to the reviewed application revision `fcf54cb4ca15c3fe7b2a9382847344e69feb93cb` (or provide the immutable replacement revision and its application diff), then return WO-037 to QA. Theo must provide controlled staging access for the missing role/no-membership accounts or explicitly accept those checks as residual risk; no new workspace should be created merely to generate evidence.
+
+### Theo accepted closure - 2026-08-03
+
+- Theo confirmed that he completed the relevant authenticated testing and that the reported membership-first workspace-entry issue works correctly. The implementation issue is accepted as resolved.
+- **Status:** Done (conditional). This acceptance supersedes the QA deployment-candidate mismatch as the delivery disposition, but does not erase it: the QA browser session observed a different served asset and did not complete the full controlled role/tenant matrix.
+- **Residual release evidence:** no independently captured proof remains for the no-membership and member/admin/viewer-only direct-denial journeys, mobile selector, or exact immutable revision. This work order does not approve production release, tenant/billing changes, or further workspace creation.

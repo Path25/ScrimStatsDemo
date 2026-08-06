@@ -1,7 +1,7 @@
 # WO-2026-030 - Restore an opaque workspace-switcher menu in the sidebar
 
 - **ID reservation:** [WO-2026-030 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Done (conditional; Theo accepted remaining staging evidence risk on 2026-08-03)
 - **Assigned owner:** Developer – Fast Lane
 - **Size:** S
 - **Risk:** Low
@@ -130,3 +130,93 @@ Multi-workspace membership is already supported for existing users. This is a co
 - Evidence artifacts: `C:\Users\Theo\.codex\visualizations\2026\07\29\019faf19-f52e-74b0-ac28-8828910f821a\WO-2026-030-staging-desktop.png` and `C:\Users\Theo\.codex\visualizations\2026\07\29\019faf19-f52e-74b0-ac28-8828910f821a\WO-2026-030-staging-mobile.png`.
 - The staging build still renders the old scoped `bg-[var(--workspace-surface-raised)]` class; the local patch is not deployed, so the visual acceptance criterion remains blocked.
 - **Highest evidence achieved:** Browser verified (pre-fix staging behavior; patched candidate not yet browser verified).
+
+## Independent QA review - 2026-08-03
+
+### 1. Release verdict: HOLD
+
+The implementation is a contained, low-risk local correction, but it is not release-ready: the hosted staging candidate remains pre-fix and the required multi-workspace plus single-workspace browser matrix is incomplete.
+
+### 2. What was verified
+
+- **Implementation scope:** Commit `711fe25` changes only the intended `DashboardLayout` menu surface and the focused workspace-console contract. It adds an explicit opaque `#111a23` background, border, foreground, shadow, `z-[60]`, and active-indicator colour; `TenantContext`, membership queries, selection, storage, RLS, and the shared dropdown primitive are unchanged.
+- **Independent local validation:** `node --test scripts/workspace-console-contract.test.mjs` passed 6/6 on 2026-08-03.
+- **Hosted state:** The authenticated staging `/overview` account currently exposed only the single-workspace sidebar form. The prior work-order browser evidence records the multi-workspace staging candidate as transparent/pre-fix; no patched hosted revision evidence was available for this review.
+
+### 3. Blocking issues
+
+- **Blocking:** The patched menu has not been authenticated-browser-verified in staging with a controlled account holding two memberships at desktop and mobile widths.
+- **Blocking:** The required single-workspace control account regression check has not been completed.
+
+### 4. Important risks
+
+- **Important:** The source-contract assertion proves the intended Tailwind class tokens exist, not their computed style or portal stacking in the deployed application.
+- **Important:** A current single-workspace staging account cannot exercise the dropdown branch, so it does not substitute for the required multi-workspace journey.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Patched staging revision; opaque/bounded menu and layering at desktop and 390x844 mobile; pointer and keyboard A-to-B-to-A switching with no console errors; active indicator; separate single-workspace presentation control.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / Developer – Fast Lane:** make the exact commit `711fe25` available as a staging candidate under the existing deployment approval boundary; do not alter tenant behaviour or deploy production as part of this work order.
+2. **QA:** use a controlled two-workspace account to complete the browser matrix and a separate single-workspace control account. Retain screenshots, viewport sizes, candidate revision, and console output before changing the delivery state.
+
+## QA correction and current staging verification - 2026-08-03
+
+### 1. Release verdict: CONDITIONAL
+
+The prior independent QA conclusion that staging was pre-fix was incorrect: it misread the multi-workspace trigger as a single-workspace presentation. Current staging now passes the central visual and selection acceptance path. Conditional closure is appropriate only if Theo accepts the remaining isolated keyboard-dismissal and single-workspace-control evidence risk; it is not a production-release claim.
+
+### 2. What was verified
+
+- **Current hosted desktop:** Opening `Team workspace OnceUponATeam` on authenticated staging rendered the menu with computed `background-color: rgb(17, 26, 35)`, visible `rgba(226, 236, 232, 0.22)` border, `rgb(242, 246, 244)` foreground, shadow, and `z-index: 60`. It displayed the active workspace and both QA-workspace options.
+- **Current hosted mobile:** At 390x844, after opening the navigation, the same menu rendered at a contained 240px width with the same opaque background, border, readable foreground, and `z-index: 60`; it did not visually blend into the navigation.
+- **Selection preservation:** The controlled session switched `OnceUponATeam` to `WO-024 QA Tenant A` and back, retained the expected trigger label after each switch, and recorded no console warnings or errors.
+- **Source/local:** Commit `711fe25` remains contained to the intended menu surface and focused contract; the independent contract run passed 6/6.
+
+### 3. Blocking issues
+
+- **Blocking for an unconditional release claim:** A separate authenticated single-workspace control account has not been exercised.
+
+### 4. Important risks
+
+- **Important:** Escape dismissal was not independently confirmed in the current staging session; the visual styling change did not modify keyboard handling, and prior handoff evidence reports it passed, but this remains unverified in this review.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Current-candidate keyboard Escape dismissal and separate single-workspace non-dropdown presentation. Production deployment/smoke evidence remains outside this work order.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** either provide a separate controlled single-workspace session plus confirm the keyboard check for a full QA closure, or explicitly accept these two low-risk residual checks for a conditional staging closure.
+2. **QA:** retain this correction alongside the original pre-fix evidence rather than deleting it; the latter documents the regression and the former documents its hosted resolution.
+
+## Conditional closure - 2026-08-03
+
+### 1. Release verdict: CONDITIONAL
+
+Theo accepted conditional closure after the multi-workspace staging path was hosted-verified. This is not production-deployment approval and does not turn the remaining keyboard and single-workspace checks into passed evidence.
+
+### 2. What was verified
+
+- Current authenticated staging desktop and 390x844 mobile render an opaque, bordered, readable workspace menu above the navigation.
+- The controlled account switched from `OnceUponATeam` to `WO-024 QA Tenant A` and back with the selected label updating and no captured browser warnings or errors.
+- The implementation remains contained to menu presentation and its focused source contract passed 6/6.
+
+### 3. Blocking issues
+
+- **Blocking for a stronger release claim:** Current-candidate Escape dismissal and a separate single-workspace non-dropdown control remain unverified.
+
+### 4. Important risks
+
+- **Important:** The residual checks are low-risk because selection and keyboard implementation were unchanged, but browser evidence remains incomplete for those exact states.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Escape dismissal in the current staging candidate, single-workspace sidebar presentation, and any separate production deployment/smoke test.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo / PM:** treat this work order as staging conditional closure only. Reopen it if the switcher changes again or before making a production-readiness claim that depends on the two residual checks.
+2. **QA:** retain the hosted computed-style and switching evidence together with this risk acceptance; do not erase the historical pre-fix regression evidence.

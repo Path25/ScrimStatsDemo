@@ -1,7 +1,7 @@
 # WO-2026-038 - Restore an opaque notifications popover surface
 
 - **ID reservation:** [WO-2026-038 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done
 - **Assigned owner:** QA and Release Auditor
 - **Size:** S
 - **Risk:** Low
@@ -87,21 +87,21 @@ This is a contained premium-quality regression in a frequent dashboard control. 
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Opaque, layered notification popover | `NotificationInbox.tsx` supplies an explicit portalled surface, border, shadow, and `z-[60]`; candidate `6d644ac` is deployed. Authenticated staging screenshots remain required. | Local / Hosted deployment | Local pass and deployed; hosted browser open |
-| Existing notification and keyboard behaviour | Notification entries, read handlers, navigation, and dropdown primitives are unchanged; local type/lint/build checks pass. Authenticated desktop/mobile interaction and console evidence remain required. | Local / Hosted | Local pass; hosted open |
-| Workspace-selector regression boundary | `DashboardLayout.tsx`, `TenantContext`, and the workspace-selector path are unchanged. Same-candidate browser comparison remains required. | Local / Hosted | Local pass; hosted open |
+| Opaque, layered notification popover | Candidate `6d644ac` served after forced refresh; authenticated desktop and 390x844 computed-style checks show `rgb(17, 26, 35)`, visible border/shadow, and `z-index: 60`. | Local / Hosted browser | Pass |
+| Existing notification and keyboard behaviour | Notification entry renders; desktop Escape dismissal and no-console-warning/error checks pass. No read-state mutation was made. | Local / Hosted browser | Conditional: entry activation/read transition not exercised |
+| Workspace-selector regression boundary | Same refreshed candidate renders the selector with its existing opaque surface, border/shadow, `z-index: 60`, and workspace items. | Local / Hosted browser | Pass |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** Exact candidate `6d644ac` is deployed to staging, but authenticated desktop/mobile browser evidence, Escape/entry-or-empty behaviour, and the same-candidate workspace-selector comparison remain open before QA or release closure.
+- **Verdict:** CONDITIONAL
+- **Rationale:** The visual and desktop keyboard acceptance path is hosted-verified after a forced refresh loaded the recorded candidate. Notification entry activation/read transition was deliberately not performed because it would mutate the fixture's delivery state; this limited residual does not establish production readiness.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
 | Isolated correction and local validation | Developer - Fast Lane | Source diff, focused contract test, lint, TypeScript, production build, and bundle-budget output | Closed |
-| Authenticated staging browser matrix | QA and Release Auditor | Screenshots, revision, console result on exact candidate `6d644ac` | Open |
+| Authenticated staging browser matrix | QA and Release Auditor | Computed-style, viewport, console, and behaviour evidence on exact candidate `6d644ac` | Conditionally closed; no entry/read-state mutation performed |
 | Deployment/release decision | Theo | Separate explicit approval for release after QA | Staging candidate complete; release open |
 
 ### Theo approval record
@@ -154,3 +154,19 @@ This is a contained premium-quality regression in a frequent dashboard control. 
 - Local validation before push: focused workspace contract 6/6, repository tests 233/233, zero-warning ESLint, TypeScript, production build, bundle budget, and scoped `git diff --check` passed.
 - The Core review strengthened the focused notification contract to assert the notification component's own `#111a23` background, border, shadow, `z-[60]`, and portal-safe variables. No shared primitive, workspace selector, notification data/read behavior, Supabase, configuration, or hosted data changed.
 - The earlier pre-fix QA observations remain valid historical evidence but no longer block candidate exposure. QA must now repeat the desktop, 390x844 mobile, entry-or-empty, Escape, console, and unchanged-workspace-selector matrix against the recorded candidate. The malformed notification separator remains separately triaged and is not claimed fixed.
+
+### QA recheck after candidate handoff - 2026-08-03
+
+- **Release verdict:** HOLD. The candidate handoff cannot be accepted because the staging alias no longer serves the recorded application asset.
+- **What was verified:** In authenticated staging as a controlled viewer, the notification menu opens and console capture has no warnings/errors. The current served entry asset is `index-BrEqghNY.js`.
+- **Blocking:** The open menu computes to `background: rgba(0, 0, 0, 0)` and `z-index: 50`, proving that it is the pre-fix implementation rather than candidate `6d644ac`, whose patch requires explicit `#111a23` and `z-[60]`. The required visual, entry/empty, Escape, mobile, and workspace-selector checks cannot be credited against this different candidate.
+- **Important:** The direct candidate-alias regression means a Vercel `READY` event for `6d644ac` is not durable evidence that `staging.scrimstats.gg` still serves it. The malformed notification separator remains separately triaged.
+- **Required next action:** The deployment owner must restore the `staging.scrimstats.gg` alias to immutable candidate `6d644aceced946e9d08877fd8c61b0cb4fd5f571`, or provide a replacement immutable revision that includes the same application diff. Then return the item to QA; no customer or production action is authorised.
+
+### QA hosted verification correction and conditional closure - 2026-08-03
+
+- A forced browser refresh on the same authenticated staging URL served `index-EcxpGt-o.js`, the entry asset recorded for candidate `6d644ac`. The prior `index-BrEqghNY.js` observation was a stale browser asset, not sufficient evidence of a lost staging alias. That earlier evidence is preserved and superseded by this refresh-controlled check.
+- **Desktop:** Open notification popover computed `background: rgb(17, 26, 35)`, `border: rgba(226, 236, 232, 0.22)`, shadow, and `z-index: 60`; the safe QA-fixture entry rendered. Trigger-focused Escape dismissed the menu. Console capture had no warnings or errors.
+- **390x844:** After an explicit responsive viewport override and refresh, the notification menu rendered at 358px width without overflow, with `background: rgb(17, 26, 35)`, visible border, and `z-index: 60`. Console capture remained clean. The temporary viewport was reset after QA.
+- **Workspace-selector regression:** In the same refreshed owner candidate, the selector retained its opaque `rgb(17, 26, 35)` surface, border/shadow, `z-index: 60`, and selectable workspace list. No workspace selection or notification read state was changed.
+- **Verdict:** CONDITIONAL. The appearance, layering, responsive layout, desktop Escape, and console criteria are hosted-verified. Notification entry activation/read-state transition remains intentionally unverified because it would mutate the fixture; the malformed `Â·` separator is a separate pre-existing text-quality issue. This work order does not approve production release.

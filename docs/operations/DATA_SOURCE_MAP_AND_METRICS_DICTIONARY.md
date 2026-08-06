@@ -100,6 +100,20 @@
 
 ## Meaningful-change monitoring
 
+### Proposed Elite practice-development reporting boundary
+
+| Metric | Exact definition | Data source | Owner / integration | Refresh | Known limitations | Status |
+|---|---|---|---|---|---|---|
+| Elite practice-development coverage | Eligible Elite tenants with at least one active objective that has either linked evidence, a recorded unavailable state, or an attached follow-up action during the reporting period. | `practice_development_objectives`, `practice_development_evidence`, `practice_development_action_links`, and authoritative Elite/module state. | ScrimStats / Supabase | Weekly | This measures workflow coverage only. It does not measure practice quality, player performance, improvement, customer availability, or retention. The named QA fixture must be excluded from customer reporting. | **Unavailable** - define secure query and connect approved reporting access before use. |
+
+### League knowledge and learning-source boundary
+
+| Item | Exact definition | Data source | Owner / integration | Refresh | Known limitations | Status |
+|---|---|---|---|---|---|---|
+| Official patch fact | A versioned fact linked to the canonical Riot source with recorded retrieval date and explicit current/historical/stale state. | Riot official patch source, per [source boundary](LEAGUE_KNOWLEDGE_SOURCE_BOUNDARY.md) | Technical Reporting Analyst / future approved workflow | Within 72 hours of an official patch publication | This is not a licence to reproduce patch prose or automated tactical interpretation. | **Unavailable** — no customer surface or approved source workflow. |
+| Curated learning resource | An attributed outbound link with named publisher, date, curation record, and reviewed rights boundary. | Exact publisher/resource, reviewed individually | PM/Marketing with Analyst review | Editorial cycle | Does not establish official status, performance benefit, or availability. | **Unavailable** — no publisher/resource has customer approval. |
+| Provider-backed League data | Versioned data supplied through an approved Riot or third-party provider contract. | Approved provider only | Core Features Developer / external provider | Defined by future contract | Requires provider approval, rights, cost, privacy, provenance, and implementation verification. | **Unavailable** — no provider path is approved. |
+
 Create a Project Manager handoff only when a signal has a material user or business implication. Prioritise:
 
 1. Any sustained increase in browser, authentication, API, Edge Function, import, or webhook failures.

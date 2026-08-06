@@ -35,6 +35,7 @@ const evidenceLifecycle = read(
   "supabase/migrations/20260725083647_scouting_evidence_lifecycle.sql",
 );
 const discord = read("supabase/functions/discord-dispatch/index.ts");
+const discordDelivery = read("supabase/functions/_shared/discord-delivery.ts");
 const discordInstall = read("supabase/functions/discord-install/index.ts");
 const discordReminders = read("supabase/functions/discord-schedule-reminders/index.ts");
 const edgeAuth = read("supabase/functions/_shared/collector.ts");
@@ -117,7 +118,7 @@ test("Discord delivery is private, deduplicated, and only queues subscribed even
   assert.match(migration, /unique \(tenant_id, dedupe_key\)/);
   assert.match(migration, /subscription\.event_type = event_name/);
   assert.match(migration, /feature\.module_key = 'discord'/);
-  assert.match(discord, /allowed_mentions:\s*\{\s*parse:\s*\[\]/);
+  assert.match(discordDelivery, /allowed_mentions:\s*\{\s*parse:\s*\[\]/);
   assert.match(discord, /DISCORD_DISPATCH_SECRET/);
   assert.match(discord, /claim_integration_events/);
   assert.match(workflows, /for update skip locked/);

@@ -1,7 +1,7 @@
 # WO-2026-036 - Build repeatable Elite opponent-preparation playbooks
 
 - **ID reservation:** [WO-2026-036 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
+- **Status:** Done
 - **Assigned owner:** QA and Release Auditor
 - **Size:** L
 - **Risk:** High
@@ -78,14 +78,14 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Tenant-safe playbook lifecycle | Hosted browser/direct evidence | Hosted | Outstanding |
-| Tenant-owned evidence/date/context provenance | Source-reference contract and QA evidence | Hosted | Outstanding |
-| Role/plan/tenant enforcement | RLS/function/browser matrix | Hosted | Outstanding |
+| Tenant-safe playbook lifecycle | Hosted Owner browser evidence in named non-customer Elite fixture | Hosted browser | Conditional pass: lifecycle exercised; completed-review link remains open |
+| Tenant-owned evidence/date/context provenance | Source-reference contract and QA evidence | Hosted browser | Conditional pass: dated tenant-owned scouting evidence and explicit staff judgement rendered; unavailable/insufficient paths remain open |
+| Role/plan/tenant enforcement | RLS/function/browser matrix | Hosted browser / local / QA-hosted rollback-only harness | Pass: browser role/plan/tenant controls are QA-verified; QA independently executed the exact rollback-only hosted harness without its fail-closed matrix exception and confirmed post-run fail-closed module invariants |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** The reviewed candidate is deployed and limited to one named non-customer Elite QA fixture. Core's hosted access matrix and authenticated Owner surface pass, but QA has not yet completed the playbook lifecycle, browser-role, responsive, provenance, or cross-workflow matrix. External intelligence remains deliberately out of scope.
+- **Verdict:** CONDITIONAL
+- **Rationale:** Theo accepted closure of the remaining fixture-only workflow evidence risk on 2026-08-04. QA independently verified the named-fixture Owner lifecycle, dated tenant-owned provenance display, Tenant B isolation, Elite Member/Viewer UI denial, Elite Admin positive controls, Free/Pro browser denial, 390x844 Owner presentation, and the exact rollback-only hosted authorization harness. Completed same-opponent review, cross-workflow breadcrumbs, and unavailable/insufficient evidence remain preserved as unverified residual risk. External intelligence remains deliberately out of scope. This does not approve customer activation, production deployment, or release.
 
 ### Outstanding checks
 
@@ -95,7 +95,7 @@ Existing scouting and Draft capabilities can help analyse a match-up, but staff 
 | Implementation approval | Theo | Written approval | Complete (2026-08-03) |
 | Phase 2B application projection and workflow | Core | Local implementation, contracts, build and responsive shell check | Complete locally (2026-08-03) |
 | Hosted additive schema and generated client contract | Core | Migration record, catalog/ACL checks, empty-table proof, generated types, Advisor review | Complete (2026-08-03) |
-| Hosted QA | QA and Release Auditor | Lifecycle, browser-role, responsive, provenance and cross-workflow evidence pack | Ready to execute |
+| Hosted QA | QA and Release Auditor | Lifecycle, browser-role, responsive, provenance, direct authorization, and cross-workflow evidence pack | Done (conditional): Theo accepted completed-review, breadcrumb, and unavailable/insufficient-state residual risk for the named QA fixtures only |
 
 ### Theo approval record
 
@@ -174,3 +174,71 @@ The earlier `Implementation: Pending` table row predates Theo's Phase 1 approval
 3. Exercise explicit insufficient evidence, unavailable/superseded evidence, option-load failure/retry, archive/restore, and a completed same-opponent Scrim review outcome. Confirm the UI never substitutes external or inferred claims.
 4. Verify breadcrumbs from the linked Draft record, Coaching Action, fixture Scrim, and completed review Scrim return to the correct opponent report and disappear when the playbook is archived or the link is removed.
 5. Verify Owner/Admin positive paths on desktop and mobile. Verify Elite Member/Viewer, all Free/Pro roles, disabled/non-live module, other tenant, unauthenticated, direct-table, cross-tenant-ID, stale-version, invalid-source, and oversized breadcrumb requests fail below the browser layer.
+
+### QA audit - 2026-08-04
+
+- **Release verdict:** HOLD. This is isolated non-customer fixture evidence only; no customer availability or production release is approved.
+- **What was verified:** Focused security/UI contracts passed 10/10 and `git diff --check` passed. After a staging refresh, authenticated Elite Tenant A Owner QA exercised a durable named QA playbook only: create draft, staff judgement, dated same-tenant Scouting evidence link, canonical Coaching Action link, approval, immutable approved history, new revision, archive, and restore. The UI rendered unrecorded fixture/context/patch truthfully and the browser console contained no warnings/errors. Switching to disabled Elite Tenant B with Tenant A's opponent URL returned the honest `Opponent report unavailable` state, without exposing Tenant A content; the session was returned to Tenant A.
+- **Blocking:** Controlled authenticated browser/direct evidence is still absent for Elite Admin positive, Elite Member and Viewer denial, independently active Free and Pro denial, unauthenticated/direct-table denial, cross-tenant-ID mutation, stale-version, invalid-source/oversized breadcrumb requests, completed same-opponent review link, Draft/Action/Scrim breadcrumb paths, unavailable/insufficient evidence, and an actual 390px viewport. These are release-critical for sensitive competitive intelligence.
+- **Important:** The approved QA playbook, two revisions, evidence/action links, and archive/restore events now persist only in `WO-024 QA Tenant A`; they are intentionally non-customer audit fixtures and must remain identified as such. No customer record or tenant B data was modified.
+- **Required next action:** Theo must provide or switch to controlled Elite Admin, Member, and Viewer accounts plus isolated Free/Pro controls, and a controllable 390x844 browser viewport. QA will then complete the denial, provenance, breadcrumb, and responsive matrix without creating customer data. Do not enable `opponent_preparation` for any other tenant or treat this result as release approval.
+
+### QA evidence supplement - 2026-08-04
+
+- Theo switched to `fridayxiiiempire@gmail.com`. Settings showed that account as an **Elite Member** in `OnceUponATeam` and, separately, in `WO-024 QA Tenant A`; Tenant A's membership list also identifies distinct Admin, Owner, and Viewer QA accounts.
+- In Tenant A, the Member could read the permitted non-customer opponent evidence but the Owner-created opponent-preparation playbook was not rendered in the opponent report. The browser console had no warnings/errors. This is hosted **browser-gate** evidence only; it does not replace direct RPC/RLS denial verification.
+- `clash` is Elite Owner for this account, but was not used for playbook mutation or as customer evidence.
+
+### QA evidence supplement - 2026-08-04 (Admin)
+
+- `deniedclassics@gmail.com` was authenticated as **Elite Admin** in `WO-024 QA Tenant A`. In the existing named QA opponent report, the Admin could see the Owner-created playbook, draft edit/archive controls, draft approval, evidence/action link controls, and completed-review link control. Console warnings/errors were absent.
+- This confirms an Admin positive browser path without mutating a playbook, evidence, action, or review. It does not replace independent direct-RPC/RLS mutation and stale-version checks.
+
+### QA evidence supplement - 2026-08-04 (Viewer)
+
+- `pathdigitaldesigns@gmail.com` was authenticated as **Elite Viewer** in `WO-024 QA Tenant A`. The Viewer could read permitted non-customer scouting evidence, but no opponent-preparation playbook or preparation mutation controls were rendered in the opponent report. Console warnings/errors were absent.
+- This is hosted browser-gate evidence only; direct RPC/RLS denial verification remains required.
+
+### QA evidence supplement - 2026-08-04 (Free)
+
+- `pathdigitaldesigns@gmail.com` was authenticated as **Owner** of the Free `TestWorkspace`. Settings showed `Free · active` and the current-plan billing state.
+- Both `/scouting` and a direct URL to the named QA Tenant A opponent report rendered the same honest `Unlock opponent scouting` Free upgrade gate. No opponent report or opponent-preparation data was exposed; console warnings/errors were absent.
+- This is hosted browser-gate and cross-tenant non-disclosure evidence only. It does not replace direct RPC/RLS denial verification.
+
+### QA evidence supplement - 2026-08-04 (Pro)
+
+- `pathdigitaldesigns@gmail.com` was authenticated as **Owner** of the active Pro `WO-023 QA Additional 2026-08-02` workspace. Standard Pro Scouting was available.
+- With Theo's earlier QA-fixture authorization, QA created one durable non-customer record only: `WO-036 QA Pro entitlement fixture` (`be3b65c9-2e68-4f9d-91ab-0631d8e83c71`). Its report rendered the ordinary Scouting/Draft controls but no opponent-preparation panel or playbook mutation controls. Console warnings/errors were absent.
+- This is hosted browser-gate evidence that the Elite playbook is not exposed to an active Pro Owner. The QA fixture must remain identified as non-customer; direct RPC/RLS denial verification remains required.
+
+### QA evidence supplement - 2026-08-04 (390x844)
+
+- `pathtoyourdream@gmail.com` was authenticated as **Elite Owner** in `WO-024 QA Tenant A`. With a temporary exact **390x844** browser viewport, the existing opponent-preparation report rendered the card, title, staff-judgement explanation, edit/archive controls, draft Revision 2, approval control, and unrecorded fixture/context/patch labels within the visible mobile viewport. No clipping, overlap, horizontal overflow, or console warnings/errors were observed in the inspected initial mobile viewport.
+- The viewport override was reset after verification. This is hosted responsive presentation evidence only; it does not prove cross-workflow navigation or server-side authorization.
+
+### Core direct-authorization evidence handoff - 2026-08-04
+
+- Theo approved the narrow Core return. Core added [`supabase/verification/wo036_opponent_preparation_hosted_authorization.sql`](../../../supabase/verification/wo036_opponent_preparation_hosted_authorization.sql), an independently reproducible, fixture-bounded hosted SQL harness. It resolves only `WO-024 QA Tenant A`, disabled `WO-024 QA Tenant B`, Free `TestWorkspace`, and Pro `WO-023 QA Additional 2026-08-02`; validates their required plans, roles, opponents, draft revision, and module states; uses transaction-scoped Auth claims and application roles; fails closed if any expected result differs; and always ends in `rollback` with no `commit` path.
+- The final hosted run passed **16/16** checks: authenticated browser roles have no direct table privileges; anonymous execution is revoked; Elite Owner/Admin direct getters succeed; Elite Member/Viewer, disabled Elite Tenant B, Free Owner, Pro Owner, and an authenticated database role without an Auth identity are denied; a direct locked-table read is denied; a Tenant B opponent identifier cannot be used in a Tenant A mutation; stale version, unsupported evidence source, unsupported breadcrumb context, and 101-ID breadcrumb requests are rejected with their exact server errors.
+- Free/Pro module state was simulated as `live/enabled` only inside the uncommitted transaction so plan enforcement was tested independently of the normal planned/disabled state. Post-run hosted invariants confirmed exactly **1** `opponent_preparation` row remains live/enabled and **114** remain planned/disabled; the named Free, Pro, and Tenant B controls remain planned/disabled, while only Tenant A remains live/enabled. No schema, user, tenant, playbook, fixture, customer record, or durable module state was created or changed.
+- The first harness run safely rolled back and identified that two draft checks attempted to read locked revision metadata after role impersonation. Core corrected the harness to snapshot only the required draft metadata before impersonation rather than granting or bypassing base-table access. The authorization design and hosted schema were not changed.
+- Validation passed: focused opponent-preparation contracts **11/11**, full repository **244/244**, ESLint with zero warnings, TypeScript, production Vite build, bundle budget, and scoped `git diff --check`. The broken global Windows npm shim was bypassed with the documented bundled Node runtime; this was an environment issue, not a source failure.
+- **Core handoff:** the direct-RPC/RLS evidence blocker is complete and reproducible. Ownership remains with the QA and Release Auditor to execute the completed same-opponent Scrim review, Draft/Action/fixture-Scrim/review-Scrim breadcrumb paths, and unavailable/insufficient evidence states. This remains fixture-only HOLD evidence, not customer activation, production readiness, or release approval.
+
+### QA re-review - 2026-08-04
+
+- **Source review:** `supabase/verification/wo036_opponent_preparation_hosted_authorization.sql` is fixture-bounded, transaction-scoped, has no commit path, snapshots only draft metadata before impersonation, fails closed on missing fixtures or unexpected results, and rolls back its temporary Free/Pro module simulation and attempted mutation checks. It does not add schema, persist customer data, or expand base-table grants.
+- **Local verification:** focused opponent-preparation contracts passed **11/11**. The added contract asserts rollback-only structure, named QA-fixture scope, claim/role impersonation, and the direct denial cases recorded in the handoff. `git diff --check` passed.
+- **Evidence classification:** the reported hosted **16/16** result is credible **Core-hosted verification**, not independent QA-hosted verification: QA did not execute the script against the hosted project this audit. The result therefore remains conditional until Theo explicitly approves QA execution of this exact rollback-only script through an approved hosted SQL route.
+- **Residual workflow blocker:** completed same-opponent review, Draft/Action/fixture-Scrim/review-Scrim breadcrumbs, and unavailable/insufficient evidence states are still not browser-verified. The release verdict remains HOLD.
+
+### QA hosted direct-authorization execution - 2026-08-04
+
+- Theo explicitly approved execution of the exact `supabase/verification/wo036_opponent_preparation_hosted_authorization.sql` harness against hosted project `tvcgjehreaayfazlhvps`. QA confirmed the source's rollback-only invariant before execution.
+- The run completed without raising its fail-closed matrix exception. The harness itself raises if any of its 16 expected allow/deny checks fails, so this is independent QA-hosted execution of that recorded 16/16 matrix. The SQL response exposed only the final transaction-local claims-setting result, not the internal notice; no returned data was treated as instruction.
+- A subsequent read-only post-run invariant query returned **1** `live/enabled` opponent-preparation row, **0** unexpected non-fixture enabled rows, and **114** `planned/disabled` rows. The rollback therefore preserved the named-fixture-only activation boundary.
+
+### Conditional closure - 2026-08-04
+
+- Theo explicitly accepted the remaining fixture-only evidence risk and authorised this work order to move to **Done**. Residual unverified checks are: a completed same-opponent Scrim review; Draft, Coaching Action, fixture-Scrim, and review-Scrim breadcrumbs; and unavailable/insufficient evidence states.
+- This is not evidence of customer readiness, provider availability, production deployment, billing readiness, or a production release decision. Reopen WO-036 before enabling `opponent_preparation` for any non-QA tenant or making customer-facing Elite claims.

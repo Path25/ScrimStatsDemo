@@ -7,6 +7,9 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 const migration = read(
   "supabase/migrations/20260803204749_elite_opponent_preparation.sql",
 );
+const hostedAuthorizationVerification = read(
+  "supabase/verification/wo036_opponent_preparation_hosted_authorization.sql",
+);
 const design = read("docs/agent-work-orders/WO-2026-036-PHASE-1-DESIGN.md");
 
 const publicRpcNames = [
@@ -114,4 +117,22 @@ test("the accepted design keeps Phase 1 staff-only and external-source free", ()
   assert.match(design, /does not use Leaguepedia, provider feeds, public URLs, embeds, scraping/);
   assert.match(design, /Review not recorded/);
   assert.match(design, /Missing rows, loading failures, non-`live` state, or `is_enabled = false` deny access/);
+});
+
+test("the hosted authorization matrix is fixture-bounded and rollback-only", () => {
+  assert.match(hostedAuthorizationVerification, /^-- WO-2026-036 hosted direct-authorization verification\./);
+  assert.match(hostedAuthorizationVerification, /\nbegin;\n/);
+  assert.match(hostedAuthorizationVerification, /\nrollback;\s*$/);
+  assert.doesNotMatch(hostedAuthorizationVerification, /\bcommit\s*;/i);
+  assert.match(hostedAuthorizationVerification, /WO-024 QA Tenant A/);
+  assert.match(hostedAuthorizationVerification, /WO-024 QA Tenant B/);
+  assert.match(hostedAuthorizationVerification, /WO-023 QA Additional 2026-08-02/);
+  assert.match(hostedAuthorizationVerification, /where name = 'TestWorkspace'/);
+  assert.match(hostedAuthorizationVerification, /set local role authenticated/);
+  assert.match(hostedAuthorizationVerification, /request\.jwt\.claim\.sub/);
+  assert.match(hostedAuthorizationVerification, /cross-tenant opponent identifier mutation is denied/);
+  assert.match(hostedAuthorizationVerification, /stale draft version is rejected/);
+  assert.match(hostedAuthorizationVerification, /unsupported evidence source is rejected/);
+  assert.match(hostedAuthorizationVerification, /oversized breadcrumb request is rejected/);
+  assert.match(hostedAuthorizationVerification, /count\(\*\) from wo036_result\) <> 16/);
 });

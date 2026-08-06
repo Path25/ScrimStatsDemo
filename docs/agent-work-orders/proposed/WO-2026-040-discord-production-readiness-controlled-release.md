@@ -1737,3 +1737,34 @@ The transaction rolled back. Final hosted state: jobs 4/5 inactive; Discord-spec
 No active worker state was committed, no provider request or message occurred, no customer/fixture/module row changed, no Function or frontend deployment occurred, and Phase D-C, denial matrices, production configuration, smoke, pilot, customer availability, and release were not started.
 
 The corrected Phase D-B acceptance criterion now passes. Migration-identity and hosted-evidence reconciliation is commit `fc0e8e8`. WO-2026-040 is **Ready for QA** and assigned to the **QA and Release Auditor** for independent audit of commits `fe77294` and `fc0e8e8`, hosted migration `20260806142907`, function/ACL evidence, the successful active-then-inactive transaction, and final inactive/no-mutation state. Release remains **HOLD**.
+
+## Independent QA Phase D-B corrected scheduler audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The corrected rollback-only scheduler recovery passes. This proves the named jobs can be activated and immediately disabled inside a transaction without committed worker activity; it does not authorise normal worker activation, customer delivery, or release.
+
+### 2. What was verified
+
+- Git history contains correction commit `fe77294` and evidence/migration-identity reconciliation `fc0e8e8`; hosted migration `20260806142907` is present.
+- Independent source and hosted-definition checks confirm `security.configure_discord_production_worker_schedule()` is `SECURITY DEFINER` with `search_path=''`, explicitly activates both returned job IDs, re-reads both actual rows, fails closed if either is not active, and is not executable by `anon`, `authenticated`, or `service_role`.
+- Focused independent contracts pass **16/16**. Hosted jobs 4/5 retain their expected schedules and are currently inactive. Current protected state is HTTP queue **0**, Discord events/attempts **11/13**, active nonce/exact controls **0/0**, and Discord-specific cron history **7,407**.
+- The recorded one-transaction rehearsal preserved IDs, made both jobs active only inside the transaction, disabled both before rollback, and finished with the inactive/no-mutation state above. Current security/performance advisors have no finding referencing the correction or cron activation control; their existing INFO/WARN baseline remains separate.
+
+### 3. Blocking issues
+
+- **Blocking:** Phase D-C private workspace module disable/recovery has not been separately approved or executed.
+- **Blocking:** Customer/role/tenant/entitlement denial matrix, production configuration/smoke, controlled pilot, monitoring/support/rollback, and final release approval remain unverified.
+
+### 4. Important risks
+
+- **Important:** The correction deliberately makes the configure routine capable of activating workers. It must remain operator-only and may be used only under a separately approved, bounded scope; the successful rollback rehearsal does not permit a committed activation.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Phase D-C fixture module snapshot/disable/restore and bounded non-postable provider boundary; all production and customer availability evidence.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** decide whether to approve the exact Phase D-C procedure in `WO-2026-040_PHASE_D_QA.md`: one named private fixture, two fresh events, exact module snapshot/restore, one disable-path invocation, one view-only provider-boundary invocation, and evidence-preserving cleanup.
+2. If approved, QA will preflight and execute only that bounded procedure. Keep workers inactive and release HOLD throughout.

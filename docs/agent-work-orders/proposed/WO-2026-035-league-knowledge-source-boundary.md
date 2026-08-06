@@ -1,7 +1,7 @@
 # WO-2026-035 - Establish the League knowledge, patch, and learning-resource source boundary
 
 - **ID reservation:** [WO-2026-035 in the work-order index](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** Done
 - **Assigned owner:** Technical Reporting Analyst
 - **Size:** M
 - **Risk:** High
@@ -75,22 +75,22 @@ Current official data, patch-note breakdowns, annotated top-tier games, and lear
 
 | Acceptance criterion | Evidence | Evidence level | Result |
 |---|---|---|---|
-| Approved source register | Primary-source review | Proposed | Outstanding |
-| Safe first experience recommendation | Cross-role review | Proposed | Outstanding |
-| Claim/provenance boundary | Ledger/dictionary update | Proposed | Outstanding |
+| Approved source register | [Source boundary register](../../operations/LEAGUE_KNOWLEDGE_SOURCE_BOUNDARY.md) | Primary-source review | Ready for PM/QA review |
+| Safe first experience recommendation | Outbound-link-only recommendation in source register | Analyst-reviewed | Ready for PM/Marketing review |
+| Claim/provenance boundary | [Message Ledger](../../operations/MESSAGE_LEDGER.md) and [Metrics Dictionary](../../operations/DATA_SOURCE_MAP_AND_METRICS_DICTIONARY.md) updates | Analyst-reviewed | Ready for PM/QA review |
 
 ### Final verdict
 
-- **Verdict:** HOLD
-- **Rationale:** No source, rights, provider, or publishing path is approved.
+- **Verdict:** CONDITIONAL
+- **Rationale:** The internal source-boundary research is complete and intentionally parked. No source, rights, provider, customer surface, or publishing path is approved; reopening requires a new founder decision on the exact limited customer experience.
 
 ### Outstanding checks
 
 | Check | Owner | Required evidence to close | Status |
 |---|---|---|---|
-| Source/rights review | Analyst / PM | Source register | Open |
-| External activation decision | Theo | Written approval or decline | Open |
-| Claim review | Marketing / PM | Message Ledger | Open |
+| Source/rights review | Analyst / PM | Source register | Closed (2026-08-03) |
+| PM decision on first experience | Theo / PM | Written park or scoped next-step decision | Closed (2026-08-03): parked |
+| External activation / customer claim | Theo | Separate exact approval | Parked; not required to close research |
 
 ### Theo approval record
 
@@ -103,8 +103,11 @@ Current official data, patch-note breakdowns, annotated top-tier games, and lear
 
 - 2026-08-02 - Founder proposed official data, patch notes, top-tier examples, and ready-made learning resources as future strong wins.
 - 2026-08-03 - Theo approved the WO-035 source-boundary research. Any implementation or release remains separately approval-gated per source.
+- 2026-08-03 - Theo selected the recommended path: close this work order as internal research and park all customer-facing development until a later decision. No source selection, provider activation, spending, ingestion, embedding, publishing, or customer claim is authorised.
 
 ## Implementation and review evidence
 
+- 2026-08-03 - Primary-source review and source register completed: [League knowledge source boundary](../../operations/LEAGUE_KNOWLEDGE_SOURCE_BOUNDARY.md). It sets an outbound-link-only first-experience recommendation and rejects ingestion, scraping, hosted VODs, copied source content, automated patch interpretation, and unreviewed third-party material.
+- 2026-08-03 - The [Message Ledger](../../operations/MESSAGE_LEDGER.md) and [Metrics Dictionary](../../operations/DATA_SOURCE_MAP_AND_METRICS_DICTIONARY.md) now distinguish official facts, curated editorial material, and unavailable/stale data.
 - These are strategic candidates only. Existing provider/official-data readiness is not established as a customer path.
-- **Highest evidence achieved:** Proposed.
+- **Highest evidence achieved:** Primary-source reviewed / internal documentation. Customer, provider, and hosted evidence remain unavailable; the work is intentionally parked.

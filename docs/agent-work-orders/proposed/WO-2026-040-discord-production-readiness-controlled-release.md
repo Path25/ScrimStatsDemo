@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** In Progress
+- **Status:** Ready for QA
 - **Assigned owner:** Core Features Developer / QA and Release Auditor
 - **Size:** M
 - **Risk:** High
@@ -1461,3 +1461,25 @@ The approved disposable proof clears the local database-validation blocker only.
 
 1. **Core Features Developer:** provide the exact candidate commit and a narrowly scoped inert hosted deployment plan (migration/function/revision, verification queries, rollback point, and explicit statement that workers, fixtures, provider calls, and customer availability remain untouched).
 2. **Theo:** if satisfied with that plan, approve that exact inert hosted scope. QA will then independently verify its hosted security and inert state before requesting any provider-facing test approval.
+
+## Core Phase D inert hosted deployment - 2026-08-06
+
+### 1. Outcome
+
+Theo approved the exact scoped Phase D commit/push, hosted migration, deployment of only `discord-qa-nonce`, and inert security verification. Core pushed candidate commit `1c05d7b`, then reconciled the connector-generated hosted migration identity in commit `a0180f0`; both commits are on `origin/codex/Staging`. The SQL content did not change during reconciliation.
+
+Hosted migration `20260806130646_wo040_discord_nonce_qa_controls` applied successfully. `discord-qa-nonce` deployed as v1 with `verify_jwt=true` and SHA `85e9ed3099fd304b88e56754f9e148bfd10fb460011e9facff39bfa29c85dacf`. Retrieved hosted source exactly matches the committed entrypoint, `_shared/collector.ts`, and `_shared/discord-delivery.ts`. `discord-dispatch` remains untouched at v18.
+
+### 2. Inert hosted verification
+
+- Gateway authentication: missing JWT returned 401 `UNAUTHORIZED_NO_AUTH_HEADER`; invalid JWT returned 401 `UNAUTHORIZED_INVALID_JWT_FORMAT`.
+- Function authentication: a valid public JWT with an absent or deliberately wrong dispatch secret returned 401 `Unauthorized`. No secret value was read or recorded.
+- Database boundary: the exact hosted migration is present; `security.discord_qa_nonce_runs` has RLS enabled, zero policies, zero rows, and zero active runs. `anon`, `authenticated`, and `service_role` have no table `SELECT`; operator arm execution is revoked from all three. Only `service_role` can execute the public claim/completion RPCs.
+- Isolation: Discord events remain 10, delivery attempts remain 12, active exact runs remain zero, and active Discord workers remain zero.
+- Advisors: zero error-level findings. The Phase D table has the expected informational `RLS enabled with no policy` notice because all application access is intentionally revoked; its new indexes have expected unused-index informational notices before any approved run.
+
+### 3. Boundaries and handoff
+
+No nonce run was armed, no correct dispatch secret was used, no fixture or tenant/module row changed, no Discord/provider request occurred, no message was sent, no worker or cron job was activated, no customer workspace was used, and no production smoke, pilot, availability claim, or release action occurred.
+
+WO-2026-040 is **Ready for QA** for independent verification of commits `1c05d7b` and `a0180f0`, hosted migration `20260806130646`, Function v1/SHA and retrieved source, authentication rejection evidence, ACL/RLS/inert counts, advisor classification, unchanged dispatcher v18, and inactive workers. Release remains **HOLD**. Provider nonce execution, recovery rehearsals, workspace-module testing, smoke, pilot, customer use, and release each require their separately named approvals.

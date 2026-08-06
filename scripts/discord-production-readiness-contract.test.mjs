@@ -37,6 +37,28 @@ test("Discord production controls apply inactive and remain operator-only", () =
   assert.doesNotMatch(migration, /create_secret|update_secret/);
 });
 
+test("Discord worker reactivation verifies the actual pg_cron state", () => {
+  const migration = read("supabase/migrations/20260806141005_wo040_discord_worker_reactivation.sql");
+
+  assert.match(migration, /create or replace function security\.configure_discord_production_worker_schedule\(\)/);
+  assert.match(migration, /security definer\s+set search_path = ''/);
+  assert.match(migration, /cron\.alter_job\(job_id := v_reminder_job_id, active := true\)/);
+  assert.match(migration, /cron\.alter_job\(job_id := v_dispatch_job_id, active := true\)/);
+  assert.match(migration, /where jobid = v_reminder_job_id\s+and jobname = 'scrimstats-discord-reminders'/);
+  assert.match(migration, /where jobid = v_dispatch_job_id\s+and jobname = 'scrimstats-discord-dispatch'/);
+  assert.match(migration, /v_reminder_active is distinct from true or v_dispatch_active is distinct from true/);
+  assert.match(migration, /'dispatch_active', v_dispatch_active/);
+  assert.match(migration, /'reminder_active', v_reminder_active/);
+  assert.match(migration, /'active', v_dispatch_active and v_reminder_active/);
+  assert.match(migration, /from public, anon, authenticated, service_role/);
+  assert.match(migration, /where name = 'project_url'/);
+  assert.match(migration, /where name = 'publishable_key'/);
+  assert.match(migration, /where name = 'discord_dispatch_secret'/);
+  assert.doesNotMatch(migration, /create_secret|update_secret|update\s+cron\.job/i);
+  assert.doesNotMatch(migration, /disable_discord_production_worker_schedule/);
+  assert.doesNotMatch(migration, /raise\s+(?:notice|log|info|debug)/i);
+});
+
 test("Discord production candidate remains outside the customer release boundary", () => {
   const manifest = read("docs/launch/EDGE_FUNCTION_MANIFEST.md");
   const boundary = read("docs/launch/RELEASE_BOUNDARY.md");

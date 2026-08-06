@@ -45,3 +45,17 @@ Executed on 2026-08-06 under Theo's approval for a read-only schema-only ScrimSt
 ## Evidence classification
 
 This is local disposable-database migration, RLS/grant, function, and rollback evidence. It is not hosted migration, deployed gateway-authentication, provider deduplication, rendered-message, recovery rehearsal, production smoke, pilot, customer availability, or release evidence. WO-2026-040 remains HOLD.
+
+## Scheduler reactivation correction proof - 2026-08-06
+
+Theo approved the source-only scheduler correction and a new disposable proof after the hosted Phase D-B rehearsal showed that named `cron.schedule()` reconciliation left jobs 4/5 inactive. No commit, push, hosted migration, Function deployment, provider request, committed worker activation, fixture/customer action, Phase D-C action, or release action was approved or performed.
+
+- Candidate migration: `20260806141005_wo040_discord_worker_reactivation.sql`. It preserves the existing disable routine, explicitly calls `cron.alter_job(..., active := true)` for both returned job IDs, re-reads each named row's actual state, and fails transactionally unless both are active.
+- Schema-only evidence: default export 763,710 bytes / SHA-256 `819619623CDD00D9CC36D8AA0FA5EBD9B4C74E9C9B9FCE5888E1627A3C713EAE`; Auth export 47,837 bytes / SHA-256 `55E4904376BEA60ED540D8AE6A464FAA0758B48114CD450C84B356C459D473F9`. Neither export contained table-data `COPY`, `INSERT`, `UPDATE`, or `DELETE` statements. Both temporary exports were removed.
+- Disposable identity: PostgreSQL image `public.ecr.aws/supabase/postgres:17.6.1.143`, database `scrimstats_wo040_phase_db_fix_20260806`, and loopback port `127.0.0.1:55323`, with matching uniquely named container/network/volume. The default schema restored with zero tenant, event, attempt, Vault, cron-job, or HTTP-queue rows. A full Auth-schema restore encountered the known disposable baseline `auth.users.is_sso_user` mismatch; the scheduler proof does not reference Auth and did not rely on that partial restore.
+- Guarded rollback proof: two exact named jobs were created as inactive disposable fixtures before the transaction. Configure returned verified active state for both existing IDs; the unchanged disable routine returned both inactive; rollback preserved both original IDs and their inactive state. Cron history, HTTP queue, Discord events, and delivery attempts remained `0/0/0/0`.
+- Function validation: direct `plpgsql_check` returned zero rows; `search_path` remained fixed to empty; `anon`, `authenticated`, and `service_role` execute checks were all false. Focused source contracts passed 11/11, scoped ESLint passed with zero warnings, TypeScript passed, production build passed, and bundle budgets passed.
+- The Supabase CLI lint wrapper could not connect to the loopback container because it forced TLS while the disposable server refused TLS. Migration application with stop-on-error and direct `plpgsql_check` passed; hosted Advisors remain a required inert post-application check because the candidate has not been applied to the shared project.
+- Cleanup verification found zero matching disposable resources and no export path. The existing ClimbLab database remained healthy on port 54322 and was never attached to the proof network.
+
+Evidence classification remains local/source-only. WO-2026-040 stays **Blocked** under Core and release stays **HOLD** until Theo separately approves the exact candidate commit/push, hosted migration, inert checks, and one rollback-only active-then-inactive rehearsal.

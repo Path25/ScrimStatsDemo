@@ -1,8 +1,8 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for QA
-- **Assigned owner:** Core Features Developer / QA and Release Auditor
+- **Status:** Blocked
+- **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** High
 - **Priority:** High
@@ -1483,3 +1483,231 @@ Hosted migration `20260806130646_wo040_discord_nonce_qa_controls` applied succes
 No nonce run was armed, no correct dispatch secret was used, no fixture or tenant/module row changed, no Discord/provider request occurred, no message was sent, no worker or cron job was activated, no customer workspace was used, and no production smoke, pilot, availability claim, or release action occurred.
 
 WO-2026-040 is **Ready for QA** for independent verification of commits `1c05d7b` and `a0180f0`, hosted migration `20260806130646`, Function v1/SHA and retrieved source, authentication rejection evidence, ACL/RLS/inert counts, advisor classification, unchanged dispatcher v18, and inactive workers. Release remains **HOLD**. Provider nonce execution, recovery rehearsals, workspace-module testing, smoke, pilot, customer use, and release each require their separately named approvals.
+
+## Independent QA Phase D inert hosted audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The exact inert hosted scope passes. This proves the candidate is deployed fail-closed and inactive; it does not prove provider deduplication, recovery, customer availability, or production readiness.
+
+### 2. What was verified
+
+- Git history contains candidate commit `1c05d7b` and migration-identity-only reconciliation `a0180f0`. The hosted project records migration `20260806130646`.
+- Supabase reports `discord-qa-nonce` **v1**, `ACTIVE`, `verify_jwt=true`, SHA `85e9ed3099fd304b88e56754f9e148bfd10fb460011e9facff39bfa29c85dacf`, with the expected nonce entrypoint and shared collector/delivery files. `discord-dispatch` remains v18 SHA `f8706beefeb5d1e0becae4cd9609376c78f990b5ad14eafeda4bc65f71a990b2`.
+- Independent POSTs with no JWT and a malformed JWT stopped at the gateway with 401 `UNAUTHORIZED_NO_AUTH_HEADER` and 401 `UNAUTHORIZED_INVALID_JWT_FORMAT`; neither request could reach the handler, database, or Discord.
+- Hosted database inspection confirms the nonce table exists with RLS enabled and zero policies; `anon`, `authenticated`, and `service_role` cannot select it or arm a probe. Only `service_role` can execute the narrowly granted claim/completion RPCs. Counts remain **10** Discord events, **12** attempts, zero active nonce/exact runs, and zero active Discord workers.
+- Focused source contracts independently pass **15/15**. Advisor output has no Phase D warning/error: the Phase D RLS-with-no-policy and unused-index notices are informational and expected while the harness is intentionally inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** No approved non-customer nonce/deduplication execution has occurred. The deployed proof cannot establish that Discord returns a single deduplicated visible result or that the first receipt is durably recorded before the second request.
+- **Blocking:** Recovery rehearsal, workspace module disable/recovery, rendered-message review, smoke, pilot, operational monitoring/support/rollback, and final release decision remain untested.
+
+### 4. Important risks
+
+- **Important:** Gateway JWT rejection was independently verified. A valid public JWT plus an absent/wrong dispatch secret was reported by Core but was not independently re-issued because it requires a current public JWT; retain that as developer-hosted evidence until a safe authenticated QA check is separately arranged.
+- **Important:** The `security.discord_qa_nonce_runs` table is deliberately private. Its zero-policy advisor notice is correct only while access remains revoked and the service-only Function is the sole execution path.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Exact single-use private nonce/deduplication scenario: named non-customer workspace, fresh eligible event, intended subscribed channel, maximum two requests, first-receipt evidence, second-request equality/deduplication, bounded logs, disable/cleanup, and unchanged unrelated events/workers.
+- **Unverified:** Global scheduler recovery, module restoration, browser/admin states, production configuration/smoke, consented pilot, support/rollback, and release approval.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** if advancing Phase D, approve one exact non-customer nonce/deduplication scenario only, naming the workspace, channel, event, temporary channel permissions, two-message ceiling, stop conditions, restoration, and required post-run checks. No customer workspace, worker activation, or production release should be included.
+2. **Core and QA:** execute and independently audit that one case; return to HOLD immediately on any unexpected provider response, duplicated visible message, missing receipt, unrelated mutation, or incomplete cleanup.
+
+## Independent QA Phase D fixture preflight - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The nominated Clash / ScrimStats Integration Test fixture is suitable in principle, but no provider action is authorised or ready because a fresh labelled event and temporary test-channel posting permission are still required.
+
+### 2. What was verified
+
+- The named fixture is an active Elite workspace with Discord live/enabled, an active installation for ScrimStats Integration Test, and enabled schedule-event subscriptions to its isolated `scrimstats-test` channel.
+- No nonce or exact-event QA control is active and all Discord workers remain inactive.
+- Two retained schedule-created events are technically eligible but are not fresh; QA did not arm, invoke, mutate, or reuse either one.
+
+### 3. Blocking issues
+
+- **Blocking:** The exact Phase D plan requires one fresh, labelled schedule-created event with zero delivery attempts. No such event has been nominated or created for this run.
+- **Blocking:** The temporary channel permission allowing the app to post only in the isolated test channel has not been confirmed. No provider request may be made without it.
+
+### 4. Important risks
+
+- **Important:** Reusing a retained pending event could confuse prior evidence and undermine one-use attribution. Preserve it untouched.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Fresh-event eligibility, zero-attempt baseline, exact channel permission, pre-arm counts, nonce deduplication result, dispatcher skip, restoration, and all later recovery/release checks.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** in Clash, create one new clearly labelled QA schedule block (for example, `WO-040 nonce QA`) so it produces a fresh schedule-created event; then confirm the ScrimStats app may temporarily send only in `scrimstats-test`.
+2. Reply `ready` after that setup. QA will perform a final read-only preflight and state the exact one-use provider action before any arm or invocation.
+
+## Independent QA Phase D final fixture preflight - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The designated private fixture is ready for the separately approved one-use test only. It is not armed, invoked, or released.
+
+### 2. What was verified
+
+- One newly created schedule-created event is pending, available, and has zero delivery attempts.
+- Clash remains Elite with its Discord module live/enabled, one active matching subscription in the isolated test channel, zero active nonce/exact controls, and zero active Discord workers.
+- Retained historical events and attempt counts remain distinguishable and untouched.
+
+### 3. Blocking issues
+
+- **Blocking:** Theo has not yet explicitly approved the exact fresh-event arm, nonce invocation, two-message ceiling, channel restoration, and following exact dispatcher deduplication check as one bounded provider-facing action.
+
+### 4. Important risks
+
+- **Important:** The arm expires after five minutes. Do not arm it until the exact invocation is authorised and ready; an unexpected provider response or any second distinct provider reference is an immediate stop condition.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The nonce probe/Discord result, durable first receipt, deduplication, visible-message count, dispatcher skip, restoration, and every later recovery/release stage.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** explicitly approve this exact action: arm the fresh Clash event for at most five minutes; invoke `discord-qa-nonce` once; allow at most two visible messages in the isolated test channel; restore it view-only; then execute one exact dispatcher deduplication check and post-run read-only verification. No workers, customer workspace, or release action is included.
+
+## Independent QA Phase D nonce/deduplication probe - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The bounded private nonce probe passed its provider-receipt and deduplication evidence. The follow-on exact dispatcher check is deliberately paused until the operator restores the channel to view-only and confirms the rendered result.
+
+### 2. What was verified
+
+- QA armed the approved fresh Clash event for five minutes and queued exactly one Vault-contained Function invocation. No secret was read, logged, or exposed.
+- The Edge request returned HTTP **200** with `confirmed`; the first and second Discord provider requests both returned **200** and the same provider reference. The first receipt was durably recorded before the second request.
+- The nonce run is `completed/confirmed`; the event remains `pending` with attempt count **0**; exactly one delivery-attempt receipt exists; nonce/exact controls and Discord workers are all inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** The channel has not yet been independently confirmed view-only with exactly one visible test message. Do not invoke the normal dispatcher before that restoration, because a regression could otherwise create an unplanned second visible message.
+
+### 4. Important risks
+
+- **Important:** Same provider reference is strong provider deduplication evidence, but it does not replace human inspection of the private rendered-message count.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Channel restoration and visible-message count; one exact dispatcher deduplication check; recovery/module cases; and all smoke/pilot/release stages.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** restore ScrimStats to view-only in `scrimstats-test`, confirm exactly one new test message is visible, and reply `ready`.
+2. QA will then invoke the already approved exact dispatcher check once. A successful deduplication result must make no new provider request or delivery-attempt row; any unexpected post, response, or mutation stops the work immediately.
+
+## Independent QA Phase D-A nonce/deduplication completion - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The approved private Phase D-A path passes end-to-end. It materially improves Discord delivery evidence, but it is not a customer, pilot, or production release approval.
+
+### 2. What was verified
+
+- Theo confirmed that exactly one private test message was visible after the nonce probe and restored the test channel to view-only before the dispatcher check.
+- The nonce run completed `confirmed`: the Function response was 200, both Discord POSTs were 200, both returned the same provider reference, and one genuine delivered-attempt receipt was written before the second call.
+- The event remained pending at attempt count 0 with exactly one delivery receipt before the dispatcher check. The approved exact dispatcher invocation then returned HTTP **200** with `processed: 1`, `delivered: 1`, and `qa_evidence: recorded`; its run completed with result `delivered`.
+- The dispatcher changed the event to delivered but did not add a second delivery-attempt row or provider request: the fixture retains exactly one attempt, while the expected aggregate deltas are one new event and one new receipt only. Both QA controls are terminal and Discord workers remain inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** Rollback-only global scheduler recovery and private workspace disable/recovery have not been approved or executed.
+- **Blocking:** Customer/role/tenant/entitlement denial matrices, production smoke, controlled pilot, operational monitoring/support/rollback, and release approval remain open.
+
+### 4. Important risks
+
+- **Important:** This is a successful isolated Elite fixture path. It does not prove ordinary customers can safely enable Discord or that all denied states fail closed in production.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Phase D-B global recovery; Phase D-C module disable/recovery; customer-safe operational configuration, smoke, pilot, support/rollback, and release decision.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** decide whether to approve Phase D-B only: the documented rollback-only global scheduler enable/disable rehearsal, with no committed worker activation or provider request.
+2. If Phase D-B passes, assess Phase D-C as a separate exact fixture/change/restoration approval. Keep the release verdict HOLD until every required stage has independent evidence.
+
+## Core Phase D-B rollback-only scheduler rehearsal - 2026-08-06
+
+### 1. Outcome
+
+Theo approved Phase D-B only. Core executed one explicit transaction that captured the inactive baseline, called `security.configure_discord_production_worker_schedule()`, inspected both named jobs, immediately called `security.disable_discord_production_worker_schedule()`, inspected them again, and rolled back. No Vault value or cron command text was selected or recorded.
+
+The rehearsal **did not pass** its activation acceptance criterion. Jobs 4 and 5 were inactive before the configure call and remained inactive after it inside the transaction; the disable call also left them inactive. The transaction rolled back successfully.
+
+### 2. Exact bounded evidence
+
+- Before: zero active jobs; job 5 `scrimstats-discord-dispatch` retained `* * * * *`; job 4 `scrimstats-discord-reminders` retained `*/15 * * * *`; cron history 7,407; HTTP queue zero; Discord events/attempts 11/13; active nonce/exact controls zero.
+- After configure inside the transaction: both named rows still reported `active=false`; every aggregate remained unchanged.
+- After disable inside the transaction: both named rows remained `active=false`; every aggregate remained unchanged.
+- After rollback: jobs 4/5 remained inactive; cron history remained 7,407; HTTP queue remained zero; Discord events/attempts remained 11/13; active nonce/exact controls remained zero.
+
+### 3. Diagnosis and handoff
+
+Hosted behavior shows that rescheduling an existing inactive named pg_cron job does not itself reactivate the row. This is consistent with pg_cron's separate `cron.alter_job(job_id, active := true)` activation control. The current configure routine returns `active: true` after calling named `cron.schedule(...)`, but it does not explicitly reactivate the existing rows, so its return contract is inaccurate for previously disabled jobs.
+
+WO-2026-040 is **Ready for QA for independent failed-result audit** and remains on release **HOLD**. Phase D-C must not begin. Any correction to `security.configure_discord_production_worker_schedule()`, new migration, hosted application, repeat rehearsal, worker activation, provider action, customer action, smoke, pilot, or release requires a new exact Theo approval.
+
+## PM handoff reset - 2026-08-06
+
+### Current status and owner
+
+**Blocked — Core Features Developer.** The Phase D-B result is a confirmed implementation defect, not an ambiguous QA finding: an existing inactive `pg_cron` job is not reactivated by the current configure routine. QA has completed the bounded failure classification and must not be sent another investigation until Core provides a corrected candidate and a new exact Theo-approved hosted rehearsal scope.
+
+### One immediate Core outcome
+
+Correct only `security.configure_discord_production_worker_schedule()` so that, for each of the two named existing jobs, it:
+
+1. schedules or reconciles the intended command without exposing Vault values;
+2. explicitly reactivates an existing inactive job through the appropriate `pg_cron` control;
+3. verifies and returns the actual post-operation `active` state rather than reporting success optimistically; and
+4. leaves `security.disable_discord_production_worker_schedule()` as the immediate global stop which preserves cron history.
+
+### Definition of done for the correction handoff
+
+- A focused disposable-database test covers both pre-existing inactive jobs and proves configure changes both to active, disable returns both to inactive, and rollback restores the original inactive state without sending HTTP requests or changing Discord/outbox data.
+- RLS, grants, fixed search paths, Vault-name-only handling, migration lint, and relevant Advisor checks remain clean; no browser, provider, worker, customer, plan, or production configuration change is included.
+- Core supplies the exact commit, migration, intended shared-project deployment plan, and rollback-only rehearsal steps. Theo must separately approve that narrow hosted application/rehearsal before deployment.
+- Only after the hosted rehearsal passes is QA assigned the evidence audit. Phase D-C, full denial matrix, production configuration, smoke, pilot, and release remain separate gates.
+
+### Explicit no-loop rule
+
+Do not return this order from Core to QA merely because source tests pass. QA receives it only after a corrected candidate has been deployed under a new exact Theo approval and the one rollback-only rehearsal has produced the required active-then-inactive evidence.
+
+## Core Phase D-B scheduler correction candidate - 2026-08-06
+
+### 1. Outcome
+
+Theo approved the source-only correction and disposable proof. Core prepared forward migration `20260806141005_wo040_discord_worker_reactivation.sql`; it changes only `security.configure_discord_production_worker_schedule()`. The routine now reconciles both named jobs, explicitly activates each returned job ID through `cron.alter_job`, re-reads both actual states, and raises transactionally unless both are active. The established `security.disable_discord_production_worker_schedule()` routine remains unchanged.
+
+No commit, push, hosted migration, Function deployment, provider action, committed worker activation, fixture/customer change, Phase D-C action, or release action occurred.
+
+### 2. Validation evidence
+
+- Focused source contract asserts explicit activation, actual-state queries, fail-closed result construction, fixed search path, Vault-name-only reads, operator-only ACLs, no direct `cron.job` update, and no disable-routine redefinition. Related focused tests passed **11/11**; scoped ESLint passed with zero warnings; TypeScript passed; production build and bundle budgets passed.
+- The migration applied with stop-on-error to a zero-data, isolated PostgreSQL 17 ScrimStats schema clone. A guarded disposable test began with both exact named jobs already present and inactive. Configure made both existing IDs active; the unchanged disable routine returned both inactive; rollback restored the original inactive IDs. Cron history, HTTP queue, Discord events, and delivery attempts remained **0/0/0/0**.
+- Direct `plpgsql_check` returned zero issues. The function retained `search_path=''`; `anon`, `authenticated`, and `service_role` execute checks were all false. The Supabase CLI lint wrapper could not use the local non-TLS endpoint, so hosted Advisors remain an explicit inert post-application check rather than being claimed from source.
+- The schema-only exports, uniquely named container/network/volume, and loopback proof database were removed after identity-checked cleanup. ClimbLab remained healthy and isolated on port 54322.
+
+### 3. Exact hosted application and rollback-only rehearsal plan
+
+This plan is **not yet approved**:
+
+1. Commit and push only the correction migration, focused contract/proof, Phase D runbook/proof record, and the narrow WO/board handoff changes after verifying the final diff excludes unrelated dirty files.
+2. Preflight the shared project read-only: exact migration absent; both existing Discord job IDs inactive; active nonce/exact controls zero; record only job IDs/schedules/active flags plus cron-history, HTTP-queue, event, and attempt counts. Never select cron command text or Vault values.
+3. Apply only migration `20260806141005_wo040_discord_worker_reactivation.sql`. It must leave both jobs inactive because it does not invoke configure. Verify the hosted function definition, fixed search path, revokes, unchanged disable definition, inactive jobs, protected counts, and security/performance Advisors.
+4. In one explicit transaction, capture the inactive baseline; call configure and retain only returned IDs/booleans; verify both existing rows active; immediately call disable and verify both inactive; compare every protected count; then roll back. Never commit an active job state.
+5. Recheck both original IDs inactive and every protected count unchanged. Stop on any mismatch, unexpected HTTP/provider activity, active control, or unrelated mutation. If migration application fails, rely on its transaction rollback. Any later source reversal must be a separately approved forward migration restoring the prior configure definition while both jobs remain inactive.
+
+### 4. Status and handoff
+
+WO-2026-040 remains **Blocked — Core Features Developer** and release remains **HOLD**. Theo must separately approve the exact commit/push, hosted migration, inert verification, and rollback-only rehearsal above. Do not assign QA until the hosted active-then-inactive evidence passes. Phase D-C, denial matrices, production configuration, smoke, pilot, customers, and release remain separate gates.

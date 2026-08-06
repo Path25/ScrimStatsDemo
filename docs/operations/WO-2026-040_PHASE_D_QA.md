@@ -21,13 +21,17 @@ Workers remain inactive throughout every Phase D step. Never invoke the global d
 
 ## B. Global disable and rollback-only recovery
 
-Use one explicit rollback-only transaction against the approved project:
+The corrected source candidate is migration `20260806141005_wo040_discord_worker_reactivation.sql`. Applying it only replaces the operator-only configure routine; it does not call that routine or activate a job. Commit/push, hosted application, and the rehearsal below require a new exact Theo approval.
 
-1. Verify both Discord jobs are inactive and capture their IDs plus aggregate run-history counts.
-2. Call `security.configure_discord_production_worker_schedule()` and verify both job rows are active only inside the transaction.
+After the separately approved migration is hosted and inert verification confirms both jobs are still inactive, use one explicit rollback-only transaction against the approved project:
+
+1. Verify both Discord jobs are inactive and capture their IDs plus aggregate run-history, HTTP queue, Discord event, delivery-attempt, and active-control counts. Do not select cron command text or Vault values.
+2. Call `security.configure_discord_production_worker_schedule()`. Retain only the returned job IDs and three boolean state fields; verify those IDs match the existing rows and both rows report `active=true` only inside the transaction.
 3. Immediately call `security.disable_discord_production_worker_schedule()` and verify both are inactive inside the same transaction.
 4. Roll back the transaction. Never commit an active cron state.
-5. Recheck both jobs are inactive, no `net.http_post` request was created, no cron run-history count changed, and no event or attempt count changed.
+5. Recheck both original job IDs are inactive, no `net.http_post` request was created, no cron run-history count changed, and no event, attempt, or active-control count changed.
+
+Stop and roll back immediately if either job ID changes, either actual active state is false after configure, disable does not return both inactive, or any protected count changes. If the migration itself fails, rely on its transaction rollback. If the corrected definition later requires reversal, keep both jobs inactive and use a separately reviewed forward migration restoring the prior configure definition; do not edit migration history or directly update `cron.job`.
 
 This proves the source-tracked global recovery controls without exposing the scheduler to an active committed job definition.
 

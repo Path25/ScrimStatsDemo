@@ -52,7 +52,7 @@ Do not use a database belonging to another workspace and do not rename or rewrit
 1. Obtain separate approval for a read-only, schema-only export of the current ScrimStats Supabase database. Export no table rows, Auth users, Storage objects, Vault values, or secret/configuration values; record only the export timestamp and checksum.
 2. Start a disposable local container from the same Supabase Postgres major version under a unique project/container identity, Docker network, database name, and non-conflicting host port. Do not attach it to the running ClimbLab network or ports.
 3. Restore the approved schema-only export with ownership and privilege restoration disabled. Confirm the disposable database contains the current `public` and `security` objects needed by the Phase D migration while containing zero tenant, event, attempt, Discord, Auth-user, and Vault-secret rows.
-4. Apply only `20260806095431_wo040_discord_nonce_qa_controls.sql` with stop-on-error enabled, then run `wo040_discord_qa_nonce.test.sql`. The test itself remains inside `BEGIN`/`ROLLBACK`; require all 25 assertions and a zero exit status.
+4. Apply only `20260806130646_wo040_discord_nonce_qa_controls.sql` with stop-on-error enabled, then run `wo040_discord_qa_nonce.test.sql`. The test itself remains inside `BEGIN`/`ROLLBACK`; require all 25 assertions and a zero exit status.
 5. Run database lint/advisor checks against that disposable database. Record bounded output only; do not record connection strings or credentials.
 6. Stop and remove only the exact disposable container, network, and volume after confirming their resolved names carry the unique Phase D identity. Recheck that the running ClimbLab stack and the hosted ScrimStats project were untouched.
 

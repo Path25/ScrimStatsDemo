@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const migrationPath = "supabase/migrations/20260806095431_wo040_discord_nonce_qa_controls.sql";
+const migrationPath = "supabase/migrations/20260806130646_wo040_discord_nonce_qa_controls.sql";
 
 test("Phase D nonce controls are private, one-use, and fresh-event bound", () => {
   const migration = read(migrationPath);

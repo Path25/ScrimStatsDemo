@@ -6,9 +6,11 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("Discord dispatch retries are target-scoped and provider-deduplicated", () => {
   const dispatch = read("supabase/functions/discord-dispatch/index.ts");
+  const delivery = read("supabase/functions/_shared/discord-delivery.ts");
 
-  assert.match(dispatch, /async function deliveryNonce\(eventId: string, channelId: string\)/);
-  assert.match(dispatch, /crypto\.subtle\.digest\("SHA-256", input\)/);
+  assert.match(delivery, /export async function discordDeliveryNonce\(eventId: string, channelId: string\)/);
+  assert.match(delivery, /crypto\.subtle\.digest\("SHA-256", input\)/);
+  assert.match(dispatch, /discordDeliveryNonce\(event\.id, subscription\.channel_id\)/);
   assert.match(dispatch, /\.eq\("delivery_target_id", subscription\.channel_id\)/);
   assert.match(dispatch, /\.eq\("outcome", "delivered"\)/);
   assert.match(dispatch, /if \(deliveredAttempt\) continue/);

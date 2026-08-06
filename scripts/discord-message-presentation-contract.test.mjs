@@ -6,12 +6,14 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("Discord messages use one recipient-local schedule time without embeds or mentions", () => {
   const dispatch = read("supabase/functions/discord-dispatch/index.ts");
+  const delivery = read("supabase/functions/_shared/discord-delivery.ts");
 
-  assert.match(dispatch, /function discordTime\(payload: Record<string, unknown>\)/);
-  assert.match(dispatch, /<t:\$\{Math\.floor\(instant \/ 1_000\)\}:F>/);
-  assert.match(dispatch, /"Time to be confirmed"/);
-  assert.match(dispatch, /const DISCORD_SUPPRESS_EMBEDS = 1 << 2;/);
-  assert.match(dispatch, /allowed_mentions: \{ parse: \[\] \},\s+flags: DISCORD_SUPPRESS_EMBEDS,/);
+  assert.match(delivery, /function discordTime\(payload: Record<string, unknown>\)/);
+  assert.match(delivery, /<t:\$\{Math\.floor\(instant \/ 1_000\)\}:F>/);
+  assert.match(delivery, /"Time to be confirmed"/);
+  assert.match(delivery, /const DISCORD_SUPPRESS_EMBEDS = 1 << 2;/);
+  assert.match(delivery, /allowed_mentions: \{ parse: \[\] as string\[\] \},\s+flags: DISCORD_SUPPRESS_EMBEDS,/);
+  assert.match(dispatch, /discordEventMessage\(event, appUrl\)/);
   assert.doesNotMatch(dispatch, /Ã|Â/);
 });
 

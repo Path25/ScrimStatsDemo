@@ -58,6 +58,9 @@ verify_jwt = true
 [functions.discord-dispatch]
 verify_jwt = false
 
+[functions.discord-qa-nonce]
+verify_jwt = true
+
 [functions.discord-install]
 verify_jwt = false
 

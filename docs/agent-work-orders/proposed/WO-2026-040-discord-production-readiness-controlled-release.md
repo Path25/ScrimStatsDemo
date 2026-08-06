@@ -1125,3 +1125,339 @@ The returned privacy correction resolves the Phase C source-review finding. The 
 
 1. **Core:** provide the exact commit, scoped hosted migration/`discord-dispatch` deployment sequence, expected inactive worker state, rollback evidence, and no-provider/no-delivery boundary.
 2. **Theo:** approve that exact hosted scope only after reviewing the plan. QA will then verify the deployed revision and inert state before any later event-arm or delivery test is proposed.
+
+## Core Phase C hosted inert deployment - 2026-08-05
+
+### 1. Outcome and approved scope
+
+Theo approved the exact Phase C commit, push, hosted migration, `discord-dispatch` deployment, and inert verification plan. Core created commit `8986e82` (`Isolate WO-040 Discord QA dispatch`), pushed it to `origin/codex/Staging`, applied only the Phase C migration to shared project `tvcgjehreaayfazlhvps`, and deployed only `discord-dispatch`. No correct-secret dispatcher invocation, QA arm, provider request, delivery, worker activation, secret/configuration change, customer action, pilot, or release action occurred.
+
+### 2. Exact hosted revisions
+
+- Source commit: `8986e82`; seven wholly WO-040-owned files only. Shared assignment-board and index files contained unrelated dirty changes and were deliberately excluded from the commit.
+- Hosted migration: `20260805191357_wo040_discord_qa_dispatch_controls`, applied from local migration `20260805170753_wo040_discord_qa_dispatch_controls.sql`.
+- Active Function: `discord-dispatch` v18, `ACTIVE`, intentional `verify_jwt=false` with the existing `DISCORD_DISPATCH_SECRET` comparison retained before request parsing or event claiming.
+- Deployed SHA-256: `f8706beefeb5d1e0becae4cd9609376c78f990b5ad14eafeda4bc65f71a990b2`.
+- Retrieved v18 entrypoint and `_shared/collector.ts` are exact normalized matches for commit `8986e82`.
+- The pre-deployment active Function was v17, rather than the older revision noted in the local manifest. Retrieved v17 was the reviewed global dispatcher source matching commit `e268298`/pre-Phase-C `HEAD`; it remains the bounded Function rollback source.
+
+### 3. Hosted inert verification
+
+- Before migration: Phase C table absent; 10 Discord events; 6 Discord delivery attempts; both `scrimstats-discord-dispatch` and `scrimstats-discord-reminders` jobs inactive.
+- After migration/deployment: private table present with RLS enabled; API roles cannot use the `security` schema or table; service role has only the narrow public claim/completion grants and cannot arm/disable runs.
+- Phase C evidence rows: **0 total**, **0 active**. No run was armed or claimed.
+- Discord event and attempt counts remain unchanged at **10** and **6**. Both Discord worker jobs remain inactive.
+- One deliberately invalid-secret POST with an otherwise valid-shaped QA UUID returned HTTP **401**, proving rejection before request parsing/event claim without using or recording the real secret.
+- Security Advisor reports only the expected informational `rls_enabled_no_policy` notice for the deliberately private, no-API-policy table. Performance Advisor reports only expected informational unused-index notices for the newly created event indexes: [RLS no-policy guidance](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [unused-index guidance](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
+
+### 4. Rollback and QA handoff
+
+The immediate Function rollback is redeployment of the pre-Phase-C global dispatcher from `e268298`; workers must remain inactive throughout. The migration is additive and inert. Removing it would require a separately approved forward rollback migration that first aborts if any Phase C evidence rows exist, then drops only the four Phase C routines and `security.discord_qa_dispatch_runs`; it must never drop the shared `security` schema or rewrite migration history.
+
+WO-040 is **Ready for QA** for independent verification of commit `8986e82`, hosted migration `20260805191357`, dispatcher v18/SHA, exact retrieved source, invalid-secret rejection, private ACL/RLS/grant state, zero runs, unchanged 10/6 counts, and inactive workers. The release verdict remains **HOLD**. Any exact-event selection/arm/invocation, retry/recovery or delivery test, worker activation, customer use, production configuration, smoke, pilot, or release requires its separately named approval.
+
+## Independent QA Phase C hosted inert audit - 2026-08-05
+
+### 1. Release verdict: HOLD
+
+The Phase C exact-event control is deployed correctly and safely inert in the shared staging project. It is suitable for a later separately approved non-customer retry/recovery test, but no delivery, client, or production-release claim is justified.
+
+### 2. What was verified
+
+- Active `discord-dispatch` is v18, `ACTIVE`, intentional `verify_jwt=false`, SHA-256 `f8706beefeb5d1e0becae4cd9609376c78f990b5ad14eafeda4bc65f71a990b2`. Retrieved source contains the reviewed strict `qa_run_id` routing and redacted delivery-evidence failure payload.
+- Hosted `security.discord_qa_dispatch_runs` has **0** rows and **0** active runs. API roles have no `security` schema/table read access; service role cannot arm/disable but can execute only the narrow claim/completion RPCs; authenticated cannot claim.
+- Discord counts remain **10** events and **6** delivery attempts. Workers 4 and 5 are inactive.
+- An independent valid-shaped request with a deliberately invalid dispatch secret returned HTTP **401** `Unauthorized`, before request parsing or any event claim.
+
+### 3. Blocking issues
+
+- **Blocking:** No exact event has been selected or armed, and no isolated retry/backoff, terminal-failure, provider-receipt, deduplication, disable, or recovery result has been hosted-verified.
+- **Blocking:** Production provider/configuration, non-customer production smoke, consented pilot, support monitoring, and final release approval remain absent.
+
+### 4. Important risks
+
+- **Important:** `verify_jwt=false` is appropriate only because this worker endpoint rejects its required server-side dispatch secret before parsing. Retain that ordering on every future revision.
+- **Important:** The retained 10/6 evidence and inactive workers do not prove outbound delivery or recovery; do not activate the global route or workers as an ad-hoc test.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One Theo-approved exact non-customer event/run with a deliberately non-postable private target, bounded retry/backoff to terminal failure, no message delivery, completion evidence, and immediate cleanup.
+- **Unverified:** A separately scoped deduplication/nonce, global/workspace-disable, production smoke, pilot, support/rollback, and release matrix.
+
+### 6. Suggested fixes or next validation steps
+
+1. Core must provide a proposed exact-event test plan naming the non-customer tenant/event/target, one-use arm expiry, expected attempts and evidence, cleanup, and explicit no-delivery boundary.
+2. Theo must approve that exact plan before Core arms anything or QA invokes v18 with the real dispatch secret. Keep workers inactive and customer Discord unavailable.
+
+## Core Phase C controlled-test stop - 2026-08-06
+
+### 1. Outcome and safety decision
+
+Theo confirmed that the existing private `ScrimStats Integration Test / #scrimstats-test` target had been made non-postable and then explicitly approved the exact `clash` event `c02f5a12-fa66-476d-987f-15b2fa686fcc` for a five-attempt retry-to-terminal-failure sequence. Core preflight confirmed active `discord-dispatch` v18/SHA `f8706bee...90b2`, the exact Elite/live-enabled tenant/event, one enabled target, two required Vault names, zero active runs, 10 Discord events, 6 attempts, and inactive workers.
+
+Attempt 1 disproved the no-delivery precondition: Discord accepted the provider request. Core stopped immediately and did not arm or invoke attempts 2-5. Continuing would have violated the approved no-delivery boundary.
+
+### 2. Exact bounded result
+
+- One five-minute run, opaque reference `07aa2f33-d27b-43fe-9593-811c2608fcd0`, was armed for only the approved tenant/event.
+- The server-side dispatch secret was consumed inside Supabase Vault and was not returned, logged, or recorded in evidence.
+- pg_net request `39418` reached v18 and returned HTTP `200` with `processed=1`, `delivered=1`, and `qa_evidence=recorded`.
+- The run completed immutably with `result_status=delivered` and the v18 deployment identifier.
+- The candidate event became `delivered`; its retry counter correctly remained zero. Discord delivery attempts moved exactly **6 to 7**, with one `delivered` attempt and a provider reference present. The reference value was not recorded.
+- This is provider-receipt evidence that Discord accepted one delivery. No rendered-message observation or screenshot was collected, so it is not a claim about visible presentation.
+
+### 3. Cleanup and isolation evidence
+
+- Active Phase C runs: **0**. No cleanup mutation or evidence deletion was required.
+- Both Discord workers remain inactive.
+- Total Discord events remain **10**.
+- The other three retained `clash` events remain pending with zero attempts; no unrelated event or tenant was claimed.
+- No second arm, retry, backoff wait, terminal-failure attempt, message deletion, permission/configuration change, customer action, smoke, pilot, or release action occurred.
+
+### 4. QA handoff and blocker
+
+WO-040 remains **Ready for QA** for independent classification of this stopped result. The intended retry/backoff/terminal-failure criterion did **not** pass. Release remains **HOLD**.
+
+The current channel cannot be reused for a no-delivery test based only on the prior permission confirmation. Before another attempt, QA and Core must agree a provider-verifiable non-postable target route—preferably an exact deleted/nonexistent private test-channel identifier created and retired for this purpose, with a separately approved temporary subscription mutation and restoration plan. Any message inspection/deletion, Discord permission change, new fixture/target, database mutation, arm, real-secret invocation, recovery, worker action, or release step requires separate approval.
+
+## Core Phase C controlled retry completion - 2026-08-06
+
+### 1. Outcome and users
+
+Theo corrected the private Discord channel permissions so the ScrimStats app could view but not send messages, then explicitly approved a fresh five-attempt exact-event retry sequence. Core used only the retained non-customer `clash` event `fc160394-f8d1-45ca-87a5-6b5c92afb404` (`WO-040 Phase B`) and the existing `ScrimStats Integration Test / #scrimstats-test` target. The hosted retry/backoff/terminal-failure path completed without a delivered message.
+
+This is operator and QA evidence for Discord delivery recovery behavior. It does not establish customer, pilot, production-configuration, worker, or release readiness.
+
+### 2. Exact hosted result
+
+- Preflight confirmed active `discord-dispatch` v18/SHA `f8706bee...90b2`, an eligible pending event at attempt count 0, exactly one enabled/active target, the two required Vault names, zero active runs, 10 total Discord events, 7 retained delivery attempts, and both Discord workers inactive.
+- Each attempt used a fresh five-minute one-use run bound to the same tenant/event. The real dispatcher secret stayed inside Supabase Vault and was not returned or recorded.
+- pg_net requests `39446`, `39451`, `39461`, `39480`, and `39514` each reached v18 and returned HTTP 200 with `processed=1`, `delivered=0`, and `qa_evidence=recorded`.
+- Discord returned HTTP 403 for all five provider attempts. Outcomes were `retry`, `retry`, `retry`, `retry`, then `failed`; every provider-reference field remained absent.
+- Event backoffs were enforced at 2, 4, 8, and 16 minutes before the following one-use arm. No eligibility timestamp was bypassed or rewritten.
+- The event reached `status=failed`, `attempt_count=5`, `delivered_at=null`, and retained the bounded error `One or more Discord deliveries failed`.
+- All five runs completed on v18. The first four recorded `result_status=pending`; the fifth recorded `result_status=failed`.
+
+### 3. Cleanup and isolation evidence
+
+- Active Phase C runs: **0**.
+- Total Discord events remain **10**; total delivery attempts moved **7 to 12**, exactly matching the five approved provider failures.
+- The two other retained pending events remain at attempt count 0 and were not claimed.
+- Both `scrimstats-discord-dispatch` and `scrimstats-discord-reminders` remain inactive.
+- No provider message was accepted in this sequence, and no provider reference was recorded. This is database plus provider-error evidence, not rendered-message evidence.
+- No subscription, installation, secret/configuration, worker, customer, smoke, pilot, billing, deployment, migration, or release action occurred.
+
+### 4. QA handoff and remaining gates
+
+WO-040 is **Ready for QA** for independent review of the five exact run rows, request results, five 403 delivery-attempt rows, 2/4/8/16-minute timing, terminal event state, zero-active-run cleanup, retained-event isolation, and inactive workers. The release verdict remains **HOLD**.
+
+This completes only the Phase C retry/backoff/terminal-failure criterion. Deduplication/nonce behavior, disable/recovery behavior, global/workspace-disable controls, production configuration and smoke, consented pilot, monitoring/support/rollback readiness, worker activation, customer availability, and final release approval remain separately gated.
+
+## Independent QA Phase C retry/recovery audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The isolated retry/backoff/terminal-failure criterion passes in the non-customer fixture. Discord remains test-only: deduplication, disable/recovery, production smoke, pilot, and final release gates are still open.
+
+### 2. What was verified
+
+- The selected private event is terminal `failed`, has `attempt_count=5`, no `delivered_at`, and retained bounded failure text. It has five completed one-use runs with results `pending`, `pending`, `pending`, `pending`, then `failed`.
+- Exactly five Discord attempt rows record `retry`, `retry`, `retry`, `retry`, then `failed`; all contain `Discord returned 403` and none has a provider reference.
+- The observed intervals were 2.3, 4.4, 8.4, and 16.6 minutes, satisfying the configured 2/4/8/16-minute backoff sequence without an availability override.
+- All five recorded `pg_net` requests completed to dispatcher v18 with HTTP 200 and no network timeout/error. The provider 403s therefore represent the intended non-postable-target outcome.
+- No active QA dispatch run or worker remains. Total Discord events remain 10 and attempts are 12; two other eligible same-tenant fixture events remain pending at attempt 0, confirming exact-event isolation.
+
+### 3. Blocking issues
+
+- **Blocking:** Hosted deduplication/nonce, global-disable, workspace-disable, and recovery-after-disable evidence remains absent. The current arm routine intentionally cannot select the earlier delivered event, so it cannot simply be reused to prove a no-second-provider-call case.
+- **Blocking:** Production provider configuration, non-customer production smoke, named consented Elite pilot, support monitoring/rollback rehearsal, and final release approval remain unverified.
+
+### 4. Important risks
+
+- **Important:** An earlier private precondition test produced one provider-accepted delivery after the target unexpectedly allowed posting. Core stopped immediately; it did not affect a customer or activate workers, but it must not be presented as rendered-message or customer-delivery evidence.
+- **Important:** This recovery test proves provider denial and retained failure evidence only. It does not prove successful delivery, deduplication, or safe recovery following a provider-accepted message.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A separately designed and approved safe hosted deduplication/nonce test, plus global and workspace disable/recovery controls, with no unplanned provider message or unrelated-event claim.
+- **Unverified:** Production configuration review, non-customer smoke, controlled Elite pilot, support/rollback ownership, customer availability, and final release decision.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core:** propose the smallest safe hosted deduplication/nonce and disable/recovery evidence plan. It must explain how it proves no second provider call without reusing a delivered event through an ineligible arm or touching another queued event.
+2. **Theo:** approve the exact isolated fixture, any reversible state change, provider boundary, evidence capture, and cleanup only after the plan is reviewed. Keep workers inactive and Discord unavailable to customers.
+
+## 2026-08-06 Core Phase D source handoff
+
+### Restated scope
+
+- **Outcome:** provide QA with a narrow, source-only mechanism to prove Discord nonce behaviour and genuine delivered-evidence deduplication, plus reproducible global/workspace disable-and-recovery procedures.
+- **Users:** QA and Release Auditor plus an authorised database/operator role; this adds no customer-facing surface.
+- **Acceptance:** one fresh non-customer event and exact subscribed channel can be armed once; at most two byte-identical provider requests can be made; the first genuine receipt is recorded before the second request; the normal exact-event dispatcher can then prove skip-on-delivered evidence without another provider call; all recovery rehearsals are bounded and reversible.
+- **Risks:** Discord may return two distinct messages, a provider success may precede an evidence-write failure, or a fixture/module/scheduler state may drift. The runbook treats each as an immediate stop and retains bounded evidence.
+- **Non-goals:** no hosted migration, Function deployment, fixture mutation, permission/configuration change, provider call, worker activation, customer smoke/pilot, availability claim, or release is included in this source handoff.
+
+### Implemented source candidate
+
+- Migration `20260806095431_wo040_discord_nonce_qa_controls.sql` adds a private RLS-enabled evidence table, operator-only arm/disable routines, service-only claim/completion routines, exact fresh-event/Elite/live-module/subscription checks, a fifteen-minute maximum, and mutual exclusion with the existing exact-event dispatcher control. API roles cannot read the table or arm a run; provider identifiers remain only in the existing delivery-attempt ledger.
+- New JWT-protected `discord-qa-nonce` source requires the separate dispatch secret before parsing, rechecks the event, entitlement, active exact subscription, and absence of any prior attempt, then permits a maximum of two byte-identical Discord POSTs. It records the first genuine provider receipt before the second request and returns/logs only bounded status/equality evidence.
+- The production dispatcher and nonce probe now share one schedule-message and deterministic-nonce helper, preserving the existing localised timestamp, no-mention, and suppressed-embed presentation contract.
+- `WO-2026-040_PHASE_D_QA.md` defines the future separately approved nonce/deduplication case, rollback-only global scheduler rehearsal, exact workspace module restoration case, stop conditions, and approval sequence. Workers remain inactive and the global dispatcher is never used for provider-facing Phase D evidence.
+
+### Validation and handoff evidence
+
+- Passed: focused Discord contracts 16/16; full repository tests 260/260; ESLint with zero warnings; TypeScript; production Vite build; bundle budget; and scoped diff checks.
+- Authored: rollback-only pgTAP contract with 25 assertions covering RLS/grants, eligibility, mutual exclusion, service authorization, one-use claims, genuine evidence, disable, and tenant/event isolation.
+- Not executed: the isolated pgTAP stack cannot bootstrap because historical hyphen-named migrations are skipped by the current CLI, leaving the first accepted underscore migration without its prerequisite enum. The attempt stopped before this WO migration or test ran; the temporary local container identity/ports were removed/restored, and no hosted state was touched. The earlier schema-lint result used the only running local database port, which belongs to ClimbLab, so it is not counted as ScrimStats database evidence despite returning clean.
+- No UI changed, so desktop/mobile browser checks are not applicable. No hosted migration, Function deployment, fixture mutation, provider request, secret/configuration change, worker activation, customer action, or release action occurred.
+
+### QA handoff
+
+QA and Release Auditor should independently inspect the migration, shared helper, nonce Function, contracts, and Phase D runbook. Status is **Ready for QA for source audit only** and the release verdict remains **HOLD**. Any commit/push, hosted migration/Function deployment, or execution of Phases A-C requires the separately recorded approvals in the runbook.
+
+## Independent QA Phase D source audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The nonce/deduplication and recovery design is directionally sound, but it is not eligible for hosted deployment because the claimed JWT gateway protection is not explicitly configured or independently tested.
+
+### 2. What was verified
+
+- The source bounds a nonce probe to one fresh Elite/live-module event and one active subscribed channel, mutually excludes the existing exact-event dispatch control, requires service-only claim/completion RPCs, and records the first genuine receipt before the maximum second byte-identical provider POST.
+- Shared message and deterministic nonce construction are used by both the production dispatcher and probe. The probe's bounded response/log omit tenant, event, channel, provider-reference, secret, and message-body values.
+- Independent focused contracts passed **14/14**; project-local TypeScript `--noEmit` and scoped ESLint passed with zero warnings.
+
+### 3. Blocking issues
+
+- **Blocking:** `supabase/config.toml` has no `[functions.discord-qa-nonce] verify_jwt = true` entry, while the Function contains no in-code JWT validation. The handoff and runbook claim gateway JWT verification, but deployment would rely on an implicit default rather than a reviewed explicit boundary. Add the explicit configuration and a contract proving it before any commit or deployment.
+- **Blocking:** The rollback-only Phase D pgTAP contract was not executed against a ScrimStats database due historical migration bootstrap incompatibility. RLS/grant, mutual-exclusion, and completion assertions are source-only until a valid disposable database run is available.
+
+### 4. Important risks
+
+- **Important:** The nonce probe may send up to two private provider requests by design. Its later approval must name the temporary channel permission, maximum visible-message boundary, stop conditions, and restoration; it cannot be treated as a no-delivery test.
+- **Important:** Add `discord-qa-nonce` to the Edge Function manifest as test-only before any hosted deployment, including its explicit JWT-plus-dispatch-secret boundary and no-customer-availability state.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Disposable ScrimStats database migration/pgTAP execution; hosted migration/Function source and auth configuration; inert ACL/RLS checks.
+- **Unverified:** Approved nonce/deduplication execution, rollback-only global scheduler rehearsal, workspace disable/recovery, production configuration/smoke, pilot, support/rollback, and release gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core:** add `[functions.discord-qa-nonce] verify_jwt = true`, add a focused config contract, update the test-only manifest, and resolve or document the valid ScrimStats disposable-database bootstrap path before returning the source candidate.
+2. QA will re-audit those corrections. Only then may Core prepare a separately approved commit and inert hosted deployment plan; no provider action, fixture change, or worker activation is approved.
+
+## Core Phase D authentication correction - 2026-08-06
+
+### 1. Outcome and users
+
+Core completed the QA-requested source-only correction for the Phase D nonce probe. The gateway JWT boundary is now explicit and regression-tested, the test-only manifest records both authentication layers, and the runbook defines a disposable ScrimStats database proof route that cannot substitute ClimbLab or the shared hosted project.
+
+This remains an operator/QA harness only. It adds no customer-facing availability and does not authorise a commit, deployment, migration, provider request, fixture, worker, smoke, pilot, or release action.
+
+### 2. Acceptance, risks, and non-goals
+
+- **Acceptance:** `discord-qa-nonce` must declare `verify_jwt = true`, still reject the separate dispatch secret before parsing, appear as source-only/test-only in the manifest, and provide a valid isolated database-validation path.
+- **Risks:** implicit gateway defaults can drift; schema-only exports require separate read approval and strict no-data handling; disposable container cleanup must target only the unique Phase D identity.
+- **Non-goals:** no in-code replacement for gateway JWT verification, historical migration renaming, hand-built partial schema, ClimbLab reuse, hosted rollback experiment, secrets/configuration mutation, or provider execution.
+
+### 3. Changes and validation evidence
+
+- Added `[functions.discord-qa-nonce] verify_jwt = true` to `supabase/config.toml` while retaining the Function's pre-parse `x-discord-dispatch-secret` check.
+- Added a focused contract asserting the explicit config, manifest wording, and source dispatch-secret boundary.
+- Registered `discord-qa-nonce` in the test-only manifest as source-only and undeployed with explicit gateway-JWT-plus-dispatch-secret authentication.
+- Added the schema-only disposable-clone procedure to `WO-2026-040_PHASE_D_QA.md`: separate read approval, zero data/secrets, matching Supabase Postgres major version, isolated identity/network/port, candidate-only migration, 25/25 rollback-only assertions, lint/advisors, exact cleanup, and explicit prohibition on ClimbLab/shared-hosted substitutes.
+- Passed: focused Discord contracts **17/17**, repository tests **261/261**, ESLint with zero warnings, TypeScript, production Vite build, and bundle budget.
+- The pgTAP suite remains authored but unexecuted; the new procedure documents the valid proof route rather than overstating database verification. No hosted or provider action occurred.
+
+### 4. QA handoff
+
+WO-2026-040 is **Ready for QA for source re-audit only**. QA should verify the explicit config contract, manifest boundary, and disposable-database procedure. Release remains **HOLD**; commit/push, hosted deployment/migration, schema-only hosted export, database proof execution, fixtures, provider calls, permissions/configuration, workers, customers, smoke, pilot, and release each retain separate approval gates.
+
+## Independent QA Phase D authentication re-audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The JWT/configuration and manifest blockers are resolved in source. Phase D remains blocked on the separately approved execution of its database proof; it is not ready for commit, deployment, provider activity, or customer use.
+
+### 2. What was verified
+
+- `supabase/config.toml` now explicitly declares `[functions.discord-qa-nonce] verify_jwt = true`; the Function retains its pre-parse `x-discord-dispatch-secret` check.
+- The test-only Edge Function manifest records the source-only nonce probe, explicit dual authentication, undeployed state, inactive workers, and no customer availability.
+- The focused contract asserts the configuration, manifest, and secret-boundary contract. Independent focused checks passed **15/15**; TypeScript and scoped ESLint passed with zero warnings.
+- The runbook now specifies a zero-data, isolated schema-only ScrimStats clone, candidate-only migration/test, advisor/lint, and identity-checked cleanup. It expressly rejects ClimbLab and shared-hosted substitutes.
+
+### 3. Blocking issues
+
+- **Blocking:** The Phase D migration and pgTAP suite still have not executed against a valid ScrimStats database. The documented clone procedure requires Theo's separate read-only, schema-only export approval before this RLS/grant proof can be claimed.
+
+### 4. Important risks
+
+- **Important:** A schema-only export must contain no rows, Auth users, Storage objects, Vault values, connection strings, or secrets. Its use must stay inside an isolated disposable environment and be cleaned up by explicit resolved identity.
+- **Important:** Passing source contracts and an explicit function setting do not establish Supabase's deployed gateway-authentication behavior; that remains hosted verification after separate deployment approval.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Approved isolated database migration, all 25 pgTAP assertions, and disposable-database lint/advisor output.
+- **Unverified:** Commit/push, hosted migration/Function deployment, hosted auth/RLS/inert review, nonce/deduplication, recovery tests, smoke, pilot, and release.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** decide whether to approve the exact read-only schema-only export and isolated disposable database proof described in `WO-2026-040_PHASE_D_QA.md`. This is the only current action needed to clear the remaining source-validation gate; it does not change hosted data, secrets, provider state, workers, or customers.
+2. If approved and passed, Core can provide a separately scoped commit and inert hosted deployment plan for a later approval. Keep all provider and customer actions unapproved until then.
+
+## Phase D disposable database-proof approval - 2026-08-06
+
+Theo approved only the documented read-only, schema-only ScrimStats export and isolated disposable database proof in `docs/operations/WO-2026-040_PHASE_D_QA.md`. Core Features Developer may perform the approved export/proof route, applying only the Phase D candidate migration in the disposable clone and running the rollback-only pgTAP/lint/advisor checks. The export must contain no rows, Auth users, Storage objects, Vault values, connection strings, or secrets; the clone must use its unique Phase D identity and be removed after verification. No shared-hosted mutation, Function deployment, provider action, fixture change, worker activation, customer action, configuration/secret change, smoke, pilot, or release is approved.
+
+## Core Phase D disposable database proof - 2026-08-06
+
+### 1. Outcome
+
+The approved read-only schema export and isolated PostgreSQL 17 proof completed. The Phase D migration applied cleanly; all **25/25** rollback-only pgTAP assertions passed; Phase D schema/RPC lint passed; advisors produced no Phase D or error-level finding; all fixtures rolled back; and the exact disposable resources plus exports were removed.
+
+### 2. Exact evidence
+
+- Schema-only exports contained zero data statements and no credential values. Checksums, sizes, clone identity, the exact Auth-helper correction, test output classification, inherited lint/advisor findings, hosted isolation, and cleanup are recorded in `docs/operations/WO-2026-040_PHASE_D_DATABASE_PROOF.md`.
+- The first test pass stopped after assertions 1-11 because the CLI default dump excludes `auth.jwt()`. That transaction rolled back. Core exported the zero-data Auth schema and restored the exact hosted helper in the disposable clone; no candidate source changed. The second pass completed 25/25 and rolled back.
+- `security` lint and direct checks of both new public RPCs returned zero issues. Full-schema lint retained unrelated inherited baseline errors; advisors returned only unrelated inherited public-schema performance warnings.
+- Post-test disposable counts were zero tenants/events/attempts/nonce runs and zero active exact runs. RLS remained enabled on the Phase D table.
+- Final read-only hosted evidence remained unchanged: Phase D table absent, 10 Discord events, 12 attempts, zero active exact runs, and zero active Discord workers.
+- Cleanup verification found zero matching Phase D container/network/volume resources and no export directory. ClimbLab remained healthy and untouched.
+
+### 3. Handoff and gates
+
+WO-2026-040 is **Ready for QA for independent database-proof audit**. This clears the disposable source-validation blocker only. Release remains **HOLD**; commit/push, hosted migration/Function deployment, hosted gateway/RLS/inert verification, provider/fixture/permission work, recovery rehearsal, workers, customers, smoke, pilot, and release all remain separately approval-gated.
+
+## Independent QA Phase D disposable database-proof audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The approved disposable proof clears the local database-validation blocker only. It does not establish a committed candidate, hosted migration or Function behavior, provider deduplication, customer safety in a live workspace, or production readiness.
+
+### 2. What was verified
+
+- The proof record documents a zero-data, schema-only ScrimStats export, a distinct PostgreSQL 17 disposable identity, candidate-only migration application, and removal of the exact disposable resources and export files. The recorded first test failure was preserved: it rolled back after the absent `auth.jwt()` helper, then the exact zero-data Auth schema helper was restored without changing candidate source.
+- The reported second disposable pass covers all **25/25** rollback-only pgTAP assertions, including private-table RLS/revokes, service-only claim/completion, entitlement and subscription eligibility, one-use behavior, cross-control exclusion, evidence-backed completion, durable disable, and untouched unrelated fixtures. The proof also records zero Phase D security/RPC lint issues and no Phase D or error-level advisor result.
+- Independent source inspection confirms the migration enables RLS, revokes API access from the nonce table and arm/disable routines, fixes `SECURITY DEFINER` search paths, restricts public claim/completion RPC execution to `service_role`, and retains the explicit `discord-qa-nonce` gateway JWT configuration plus dispatch-secret boundary in the source manifest.
+- A fresh read-only hosted query confirms Phase D is still absent: no nonce table or migration history, **10** retained Discord events, **12** retained delivery attempts, and **zero** active exact-event runs or Discord workers.
+
+### 3. Blocking issues
+
+- **Blocking:** The Phase D source candidate remains uncommitted and undeployed. No hosted migration or `discord-qa-nonce` Function revision exists to verify gateway JWT enforcement, server authorization, grants/RLS, or inert behavior in the shared environment.
+- **Blocking:** No approved provider-facing nonce/deduplication execution, recovery rehearsal, workspace recovery, non-customer smoke, pilot, support/rollback exercise, or release decision has occurred. These are required before Discord can be presented as available to other clients.
+
+### 4. Important risks
+
+- **Important:** The first disposable test failure was environmental (`auth.jwt()` excluded from the default schema dump), not a candidate change. The documented zero-data Auth-helper restoration is an acceptable disposable correction, but it is not evidence that hosted Auth gateway behavior will match after deployment.
+- **Important:** The nonce probe may make two private provider POSTs. Any future approval must identify the non-customer workspace/channel, visible-message ceiling, exact event, stop conditions, restoration, and single-use evidence boundary.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Exact commit/push and separately approved inert hosted migration plus Function deployment; then hosted function revision/configuration, JWT rejection, dispatch-secret rejection, public/authenticated/service-role ACL, RLS/grant, and inactive-worker checks.
+- **Unverified:** A separately approved non-customer nonce/deduplication case, rollback-only global scheduler rehearsal, module-disable/recovery case, rendered-message inspection, then production smoke, controlled pilot, monitoring/support/rollback, and final release approval.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Core Features Developer:** provide the exact candidate commit and a narrowly scoped inert hosted deployment plan (migration/function/revision, verification queries, rollback point, and explicit statement that workers, fixtures, provider calls, and customer availability remain untouched).
+2. **Theo:** if satisfied with that plan, approve that exact inert hosted scope. QA will then independently verify its hosted security and inert state before requesting any provider-facing test approval.

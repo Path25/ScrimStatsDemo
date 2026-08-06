@@ -1,22 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
 import { discordEntitled } from "../_shared/collector.ts";
+import {
+  discordDeliveryNonce,
+  discordEventMessage,
+  type DiscordIntegrationEvent,
+  supportedDiscordEventTypes,
+} from "../_shared/discord-delivery.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type",
 };
 
-type IntegrationEvent = {
-  id: string;
-  tenant_id: string;
-  event_type: string;
-  aggregate_id: string | null;
-  payload: Record<string, unknown>;
-  attempt_count: number;
-};
-
-const supportedEventTypes = new Set(["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"]);
-const DISCORD_SUPPRESS_EMBEDS = 1 << 2;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function parseDispatchRequest(rawBody: string) {
@@ -36,42 +31,6 @@ function parseDispatchRequest(rawBody: string) {
   if (typeof record.qa_run_id !== "string" || !UUID_PATTERN.test(record.qa_run_id)) return null;
 
   return { qaRunId: record.qa_run_id };
-}
-
-function discordTime(payload: Record<string, unknown>) {
-  const scheduledTime = typeof payload.scheduled_time === "string"
-    ? payload.scheduled_time
-    : typeof payload.match_date === "string"
-      ? payload.match_date
-      : null;
-  const instant = scheduledTime ? Date.parse(scheduledTime) : Number.NaN;
-  return Number.isFinite(instant) ? `<t:${Math.floor(instant / 1_000)}:F>` : "Time to be confirmed";
-}
-
-function eventMessage(event: IntegrationEvent, appUrl: string) {
-  const opponent = typeof event.payload.opponent_name === "string" ? event.payload.opponent_name : "opponent";
-  const link = event.aggregate_id ? `${appUrl}/scrims/${event.aggregate_id}` : `${appUrl}/scrims`;
-  const title =
-    event.event_type === "schedule_created"
-      ? "Practice block scheduled"
-      : event.event_type === "schedule_cancelled"
-        ? "Practice block cancelled"
-        : event.event_type === "schedule_changed"
-          ? "Practice block updated"
-        : event.event_type === "practice_reminder"
-          ? "Practice block coming up"
-          : "Practice block updated";
-  return {
-    content: `**${title}**\nvs ${opponent}\n${discordTime(event.payload)}\n${link}`,
-    allowed_mentions: { parse: [] },
-    flags: DISCORD_SUPPRESS_EMBEDS,
-  };
-}
-
-async function deliveryNonce(eventId: string, channelId: string) {
-  const input = new TextEncoder().encode(`${eventId}:${channelId}`);
-  const digest = await crypto.subtle.digest("SHA-256", input);
-  return Array.from(new Uint8Array(digest).slice(0, 12), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (request) => {
@@ -127,8 +86,8 @@ Deno.serve(async (request) => {
   }
 
   let delivered = 0;
-  for (const event of (events || []) as IntegrationEvent[]) {
-    if (!supportedEventTypes.has(event.event_type)) {
+  for (const event of (events || []) as DiscordIntegrationEvent[]) {
+    if (!supportedDiscordEventTypes.has(event.event_type)) {
       await admin.from("integration_events").update({ status: "cancelled", last_error: "Event is outside the approved Discord schedule scope" }).eq("id", event.id);
       continue;
     }
@@ -178,7 +137,7 @@ Deno.serve(async (request) => {
       }
       if (deliveredAttempt) continue;
 
-      const nonce = await deliveryNonce(event.id, subscription.channel_id);
+      const nonce = await discordDeliveryNonce(event.id, subscription.channel_id);
       const response = await fetch(`https://discord.com/api/v10/channels/${subscription.channel_id}/messages`, {
         method: "POST",
         headers: {
@@ -186,7 +145,7 @@ Deno.serve(async (request) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...eventMessage(event, appUrl),
+          ...discordEventMessage(event, appUrl),
           nonce,
           enforce_nonce: true,
         }),
@@ -244,7 +203,7 @@ Deno.serve(async (request) => {
   let qaEvidence: "not_applicable" | "recorded" | "failed" = "not_applicable";
   if (qaRunId) {
     qaEvidence = "failed";
-    const qaEvent = (events as IntegrationEvent[])[0];
+    const qaEvent = (events as DiscordIntegrationEvent[])[0];
     const { data: statusRow, error: statusError } = await admin
       .from("integration_events")
       .select("status")

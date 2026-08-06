@@ -49,9 +49,10 @@ test("Discord reminder scheduling stays within the approved Elite promise", () =
 
 test("Discord dispatch stays within the selected Elite schedule scope", () => {
   const dispatch = read("supabase/functions/discord-dispatch/index.ts");
+  const delivery = read("supabase/functions/_shared/discord-delivery.ts");
   const config = read("supabase/config.toml");
-  assert.match(dispatch, /schedule_created.*schedule_changed.*schedule_cancelled.*practice_reminder/);
-  assert.doesNotMatch(dispatch, /availability_reminder|collector_reminder/);
+  assert.match(delivery, /schedule_created[\s\S]*schedule_changed[\s\S]*schedule_cancelled[\s\S]*practice_reminder/);
+  assert.doesNotMatch(delivery, /availability_reminder|collector_reminder/);
   assert.match(dispatch, /discordEntitled\(event\.tenant_id\)/);
   assert.match(dispatch, /claim_integration_events_for_provider/);
   assert.match(config, /\[functions\.discord-install\]\s+verify_jwt = false/);

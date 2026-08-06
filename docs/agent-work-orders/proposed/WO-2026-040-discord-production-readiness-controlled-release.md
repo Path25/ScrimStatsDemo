@@ -1736,4 +1736,4 @@ The transaction rolled back. Final hosted state: jobs 4/5 inactive; Discord-spec
 
 No active worker state was committed, no provider request or message occurred, no customer/fixture/module row changed, no Function or frontend deployment occurred, and Phase D-C, denial matrices, production configuration, smoke, pilot, customer availability, and release were not started.
 
-The corrected Phase D-B acceptance criterion now passes. WO-2026-040 is **Ready for QA** and assigned to the **QA and Release Auditor** for independent audit of commit `fe77294`, hosted migration `20260806142907`, function/ACL evidence, the successful active-then-inactive transaction, and final inactive/no-mutation state. Release remains **HOLD**.
+The corrected Phase D-B acceptance criterion now passes. Migration-identity and hosted-evidence reconciliation is commit `fc0e8e8`. WO-2026-040 is **Ready for QA** and assigned to the **QA and Release Auditor** for independent audit of commits `fe77294` and `fc0e8e8`, hosted migration `20260806142907`, function/ACL evidence, the successful active-then-inactive transaction, and final inactive/no-mutation state. Release remains **HOLD**.

@@ -2632,5 +2632,6 @@ Theo supplied an authenticated staging session for the existing non-customer Cla
 - The Discord module rendered `Test only`, the notification-bridge preview, and `Unavailable until delivery is verified`.
 - `Disconnect`, `Refresh channels`, `Load Discord roles`, `Save schedule prompts`, and `Connect Discord` each had zero rendered controls. This closes the deployed viewer presentation gap for the current candidate.
 - The browser reported a 1280 x 720 viewport. Its control surface still exposes no real viewport resize, so 390 px responsive evidence remains unverified.
+- A read-only membership/entitlement reconciliation across the four approved test accounts confirms there is no existing admin membership on an Elite/live Discord workspace: the available admin memberships are on planned-module tenants without an installation. No fixture was changed.
 
 Phase G-B remains **In Progress** with release **HOLD**. Before QA handoff, Core/QA still needs a genuine 390 px role presentation check, an authorised Elite/live admin setup fixture or an explicitly accepted limitation, and immutable Vercel revision evidence if project visibility becomes available. Phase G-C remains separately approval-gated.

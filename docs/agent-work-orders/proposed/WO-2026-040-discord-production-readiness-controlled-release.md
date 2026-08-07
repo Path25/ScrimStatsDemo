@@ -2635,3 +2635,22 @@ Theo supplied an authenticated staging session for the existing non-customer Cla
 - A read-only membership/entitlement reconciliation across the four approved test accounts confirms there is no existing admin membership on an Elite/live Discord workspace: the available admin memberships are on planned-module tenants without an installation. No fixture was changed.
 
 Phase G-B remains **In Progress** with release **HOLD**. Before QA handoff, Core/QA still needs a genuine 390 px role presentation check, an authorised Elite/live admin setup fixture or an explicitly accepted limitation, and immutable Vercel revision evidence if project visibility becomes available. Phase G-C remains separately approval-gated.
+
+## Core Phase G-B temporary admin fixture verification - 2026-08-07
+
+Theo approved the narrowly bounded non-customer fixture proposed above: temporarily change only `pathtoyourdream@gmail.com` in Clash from viewer to admin, perform read-only hosted verification, then restore the exact viewer role. No other membership, workspace, Discord configuration, worker, provider, event, or customer state was authorised.
+
+### Preflight and temporary verification
+
+- Guarded preflight found exactly one matching membership with role `viewer`; Clash remained Elite/live/enabled with one active Discord installation and zero active Discord workers.
+- The guarded viewer-to-admin update changed exactly one row.
+- After reload at 1280 x 720, staging displayed the role as `admin`, rendered `Test only` and `Last delivery recorded`, retained the provider-receipt limitation and release-HOLD wording, and rendered exactly one each of `Disconnect`, `Refresh channels`, `Load Discord roles`, and `Save schedule prompts`.
+- No control was invoked and no configuration value was changed.
+
+### Immediate restoration and postflight
+
+- The guarded admin-to-viewer restoration changed exactly one row.
+- After reload, staging again displayed `viewer`, rendered the read-only `Test only` / `Unavailable until delivery is verified` state, and rendered zero instances of all four management controls.
+- Final database read-back confirms exactly one matching membership with role `viewer`, one active installation, four enabled subscriptions, one permitted Discord role, and zero active Discord workers.
+
+The authorised Elite/live admin presentation gap is closed and the temporary fixture is fully restored. Phase G-B remains **In Progress** with release **HOLD** only because genuine 390 px hosted evidence and immutable Vercel revision mapping remain unavailable in the current tool surfaces. Phase G-C remains separately approval-gated.

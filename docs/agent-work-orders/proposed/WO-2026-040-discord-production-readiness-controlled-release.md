@@ -2623,3 +2623,14 @@ Theo approved only the bounded candidate deployment and read-only verification s
 ### Exact QA handoff blocker
 
 To complete this deployment-verification step, QA needs authenticated access to the existing Clash viewer fixture and a browser capable of a real 390 px viewport. It must repeat the deployed `/integrations` role presentation without mutations and record the exact staging revision if Vercel project visibility is available. After those checks pass, WO-040 may move to the QA and Release Auditor for Phase G-B review; Phase G-C remains separately approval-gated.
+
+## Core Phase G-B authenticated viewer recheck - 2026-08-07
+
+Theo supplied an authenticated staging session for the existing non-customer Clash viewer fixture. The read-only check used `pathtoyourdream@gmail.com`; no workspace, provider, database, configuration, or customer state was changed.
+
+- `https://staging.scrimstats.gg/integrations` loaded the `clash` workspace and displayed the authenticated role as `viewer`.
+- The Discord module rendered `Test only`, the notification-bridge preview, and `Unavailable until delivery is verified`.
+- `Disconnect`, `Refresh channels`, `Load Discord roles`, `Save schedule prompts`, and `Connect Discord` each had zero rendered controls. This closes the deployed viewer presentation gap for the current candidate.
+- The browser reported a 1280 x 720 viewport. Its control surface still exposes no real viewport resize, so 390 px responsive evidence remains unverified.
+
+Phase G-B remains **In Progress** with release **HOLD**. Before QA handoff, Core/QA still needs a genuine 390 px role presentation check, an authorised Elite/live admin setup fixture or an explicitly accepted limitation, and immutable Vercel revision evidence if project visibility becomes available. Phase G-C remains separately approval-gated.

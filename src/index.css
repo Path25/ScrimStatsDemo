@@ -558,6 +558,8 @@
     --workspace-rule: rgba(226, 236, 232, 0.1);
     --workspace-rule-strong: rgba(226, 236, 232, 0.18);
     --workspace-accent: #11e2d0;
+    --workspace-success: #11e2d0;
+    --workspace-danger: hsl(var(--destructive));
     --workspace-violet: #795cff;
     --workspace-manual: #d7b66f;
     --workspace-awaiting: #93a2ad;

@@ -57,7 +57,7 @@ test("nonce probe requires explicit gateway JWT and dispatch-secret authenticati
   const source = read("supabase/functions/discord-qa-nonce/index.ts");
 
   assert.match(config, /\[functions\.discord-qa-nonce\]\s+verify_jwt = true/);
-  assert.match(manifest, /`discord-qa-nonce` \(source-only; explicit gateway JWT plus dispatch-secret authentication\)/);
+  assert.match(manifest, /`discord-qa-nonce` v1 \(deployed test-only control; explicit gateway JWT plus dispatch-secret authentication\)/);
   assert.match(source, /request\.headers\.get\("x-discord-dispatch-secret"\)/);
 });
 

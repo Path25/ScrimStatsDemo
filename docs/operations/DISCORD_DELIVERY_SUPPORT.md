@@ -4,14 +4,19 @@
 
 Elite Discord automation is limited to selected schedule-change and practice-reminder prompts linking back to ScrimStats. It must never relay scouting, review, player, credential, or authorization content.
 
-## Honest states
+## Honest pre-release states
 
 - **Unavailable:** Discord credentials, callback configuration, worker scheduling, or bot permissions are not configured. Do not present delivery as available.
-- **Server connected — delivery not configured:** An Elite owner or admin completed installation, but no supported channel subscription is enabled. No Discord delivery can occur until a channel and prompt type are selected.
-- **Delivery active:** An Elite owner or admin completed installation and selected one or more supported channel subscriptions.
-- **Retrying:** A Discord delivery attempt failed and is queued with backoff. This is not delivery confirmation.
-- **Failed:** Five dispatch attempts failed. Retain the delivery-attempt evidence and direct the workspace to reconnect or select a valid channel.
+- **Setup required:** No active installation exists for this workspace.
+- **Connected - prompts off:** An Elite owner or admin completed installation, but no supported channel subscription is enabled.
+- **Configured - test only:** One or more supported subscriptions are saved. This is configuration evidence, not an active-worker or customer-availability claim.
+- **Queued - awaiting delivery:** A tenant-scoped event exists but has no provider receipt. This is not delivery confirmation.
+- **Retrying delivery:** A Discord delivery attempt failed and is queued with bounded backoff. This is not delivery confirmation.
+- **Delivery needs attention:** Five dispatch attempts failed. Retain the delivery-attempt evidence and review the connection or channel before any separately approved retry.
+- **Last delivery recorded:** The latest tenant-scoped event has a provider receipt. This proves the API delivery path only, not rendered-message appearance or general reliability.
 - **Disconnected:** Subscription delivery is disabled. Historical delivery evidence is retained.
+
+Every configured state must also show **Test only** until independent hosted QA, a consented pilot, and Theo's separate release approval complete. Do not use `Available` or `Delivery active` during this boundary.
 
 ## Support triage
 
@@ -19,6 +24,14 @@ Elite Discord automation is limited to selected schedule-change and practice-rem
 2. Confirm the installation is active and the selected channel still exists and permits the bot to post.
 3. Inspect `integration_delivery_attempts` and `integration_events`; do not request or record Discord tokens in support notes.
 4. Reconnect or reconfigure the channel only with workspace-manager approval.
+
+## Operator and evidence handoff
+
+- **Approval and global-stop authority:** Theo, or a specifically named delegate in the exact hosted-action approval.
+- **Hosted execution and monitoring operator:** QA and Release Auditor, once the exact fixture, time window, before-counts, worker action, and stop conditions are approved.
+- **Workspace action owner:** The named non-customer fixture owner/admin for pre-pilot evidence; a later customer pilot must name its own consenting owner.
+- Record only tenant-safe counts, event status, attempt count/outcome, redacted Function request ID, Function version, worker active/inactive state, configuration-name presence, and timestamps. Do not record provider references, tenant/guild/channel/role identifiers, payloads, interaction signatures, or secret values in general support evidence.
+- Before any activation, record per-tenant receipt, scrim, event, and attempt counts plus the all-project open queue. After disabling, repeat those counts and confirm no unrelated tenant changed.
 
 ## Production worker controls
 
@@ -40,4 +53,4 @@ For a signed `/scrim` rejection, correlate the Function invocation with the reda
 
 ## Release and customer-claim boundary
 
-Until WO-2026-040 completes independent hosted QA, a non-customer production smoke, a named consented pilot, and Theo's separate release approval, Discord remains test-only and excluded from the customer release boundary. Do not describe it as generally available or production-ready.
+Phase F completed one bounded non-customer smoke after retaining its earlier 403 retry evidence. That receipt does not complete multi-workspace support, customer pilot, or release evidence. Until WO-2026-040 completes Phase G independent hosted QA, a named consented pilot, and Theo's separate release approval, Discord remains test-only and excluded from the customer release boundary. Do not describe it as generally available or production-ready.

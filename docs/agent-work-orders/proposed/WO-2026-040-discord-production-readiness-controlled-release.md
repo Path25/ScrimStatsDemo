@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Blocked
+- **Status:** Ready for Development
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** High
@@ -1657,6 +1657,38 @@ Hosted behavior shows that rescheduling an existing inactive named pg_cron job d
 
 WO-2026-040 is **Ready for QA for independent failed-result audit** and remains on release **HOLD**. Phase D-C must not begin. Any correction to `security.configure_discord_production_worker_schedule()`, new migration, hosted application, repeat rehearsal, worker activation, provider action, customer action, smoke, pilot, or release requires a new exact Theo approval.
 
+## PM release-stage definition — Phase E customer-safety matrix - 2026-08-06
+
+### Current status and owner
+
+**Blocked — PM / QA and Release Auditor.** Phase D-B scheduler recovery is now independently passed, and the Phase D-C private module-disable/recovery evidence is inert after approved cleanup. The next missing evidence is not another worker implementation change: it is one complete, controlled non-customer matrix proving that normal customer roles, plans, modules, guilds, and schedules fail closed when they should.
+
+### One bounded QA stage
+
+Before any production configuration, worker activation, customer message, smoke, pilot, or release, QA may run the following **single pre-approved non-customer Phase E matrix** only if Theo approves the exact fixture identities and cleanup owner:
+
+1. **Browser configuration roles:** owner/admin permitted configuration; member/viewer and cross-tenant browser/RPC denials.
+2. **Provider authorisation:** wrong guild and missing permitted Discord role, each producing a safe denial and zero receipt/scrim/outbox/attempt delta.
+3. **Plan and module boundary:** existing Free and Pro fixtures plus a captured-and-restored disabled/revoked Discord-module fixture, each producing zero mutation.
+4. **Schedule safety:** one deliberately overlapping request against an isolated fixture block, producing zero new receipt/scrim/outbox/attempt rows.
+5. **Malformed request boundary:** invalid signature and validly signed malformed payload checks, each failing before mutation.
+6. **Isolation and restoration:** tenant B/cross-tenant checks, before/after aggregate counts for every fixture, restoration of every reversible role/module/channel setting, and retained redacted evidence only.
+
+Both Discord workers remain inactive throughout. No Free/Pro plan, Stripe subscription, customer workspace, customer guild, secret, global dispatcher run, production configuration, or outbound message is part of Phase E. A failure stops the relevant case; QA records the bounded reason/code and row-count delta once, then returns it to Core without retrying the mutation-capable case.
+
+### Phase E definition of done
+
+- Every approved case has a recorded fixture, action, expected response, and before/after receipt, scrim, outbox, and delivery-attempt count; every denial has a zero-mutation result.
+- Owner/admin and member/viewer browser evidence covers desktop plus a real mobile viewport, with no role/plan overclaim.
+- All temporary fixture state is restored or intentionally left inert, workers remain inactive, and no unrelated tenant/event changes.
+- QA issues one consolidated hosted evidence verdict. A Core handoff occurs only for a reproduced defect, not for missing documentation or a request to repeat a case.
+
+### Next gates after Phase E
+
+1. **Phase F — production non-customer smoke:** separately approved production configuration presence/revision review, then one named non-customer production `/scrim` and schedule-delivery smoke with a documented immediate disable owner.
+2. **Phase G — consented Elite pilot:** separately approved named Elite workspace(s), time-bounded monitoring, support/rollback owner, and no broad availability claim.
+3. **Phase H — release:** only after QA production-ready verdict and Theo's explicit release approval. Discord remains Elite-only unless Theo separately approves a plan/entitlement change.
+
 ## PM handoff reset - 2026-08-06
 
 ### Current status and owner
@@ -1768,3 +1800,797 @@ The corrected rollback-only scheduler recovery passes. This proves the named job
 
 1. **Theo:** decide whether to approve the exact Phase D-C procedure in `WO-2026-040_PHASE_D_QA.md`: one named private fixture, two fresh events, exact module snapshot/restore, one disable-path invocation, one view-only provider-boundary invocation, and evidence-preserving cleanup.
 2. If approved, QA will preflight and execute only that bounded procedure. Keep workers inactive and release HOLD throughout.
+
+## Independent QA Phase D-C workspace recovery audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The bounded workspace disable-path passes, but the required non-postable provider-boundary check failed. The supposedly view-only private channel accepted the one restored-module delivery. This is not production-ready evidence and no further Phase D-C action is authorised from this run.
+
+### 2. What was verified
+
+- Two fresh non-customer `clash` schedule events were created through the staging product flow: event A `488dbff9-6b87-45b6-9e0a-4b359740f9ce` and event B `d70be245-04b6-4294-8881-3f203041bab9`. Both began pending with zero attempts.
+- Before the run, the fixture was Elite; its sole `discord` module row was `live`/enabled; one active `schedule_created` subscription targeted the private test channel; jobs 4/5 and all exact-dispatch controls were inactive.
+- QA captured the module row (`live`, enabled, `updated_at` `2026-07-30 16:58:42.57749+00`, null updater), disabled only that row, armed only event A, and made one exact dispatcher request. Event A became `cancelled` with the expected unavailable error, zero Discord delivery attempts, and a completed `cancelled` QA run. The Function request returned 200.
+- QA restored the captured module row exactly before event B. Event B was still pending with zero attempts and no active exact run before its one approved invocation.
+- The second Function request returned 200 and its exact run completed. Both global Discord jobs remain inactive and no exact run remains active.
+
+### 3. Blocking issues
+
+- **Blocking:** Event B was `delivered`, not the required Discord 403 retry. It has one delivered Discord attempt, a provider receipt, and `delivered_at` `2026-08-06 17:36:19.464+00`; the target was the intended private test channel. The operator's view-only assertion was therefore not true at delivery time, or a higher-priority Discord permission still allowed the bot to send.
+- **Blocking:** The approved two-fixture scope is exhausted. Do not reuse either retained event, edit its result, delete its evidence, or retry the restored-module invocation.
+- **Blocking:** Customer/role/tenant/entitlement denial matrix, production configuration/smoke, controlled pilot, monitoring/support/rollback, and final release approval remain unverified.
+
+### 4. Important risks
+
+- **Important:** The unexpected successful provider delivery means the private QA Discord channel cannot currently be relied upon as a non-postable boundary. It must not be treated as safe containment for later denial testing.
+- **Important:** The event is terminal `delivered`, so the planned retry-cleanup update is intentionally not applied. Altering it would conceal the failed acceptance result and is unnecessary to prevent queueing.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A newly created, separately approved non-customer event with the bot demonstrably unable to send in the exact subscribed channel; the expected 403 retry and retained evidence; the full customer denial matrix; production configuration/smoke, pilot, support/rollback, and release readiness.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** In the `ScrimStats Integration Test` server's subscribed private channel, remove `Send Messages` for the ScrimStats bot and any bot role/category/channel override that grants it. Keep only the visibility needed to test a 403. Confirm the exact channel is still the one subscribed to `schedule_created`; do not delete the delivered QA message or database evidence.
+2. **Theo:** After that correction, separately approve one new named non-customer fixture and one exact one-use dispatcher request. QA will preflight it from zero attempts and stop on any non-403 result.
+3. **Core Features Developer:** No code change is assigned from this result unless the Discord permission audit proves the bot was denied at the exact target when the successful delivery occurred. If so, investigate the provider-target/permission boundary with reproducible evidence.
+
+### 7. Status and handoff
+
+WO-2026-040 is **Blocked** for controlled QA pending Theo's Discord permission correction and a separate fresh-fixture approval. The release verdict remains **HOLD**. Workers, customer delivery, production configuration, smoke, pilot, and release remain out of scope.
+
+## Independent QA Phase D-C provider-boundary retest - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The non-postable provider-boundary acceptance check now passes for one fresh non-customer event. This closes only that controlled case; the retained retry event needs separately approved evidence-preserving cleanup, and the broader customer and release matrix remains unverified.
+
+### 2. What was verified
+
+- Theo confirmed the ScrimStats bot's `Send Messages` permission was removed from the subscribed private Discord test channel, then approved exactly one replacement non-customer Clash schedule block and one one-use dispatcher invocation.
+- QA created event `d8c9b793-d1e8-4857-bf24-03dfd901369f` through the normal staging flow. Before arming, it was `pending`, had zero attempts and no delivery-attempt rows; no active exact run was present.
+- QA armed only run `843173bc-d40c-4357-a8b7-bb5252ae89dc` and issued one exact dispatcher request. HTTP request `40581` returned 200 without timing out.
+- Discord returned 403 for target `1532431211086221314`. The event is `pending`, has `attempt_count=1`, no `delivered_at`, and a single `retry` attempt with `Discord returned 403` and no provider receipt. The exact run is completed with result status `pending`.
+- The delivery is evidence of provider denial, not a customer delivery. No second invocation occurred; the event is deliberately retained, and both Discord worker jobs remain inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** The retained retry event is now eligible for later dispatch. Cancellation of only event `d8c9b793-d1e8-4857-bf24-03dfd901369f`, while retaining its completed run and delivery-attempt row, needs Theo's exact cleanup approval before this controlled environment can be considered clean.
+- **Blocking:** The customer role/tenant/entitlement denial matrix, production Discord configuration and smoke test, controlled pilot, monitoring/support/rollback evidence, and final production release approval remain unverified.
+
+### 4. Important risks
+
+- **Important:** The earlier delivered event `d70be245-04b6-4294-8881-3f203041bab9` remains a historical permission-misconfiguration result. It must not be rewritten or presented as successful denial evidence.
+- **Important:** The observed 403 proves the current private-channel bot permission boundary only. It does not establish customer-workspace isolation, production provider configuration, or a safe general worker activation.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Evidence-preserving cancellation of the exact pending retest event, post-cleanup proof of zero active exact runs and inactive workers, and no unrelated event mutation.
+- **Unverified:** Customer tenant/role/plan denial paths; production bot credentials, allowed guild/channel and interaction configuration; production worker activation/disable recovery; production smoke, pilot, support and rollback rehearsal.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** explicitly approve this exact cleanup only: set event `d8c9b793-d1e8-4857-bf24-03dfd901369f` to `cancelled` so it cannot be picked up later, while preserving its 403 retry attempt and completed QA run. QA will then verify the final inert state.
+2. **Core Features Developer / PM:** prepare the next customer-safe denial-matrix and production-readiness plan as separately scoped, approval-gated work. Do not activate workers or deploy to production from this staging evidence.
+
+## Independent QA Phase D-C cleanup verification - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The approved non-customer cleanup passes and the controlled environment is inert again. This does not clear the production-release gate.
+
+### 2. What was verified
+
+- Theo approved cancellation of only event `d8c9b793-d1e8-4857-bf24-03dfd901369f` while preserving the 403 and exact-run evidence.
+- The event is now `cancelled`, retains `attempt_count=1`, has no `delivered_at`, and records the bounded QA-cancellation reason.
+- Its single Discord delivery attempt remains a `retry` with `Discord returned 403` and no provider receipt; the exact QA run remains `completed` with its original `pending` result.
+- Post-cleanup checks found zero active exact-dispatch runs and zero active Discord worker jobs.
+
+### 3. Blocking issues
+
+- **Blocking:** Controlled staging evidence does not cover customer tenant/role/entitlement denial paths, production provider configuration, worker activation/disable recovery, smoke, pilot, monitoring/support, rollback, or final release approval.
+
+### 4. Important risks
+
+- **Important:** The 403 test proves only the configured staging private-channel permission boundary. It cannot be used to claim production Discord readiness or customer isolation.
+- **Important:** The previously delivered Phase D-C event remains preserved as a historical failed permission-boundary result and must not be omitted from later release evidence.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Customer-safe role, tenant, and plan denial/allow matrix; production bot credential and guild/channel configuration; controlled worker activation plus recovery; production smoke, pilot, support, rollback, and release sign-off.
+
+### 6. Suggested fixes or next validation steps
+
+1. **PM / Core Features Developer:** create a separate, customer-safe work-order phase with explicit acceptance criteria for the remaining role/tenant/plan matrix and production operational gates.
+2. **Theo:** approve each later production configuration, activation, pilot, or release action separately; no such action is implied by this staging cleanup.
+
+## PM current routing — Phase E customer-safety matrix - 2026-08-06
+
+This is the current next stage and supersedes the request to send WO-040 back to Core for an unspecified plan. The work order remains **Blocked — PM / QA and Release Auditor** until Theo approves the named non-customer fixtures and cleanup owner.
+
+QA will run one consolidated matrix with both Discord workers inactive: owner/admin allow and member/viewer/cross-tenant browser/RPC denial; wrong guild and missing permitted role; Free/Pro; captured-and-restored disabled/revoked module; overlap; invalid signature and signed malformed payload. Every denial must record zero deltas for receipts, scrims, outbox events, and delivery attempts, with reversible fixture state restored and redacted evidence retained. Any defect returns once to Core with its bounded evidence; no mutation-capable case is retried.
+
+After Phase E, the remaining release path is fixed: separately approved non-customer production smoke (Phase F), named consented Elite pilot (Phase G), then Theo release approval (Phase H). Discord remains Elite-only unless Theo separately approves a plan/entitlement change.
+
+## Theo approval — Phase E consolidated non-customer matrix - 2026-08-06
+
+Theo approved Phase E. QA and Release Auditor may nominate and record the exact existing non-customer fixture identities, private guild/channel/role controls, and cleanup owner in a preflight entry before the first provider or reversible configuration action. This approval covers only the Phase E cases and stop conditions recorded above, with both workers inactive and no customer workspace, customer guild, Stripe/plan change, secret/configuration change, global dispatcher, outbound customer message, production smoke, pilot, or release action.
+
+If preflight reveals that a required fixture is missing or any step requires a new production/provider/configuration authority, stop and return that gap to Theo rather than substituting a customer or broadening the approval.
+
+## Independent QA Phase E fixture preflight - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+Phase E cannot safely begin. The approved matrix is correctly bounded, but the necessary non-customer roles, plans, and tenant controls have not been nominated or provisioned.
+
+### 2. What was verified
+
+- The known non-customer Clash tenant is active Elite with the Discord module `live`/enabled, an active installation, and one active schedule-created subscription.
+- The tenant has one owner membership only. No admin, member, or viewer control is present in that tenant.
+- Both Discord workers, exact-dispatch controls, and nonce controls are inactive.
+- The tenant currently has two queueable integration events, alongside retained cancelled, delivered, and failed historical evidence. QA did not arm, invoke, or alter any event.
+
+### 3. Blocking issues
+
+- **Blocking:** Phase E requires named non-customer admin, member, and viewer fixtures plus a cross-tenant control. None has been nominated from the approved scope.
+- **Blocking:** Named Free and Pro fixture tenants, their Discord/module states, and their cleanup owner have not been nominated.
+- **Blocking:** The two existing queueable events make a no-delta provider test unsafe without a named isolation/cleanup plan. Workers are inactive, but Phase E cannot claim zero side effects by assuming those events are unrelated.
+
+### 4. Important risks
+
+- **Important:** Reusing Clash as an owner-only fixture would leave the critical role-denial and cross-tenant cases untested.
+- **Important:** Listing or selecting arbitrary tenants to fill the gap could expose or affect customer data. QA must not infer that any other tenant is disposable.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The complete Phase E allow/deny matrix: owner/admin, member/viewer, cross-tenant, Free/Pro, wrong guild, permitted role, disabled/revoked module, overlap, invalid signature, and signed malformed payload.
+- **Unverified:** Fixture-specific baseline counts and cleanup proof for each authorised provider or reversible configuration action.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** either nominate existing non-customer fixtures or explicitly approve creating them: one Elite tenant with owner/admin/member/viewer test memberships, one separate no-membership/cross-tenant account, and Free and Pro tenant controls. Identify the private test guild/channel and the one permitted role for the Elite allow case, plus who will restore/delete each fixture after QA.
+2. **Theo:** identify whether the two Clash pending events are known QA events and approve their evidence-preserving isolation/cancellation, or nominate a different empty non-customer Elite tenant. Do not activate workers or invoke Discord before that decision.
+
+## Independent QA Phase E fixture refinement - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The empty Elite role controls are partly identified and the named WO-040 queue is inert. Phase E remains incomplete because viewer and meaningful Free/Pro entitlement fixtures are not yet available without a separate identity/provider setup.
+
+### 2. What was verified
+
+- Theo confirmed that WO-040-labelled records are disposable QA evidence and approved QA to choose the safest bounded cleanup.
+- QA cancelled only pending events `7b223753-6b1b-4169-9850-280c7650deaa` and `d471bb0d-ce36-4f71-ad36-58c71e39bd80`; both were zero-attempt, undelivered WO-040 fixtures. Their historical rows are retained.
+- Clash now has zero queueable integration events, zero active exact controls, and inactive Discord workers. It remains the Elite/live owner and active-installation fixture.
+- Authenticated browser evidence identifies `WO-024 QA Tenant B` as a non-customer Elite admin fixture and `WO-024 QA Tenant A` as a non-customer Elite member fixture. Both have zero queueable events, planned Discord modules, and no installation, so they are safe browser/RPC-denial controls but cannot send a provider command.
+
+### 3. Blocking issues
+
+- **Blocking:** No non-customer viewer identity is available in the approved fixture set.
+- **Blocking:** No Free or Pro tenant with a meaningful inbound Discord installation/guild control is available. Creating an empty Free/Pro workspace alone would test only missing-installation denial, not the entitlement boundary.
+- **Blocking:** A same-guild/provider setup for new entitlement fixtures is a Discord configuration action and is outside the current Phase E approval, which requires a stop when that authority is needed.
+
+### 4. Important risks
+
+- **Important:** Treating a planned/no-installation Free or Pro workspace as the paid-feature test would conflate installation absence with entitlement enforcement and could mask a server-side billing defect.
+- **Important:** The currently available owner/admin/member fixtures are separate tenants; that supports cross-tenant denial, but not viewer authorization until a distinct viewer membership exists.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Viewer browser/RPC denial; Free/Pro inbound entitlement denial with an otherwise valid signed Discord context; wrong-guild/missing-role/disabled-revoked/overlap/invalid-signature/malformed-payload cases.
+- **Unverified:** The later production configuration, worker activation/recovery, smoke, pilot, support, rollback, and release gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** nominate an existing non-customer viewer account/workspace if one exists. If not, explicitly approve creating a dedicated viewer QA account and membership in the empty WO-024 Tenant A or B.
+2. **Theo:** choose a separate non-customer Discord guild/app fixture for Free and Pro entitlement testing, or explicitly approve the scoped Discord installation/configuration changes necessary to create valid Free/Pro inbound controls. QA will not reuse the active Clash guild for those tenants by assumption.
+
+## Theo entitlement-boundary clarification - 2026-08-06
+
+Theo confirmed that Discord remains **Elite-only** as initially agreed. Free and Pro workspaces must not receive a Discord installation merely to manufacture QA evidence.
+
+Phase E therefore uses the existing non-customer Free/Pro workspaces only for bounded server-side/browser entitlement-denial checks that produce no scrim, receipt, outbox, or delivery-attempt delta. The Elite Clash fixture remains the sole configured provider allow/wrong-guild/permitted-role boundary. A non-customer viewer membership is still required for the browser/RPC role-denial case; Theo will arrange that fixture before QA begins that case.
+
+## Phase E viewer-fixture provisioning - 2026-08-06
+
+At Theo's exact request, QA manually added existing confirmed non-customer account `pathtoyourdream@gmail.com` to the Clash workspace as `viewer`. The pre-write check established no prior Clash membership; the guarded insert returned exactly one viewer membership and the post-write read-back matches. No account, invitation, invite Function, Discord installation, entitlement, event, attempt, worker, or control was changed. Clash remains queue-empty with zero active workers, exact-dispatch runs, and nonce runs.
+
+The viewer fixture is ready for authenticated browser/RPC denial verification. Theo must sign in to that account and confirm when ready; the remaining Phase E cases remain bounded by the existing approval and **HOLD** remains.
+
+## Independent QA Phase E viewer browser audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The viewer browser boundary passes. This is one role-layer result only; server-side mutation denial and the remaining entitlement/provider matrix are still required before any release claim.
+
+### 2. What was verified
+
+- Authenticated staging access as `pathtoyourdream@gmail.com` in Clash displays the `viewer` role and the intended workspace identity.
+- On Scrim blocks, the viewer can read the approved fixture/history surfaces but has no `Schedule scrim`, `Edit block`, or equivalent mutation control.
+- On Workspace settings, billing and workspace-setting actions are disabled and explicitly state that owner or admin access is required. Workspace timezone and logo controls are disabled.
+- On Integrations, the viewer sees safe connection status only; no Discord/Riot configuration action is rendered. No provider, request, event, receipt, worker, or fixture state was changed.
+
+### 3. Blocking issues
+
+- **Blocking:** The browser does not prove server-side authorization. The viewer must still be denied by the relevant mutation API/RPC/RLS boundary with a zero-delta result.
+- **Blocking:** Free/Pro no-delta entitlement denial, wrong-guild/missing-role, disabled/revoked module, overlap, invalid-signature, signed-malformed-payload, and all later release gates remain unverified.
+
+### 4. Important risks
+
+- **Important:** Viewer access to read-only workspace and team-access information appears intentional in the current UI, but this browser result must not be generalized into approval for broader team-data disclosure without the documented product/RLS contract.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Direct authenticated viewer mutation rejection with no database delta; all remaining Phase E controls; production configuration, smoke, pilot, support, rollback, and release gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. **QA:** continue only the approved no-delta server-side viewer denial and the remaining Phase E matrix cases; stop on the first unexpected mutation or provider output.
+2. **Theo:** no further action is needed for this viewer browser case. Keep the viewer account available for any repeat browser verification.
+
+## Independent QA Phase E viewer server-denial audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The viewer scheduling mutation is denied at the canonical server-side authorization boundary with no data delta. This clears the viewer case only; the release remains on HOLD.
+
+### 2. What was verified
+
+- QA bound the test transaction to the confirmed Clash viewer identity and verified it is not an owner or admin through the existing membership helper.
+- One canonical `schedule_scrim_block` invocation with the unique `WO-040 VIEWER DENIAL MARKER` reached the server-side role check and raised the expected insufficient-privilege path before insertion. The transaction retained no change.
+- Before and after protected counts are identical: 12 scrims, 14 integration events, and 15 delivery attempts. The marker has zero matching scrims and zero matching outbox events.
+
+### 3. Blocking issues
+
+- **Blocking:** Free/Pro entitlement denial, wrong-guild/missing-role, disabled/revoked module, overlap, invalid-signature, signed-malformed-payload, and every production release gate remain unverified.
+
+### 4. Important risks
+
+- **Important:** This verifies the canonical scheduling RPC's viewer boundary, not every workspace mutation or the external Discord interaction endpoint.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The remaining Phase E entitlement/provider cases and the full production configuration, worker activation/recovery, smoke, pilot, support, rollback, and release path.
+
+### 6. Suggested fixes or next validation steps
+
+1. **QA:** continue the approved no-delta Free/Pro entitlement checks next, keeping Discord Elite-only and stopping on any marker or count delta.
+2. **Theo:** no further action is needed for the viewer case.
+
+## Independent QA Phase E database authorization matrix - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The bounded database-side role, entitlement, configuration, and overlap matrix passes fail-closed. This does not verify the external Discord signature-entry boundary or any production release gate.
+
+### 2. What was verified
+
+- The authenticated member fixture was denied by `schedule_scrim_block` before insertion; a viewer cross-tenant call against the explicitly QA-labelled Free tenant was likewise denied. The initial attempt to use the viewer against WO-024 Tenant A stopped before mutation because that account owns the tenant; QA corrected the control to the known no-membership Free fixture instead of assuming isolation.
+- Under a verified service-only context, Free and Pro tenants both rejected `create_discord_scrim_block` at the Elite/live/enabled/active-installation availability gate. Both remain planned/disabled, uninstalled, and at zero scrims, receipts, events, and attempts.
+- On the Elite Clash fixture, wrong guild, missing permitted role, and overlapping schedule requests each rejected before insertion. The exact existing permitted-role and guild values were used only inside the server routine and are not reproduced here.
+- Within one transaction, QA set the Discord module to disabled and then planned, verified both denials, and restored its original `live`/enabled row including its captured metadata. The final hosted row is `live`/enabled.
+- Every Phase E marker has zero matching scrims and receipts. Final protected state is Clash 12 scrims/5 receipts/14 events/15 attempts; workers are inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** A deployed invalid-signature request and a genuinely Discord-signed malformed payload have not been independently exercised. A database/service call cannot establish the public Edge Function's Ed25519 verification behavior.
+- **Blocking:** Production Discord configuration, worker activation/recovery, smoke, pilot, monitoring/support, rollback, and final release approval remain unverified.
+
+### 4. Important risks
+
+- **Important:** The failed initial cross-tenant fixture assumption demonstrates why membership must be verified from the exact test identity before each authorization case; browser workspace labels alone are not sufficient.
+- **Important:** The provider-facing signature cases require either a controlled Discord-provider action or a valid signed fixture. Do not manufacture them with secrets, a customer guild, or an unrelated application.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Deployed invalid-signature rejection, correctly signed malformed command rejection, and the full production operational release path.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** approve one explicitly bounded deployed invalid-signature request and provide/approve the isolated Discord method for one genuinely signed malformed-command check. Both must target Clash only, create no customer/provider delivery, and stop on any unexpected database delta.
+2. **QA:** retain the completed matrix evidence; do not rerun these markers or activate workers.
+
+## Independent QA Phase E invalid-signature entry audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The deployed public signature gate passes one malformed-signature test. A valid Discord signature is still required to exercise the next semantic-rejection branch.
+
+### 2. What was verified
+
+- QA sent one approved, structurally plausible interaction POST with a deliberately invalid Ed25519 signature directly to deployed `discord-interactions`.
+- HTTP request `41039` returned 401 with `Invalid request signature` and did not time out.
+- Clash remains at 12 scrims, 5 interaction receipts, 14 integration events, and 15 attempts; the supplied interaction marker has zero receipts.
+
+### 3. Blocking issues
+
+- **Blocking:** A genuine Discord-signed malformed-command rejection remains unverified. It cannot be proved by a fabricated signature or service/database call.
+- **Blocking:** Production configuration, worker activation/recovery, smoke, pilot, monitoring/support, rollback, and release remain unverified.
+
+### 4. Important risks
+
+- **Important:** Do not treat this synthetic 401 as evidence that Discord's provider delivery, signing, or command-registration path is healthy; it proves only the deployed Function's fail-closed signature verification.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One authentic Discord-signed command containing a harmless semantic error and no resulting database delta; all remaining production gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. **Theo:** In the isolated `ScrimStats Integration Test` server using the permitted role, submit exactly one `/scrim` with a unique opponent label such as `WO-040 signed malformed QA`, a valid date/time and duration, but timezone `Invalid/Zone`. This should return the safe validation response and create no block. Reply `done` immediately after; do not retry it.
+2. **QA:** compare the signed interaction result with zero-delta database evidence, then stop Phase E.
+
+## Independent QA Phase E completion - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+Phase E is complete. Its bounded non-customer authorization, entitlement, configuration, signature, and semantic-validation matrix passes, but this is not a production-readiness or release approval.
+
+### 2. What was verified
+
+- Theo executed exactly one real Discord-signed malformed `/scrim` in the isolated test server using the permitted role. It returned the expected safe validation response: `Use the required opponent, date YYYY-MM-DD, time HH:MM (24-hour), valid timezone, and duration.`
+- Post-command database checks confirm Clash remains at 12 scrims, 5 receipts, 14 integration events, and 15 delivery attempts. The `WO-040 signed malformed QA` marker has zero scrims and zero outbox events.
+- Together with the retained Phase E evidence, this closes viewer/member/cross-tenant, Free/Pro, wrong-guild, permitted-role, overlap, module-state, invalid-signature, and real signed semantic-malformation denial coverage. Workers remain inactive throughout.
+
+### 3. Blocking issues
+
+- **Blocking:** Phase F non-customer production smoke, controlled worker activation/recovery, production Discord configuration review, consented pilot, monitoring/support, rollback rehearsal, and final release approval have not been planned, approved, or verified.
+
+### 4. Important risks
+
+- **Important:** Phase E establishes fail-closed staging behavior, not production provider health, customer readiness, or safe ongoing worker operation.
+- **Important:** The historical delivered Phase D-C permission-misconfiguration evidence remains relevant and must stay in the release record despite the later 403 correction.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A separately approved Phase F non-customer production smoke with the exact production project/app/guild/channel/worker scope, observed outbound receipt, recovery/disable proof, and cleanup; then consented pilot, operational support, rollback, and Theo release sign-off.
+
+### 6. Suggested fixes or next validation steps
+
+1. **PM / Core Features Developer:** write the Phase F plan with named production fixtures, pre/post counts, worker activation and disable/recovery procedure, stop conditions, cleanup, monitoring, and rollback owner. It must exclude customer tenants and messages unless separately approved.
+2. **Theo:** approve that exact Phase F plan only after reviewing its production/provider scope. Do not activate workers or promote a release from Phase E evidence alone.
+
+## PM Phase F production-smoke plan - 2026-08-06
+
+### Approval interpretation and status
+
+Theo approved Phase F execution only within the named non-customer scope recorded below. QA and Release Auditor is the primary authorised operator and monitor; Core Features Developer may act only as a fallback operator if QA is unavailable. This approval does not authorise a code change, deployment, secret/configuration change, customer message, customer workspace/guild/channel, pilot, or release.
+
+WO-040 is **In Progress — QA and Release Auditor** for the corrected preflight and one-run sequence below. Discord remains Elite-only, test-only, and excluded from the customer release boundary.
+
+### Purpose
+
+Establish one reversible, non-customer production-path smoke: a valid private Discord '/scrim' produces exactly one canonical practice block, receipt, eligible schedule event, and one provider delivery receipt; then the two global Discord workers are disabled and their inactive state is verified. This is evidence for Phase F only, not a customer pilot or release.
+
+### Mandatory preflight record
+
+The PM/authorised operator must record the following in a redacted evidence pack before any worker or provider action. Do not place Discord identifiers, secrets, tokens, interaction bodies, or signatures in this work order.
+
+| Required item | Required value / verification |
+|---|---|
+| Non-customer fixture | Clash workspace, ScrimStats Integration Test server, its existing subscribed private schedule-created channel, and the existing permitted Discord role; no customer account, tenant, guild, or channel |
+| Scope state | Workspace is Elite; Discord module is live and enabled; installation and one schedule-only subscription are active; no other queueable Discord event is present |
+| All-project isolation | Theo confirms no other tenant has Discord configured and all other Elite workspaces are his test fixtures. Immediately before activation, QA performs a redacted project-wide check for zero non-fixture claimable/leased Discord events and zero non-fixture reminder-eligible items during the worker window. This confirms the existing scope; it is not a further Theo decision gate. |
+| Environment boundary | Record the exact Supabase project/environment, immutable deployed Function revisions, Discord application boundary, and current manifest/release-boundary classification. The current shared-project Discord path remains test-only; this smoke cannot be treated as customer activation or release. |
+| Release candidate | Deployed Function revisions/SHA, applied migrations, current manifest classification, and configuration-name presence only |
+| Operator and monitoring owner | QA and Release Auditor is the primary activation/disable operator and monitor; Core Features Developer is fallback operator only; Theo is the live stop contact |
+| Baseline | Receipt, scrim, integration-event, delivery-attempt, active worker, and relevant cron-run counts captured immediately before activation |
+| Stop controls | Operator has verified access to 'security.disable_discord_production_worker_schedule()' and the workspace-level installation/module stop; no invocation is made during preflight |
+
+If any item is absent, stale, ambiguous, or refers to a customer, stop. No substitute fixture or configuration change is implied.
+
+### Theo execution approval - 2026-08-06
+
+Theo nominated the default non-customer Clash workspace and ScrimStats Integration Test Discord server for Phase F. QA and Release Auditor may perform the preflight, activate and immediately disable the approved worker schedule, and complete monitoring for one run. If QA is unavailable, Core Features Developer may perform the same operator-only sequence without changing code. This approval is limited to the existing subscribed private channel and current deployed revision.
+
+If preflight finds the bot cannot post to that existing channel, QA/Core must stop before changing any Discord permission, channel subscription, guild/app setting, secret, or configuration. A permission/configuration correction requires a new explicit Theo approval.
+
+## PM Phase F isolation correction - 2026-08-06
+
+Independent QA found that the proposed two-worker activation was not fixture-scoped: the dispatcher can claim up to 25 project-wide Discord events and the reminder worker can create events for qualifying Elite workspaces. Theo confirms that no other tenant has Discord configured and all other Elite tenants are his test fixtures. The remaining all-project clean-queue and reminder-window check is therefore a read-only confirmation of the approved non-customer scope, not a customer multi-tenant blocker.
+
+This correction preserves Theo's named non-customer fixture approval and records QA as the primary operator/monitor, Core as fallback only, and Theo as live stop contact. QA may perform the read-only preflight; if it confirms the recorded scope and the existing subscribed channel can receive the bot message, it may proceed with the already approved one-run sequence. Any unexpected tenant/event, unavailable channel permission, or configuration change remains an immediate stop.
+
+## Theo tenant-scope confirmation - 2026-08-06
+
+Theo confirmed that no other tenant has Discord configured and that all Elite workspaces other than Clash are his own test fixtures. This removes the customer multi-tenant exposure concern from Phase F. It does not change the requirement to preserve evidence, stop on any unexpected non-fixture event, or retain Discord as test-only until later pilot and release gates pass.
+
+### Approved-sequence proposal for Theo's exact confirmation
+
+1. Recheck the preflight baseline and confirm both workers are inactive.
+2. Submit exactly one valid '/scrim' from the private fixture with a unique Phase F marker. Confirm one receipt, one canonical scrim, and one eligible schedule-only event; stop on any duplicate or unexpected row.
+3. The authorised operator activates only the reviewed production worker schedule. QA verifies both named worker jobs report active, with no broad catch-up or unrelated-event claim.
+4. Observe one eligible fixture event reach one provider delivery receipt in the approved private channel. Confirm deterministic nonce/idempotency leaves no second provider attempt or delivery for the same event/channel.
+5. Immediately invoke 'security.disable_discord_production_worker_schedule()'. Verify both jobs are inactive, retain cron history and delivery evidence, and confirm no additional fixture or unrelated event was claimed after disable.
+6. Retain the labelled practice block, receipt, event, attempt, redacted request IDs, and count deltas as evidence. Do not delete historical evidence. If the run fails, disable first, preserve evidence, classify the failure, and return the bounded defect to Core.
+
+### Stop conditions
+
+Stop immediately and invoke the global disable procedure if any of the following occurs: a customer target is selected; a secret/configuration change is requested; a non-fixture event is claimed; a duplicate scrim/receipt/event/delivery is observed; a provider response is not the approved private target; a worker cannot be disabled; an authorisation/tenant boundary fails; or any monitored count changes outside the recorded fixture scope.
+
+### Definition of done
+
+- Exact preflight record and Theo's named execution confirmation are retained.
+- One non-customer signed '/scrim' has the expected single canonical data path and one private provider delivery receipt.
+- Both workers were observed active only for the run, then observed inactive through the documented global stop, with retained cron/delivery evidence.
+- QA independently verifies redacted before/after counts, no unrelated claims, no customer impact, safe operator recovery, and honest workspace availability state.
+- The work order returns to **Blocked** pending a separately approved Phase G consented Elite pilot; Phase F alone never changes the release verdict.
+
+## Independent QA Phase F plan audit - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+Phase F is not safe to execute from the current record. The named non-customer fixture and immediate-disable intent are appropriate, but the plan does not yet prove that activating the two project-wide workers cannot claim or create work outside the fixture. Discord remains test-only and excluded from the customer release boundary.
+
+### 2. What was verified
+
+- The plan confines the intended provider target to Clash, the ScrimStats Integration Test server, its existing private subscribed channel, and an existing permitted role; it forbids customer targets and configuration/permission changes.
+- The reviewed activation routine uses Vault-only values, requires both named cron rows to be active, and is operator-only. The disable routine retains cron history and deactivates both named jobs.
+- The active dispatcher is not tenant-scoped when called without a QA run: it calls `claim_integration_events_for_provider('discord', 25)`. The reminder worker also evaluates all active Elite `practice_reminder` subscriptions and can create events for every qualifying tenant.
+- The manifest and release boundary continue to label Discord test-only and exclude interactive Discord delivery from customer availability.
+
+### 3. Blocking issues
+
+- **Blocking:** The Phase F preflight says that no other queueable Discord event is present, but does not require a *global* pending/claimable Discord-outbox check or a global reminder-eligible scrim/subscription check. Activating the production schedule can therefore claim up to 25 unrelated events or create reminder events outside Clash.
+- **Blocking:** The plan uses the term "production-path smoke" without pinning the exact Supabase project/environment, deployed Function revision, Discord application, and release-boundary classification. The existing evidence is for shared project `tvcgjehreaayfazlhvps`, whose manifest expressly remains test-only; the plan must not silently reinterpret it as production/customer activation.
+- **Blocking:** The mandatory named activation/disable operator, QA monitor, and live stop contact are required by the plan but are not recorded. The preflight must name them before a global worker state change.
+
+### 4. Important risks
+
+- **Important:** A successful fixture delivery proves only one private non-customer message. It does not authorise an Elite customer pilot or make the Discord availability claim customer-ready.
+- **Important:** The stop procedure is global. Its use is recoverable but can delay any unrelated Discord work; that reinforces the need for an all-project clean queue and reminder window before activation.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A redacted, immediately-before-activation all-project inventory showing zero non-fixture claimable Discord events, zero non-fixture pending/leased deliveries, and no non-fixture reminder-eligible scheduled scrims/subscriptions for the worker window.
+- **Unverified:** The exact project/environment, immutable deployed revisions, named Discord app/channel target, operator, monitor, and stop contact, plus a read-only confirmation that the operator can invoke the global disable routine.
+- **Unverified:** The approved one-run delivery, deterministic per-target attempt/delivery evidence, cron activation history, immediate disable evidence, and all customer/pilot/release gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. PM must amend the Phase F preflight to require a global clean-queue and reminder-window check, not a Clash-only count, and to state the exact environment/project, deployed revisions, Discord app boundary, operator, monitor, and stop contact.
+2. Theo must explicitly confirm the corrected, environment-pinned global-worker activation scope. Until then, do not submit `/scrim`, activate either worker, or make any provider/configuration/customer change.
+3. After the corrected approval, QA may perform only the recorded preflight and return for a go/no-go check before the one-run sequence.
+
+## Independent QA Phase F preflight - 2026-08-06
+
+### 1. Release verdict: HOLD
+
+The corrected all-project preflight is partially clean, but the approved one-run smoke is not safe to start. QA stopped before creating a command, activating either worker, or causing a provider delivery.
+
+### 2. What was verified
+
+- The exact shared test-only Supabase project is `tvcgjehreaayfazlhvps`; the deployed Discord candidates remain `discord-interactions` v13, `discord-dispatch` v18, `discord-schedule-reminders` v13, and `discord-qa-nonce` v1. Required Vault configuration *names* are present; no values were read.
+- Clash is Elite with a live/enabled Discord module, one active installation, and one active `schedule_created` subscription. Both named global Discord workers are inactive; all QA controls are inactive; the current operator context can invoke the documented global disable routine.
+- The all-project inventory found zero non-fixture open or claimable Discord events, zero non-fixture reminder-eligible items, and zero currently claimable Discord events overall. The retained Clash failed event is at attempt count five and is not claimable.
+
+### 3. Blocking issues
+
+- **Blocking:** Clash has four active Discord subscriptions (`schedule_created`, `schedule_changed`, `schedule_cancelled`, and `practice_reminder`), not the approved one schedule-only subscription.
+- **Blocking:** One Clash item is currently eligible for `practice_reminder`. Activating the global reminder worker can create an additional Discord event and may cause a second provider delivery, invalidating Phase F's exact-one-event acceptance criterion.
+
+### 4. Important risks
+
+- **Important:** The non-terminal retained Clash event is terminal `failed` at five attempts and is not currently dispatchable, but it must remain preserved as historical evidence and must not be repurposed for Phase F.
+- **Important:** Disabling or editing a subscription is a workspace configuration change. The current approval explicitly requires QA to stop rather than make that change.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A newly approved, isolated existing channel/subscription state with only the Phase F schedule-created delivery capable of being produced during the worker window.
+- **Unverified:** The valid signed Phase F command, exactly one canonical data delta, one private provider receipt, active-to-inactive worker evidence, and immediate post-disable all-project count reconciliation.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must explicitly choose one safe scope: either approve a temporary non-customer change that disables the three non-schedule subscriptions and restores them with evidence afterwards, or provide an already schedule-only isolated fixture. Do not alter the existing subscriptions under the current approval.
+2. PM must record that chosen scope and the exact restoration/stop owner. QA can then repeat the read-only preflight immediately before the smoke.
+
+## Phase F temporary subscription isolation and renewed preflight - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+Theo approved the temporary non-customer isolation route. QA applied only that approved configuration change and the renewed preflight now passes for the one-run sequence; no command, worker activation, or provider delivery has occurred.
+
+### 2. What was verified
+
+- Immediately before the change, Clash had active `practice_reminder`, `schedule_changed`, and `schedule_cancelled` subscriptions, each enabled on its active installation. QA set only those three subscriptions to disabled; their prior enabled state is retained here for required restoration after the Phase F sequence.
+- Clash now has exactly one enabled active subscription: `schedule_created`.
+- The all-project inventory is clean: zero non-fixture open/claimable Discord events, zero claimable events overall, and zero reminder-eligible items. The retained failed historical Clash event remains non-claimable.
+- Both Discord cron jobs and every QA control are inactive. Current fixture baseline is 12 scrims, 5 interaction receipts, 14 Discord events, and 15 Discord delivery attempts.
+
+### 3. Blocking issues
+
+- **Blocking:** The one approved, valid Discord-signed Phase F command has not yet been submitted. QA must not activate either worker until its exact one-row canonical/outbox delta is verified.
+
+### 4. Important risks
+
+- **Important:** The three disabled subscriptions must be restored to enabled only after the worker sequence is disabled and final counts are retained. They must not be left in the temporary QA state.
+
+### 5. Unverified but required checks
+
+- **Unverified:** One valid private fixture command, its exact data delta, one provider receipt, active-to-inactive worker evidence, and post-disable no-unrelated-claim proof.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must submit exactly one valid `/scrim` in the existing private ScrimStats Integration Test fixture with the unique marker `WO-040 Phase F smoke 2026-08-07`, then reply `done` without retrying.
+2. QA will verify the one-row delta before activating the workers, monitor one delivery, immediately disable the workers, reconcile all-project counts, and restore the three subscriptions with evidence.
+
+## Independent QA Phase F command gate and activation stop - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+The single approved private command passed its canonical-data gate, but the project-wide worker activation was not executed. The hosting control rejected activation pending explicit current approval for the global external-provider blast radius. QA restored the temporary subscription isolation immediately; workers remain inactive.
+
+### 2. What was verified
+
+- The unique `WO-040 Phase F smoke 2026-08-07` command produced exactly one new Clash scrim, one interaction receipt, and one pending `schedule_created` Discord event, with zero delivery attempts. Fixture totals changed exactly 12→13 scrims, 5→6 receipts, and 14→15 events; attempts remained 15.
+- Immediately before the attempted activation, no non-fixture Discord work was open, the new event was the only claimable event, both workers and all QA controls were inactive.
+- The hosting control rejected `security.configure_discord_production_worker_schedule()` without executing it. QA restored `practice_reminder`, `schedule_changed`, and `schedule_cancelled` to their prior enabled state; both workers are confirmed inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** The worker schedule is project-wide and can invoke external Discord delivery. Theo must give a current explicit approval for *this exact action*: activating `security.configure_discord_production_worker_schedule()` in project `tvcgjehreaayfazlhvps` to dispatch only the already-created marker event, monitoring it, and immediately calling `security.disable_discord_production_worker_schedule()`.
+
+### 4. Important risks
+
+- **Important:** The marker event is now pending and claimable. Do not submit a second command; it would create a duplicate test case and breach the one-command boundary.
+- **Important:** The temporary subscription isolation is no longer active. If activation is approved later, QA must repeat the approved isolation and fresh all-project preflight immediately before activation.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Active worker evidence, one provider receipt/attempt, immediate disable, restored configuration after final reconciliation, and no unrelated claim.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must explicitly approve the exact activation/monitor/disable action stated above. This must include the project ID, existing marker event only, external Discord delivery, and immediate global disable.
+2. On that approval, QA will re-isolate the three subscriptions, repeat the clean preflight, activate once, monitor the existing event, disable immediately, reconcile globally, and restore the subscriptions.
+
+## Independent QA Phase F controlled worker result - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+The approved controlled activation completed its safety sequence but did not deliver. The only marker event received one Discord `403` retry and no provider receipt. QA immediately disabled both workers, restored the temporary subscriptions, and preserved the event/attempt evidence. WO-040 remains blocked.
+
+### 2. What was verified
+
+- After renewed isolation and preflight, the marker was the sole claimable Discord event: no non-fixture event was open or claimable, no reminder item was eligible, and only `schedule_created` was enabled for Clash.
+- `security.configure_discord_production_worker_schedule()` activated both named jobs (`dispatch` 5 and `reminders` 4). The dispatch worker made exactly one attempt for the existing marker event.
+- The marker remains `pending` at attempt count 1. Its only attempt is `retry`, records `Discord returned 403`, and has no provider receipt. Fixture totals are 13 scrims, 6 receipts, 15 Discord events, and 16 delivery attempts.
+- `security.disable_discord_production_worker_schedule()` returned both jobs to inactive. No QA controls are active and no non-fixture event or attempt was observed.
+- QA restored `practice_reminder`, `schedule_changed`, and `schedule_cancelled` to their prior enabled state.
+
+### 3. Blocking issues
+
+- **Blocking:** Discord rejected the approved private target with HTTP 403. The worker cannot deliver to that subscribed channel under its current provider permissions.
+
+### 4. Important risks
+
+- **Important:** The marker is deliberately retained as a pending evidence-bearing retry. Do not reactivate workers or submit another command: either action could create additional attempts or mutations.
+- **Important:** Any Discord channel/bot permission, subscription, guild/app, or secret/configuration correction is outside this run and requires Theo's explicit approval before it is made.
+
+### 5. Unverified but required checks
+
+- **Unverified:** A correctly permissioned non-customer private delivery, provider receipt, deterministic no-duplicate evidence, retry/recovery outcome after a corrected target, pilot, support, and release gates.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must decide whether to approve a narrowly scoped Discord permission correction for the existing subscribed non-customer channel. The correction must name the exact bot capability to grant and preserve all other channel/guild settings.
+2. After a correction, QA must receive a fresh, separately approved one-event retry/cleanup plan. It must not reuse the current global-worker activation authority; retain and reconcile the existing 403 evidence first.
+
+## Independent QA post-permission-change inert check - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+Theo reported the narrow channel-permission correction complete. QA confirms a safe inert hosted state, but the correction itself remains unverified until one separately approved provider retry succeeds or fails.
+
+### 2. What was verified
+
+- The existing Phase F marker is still the sole claimable Discord event: it remains pending at attempt count one with no delivery receipt.
+- No non-fixture Discord event is claimable; both global workers and all QA controls are inactive.
+
+### 3. Blocking issues
+
+- **Blocking:** The prior worker-activation authority was consumed by the recorded 403 run. A fresh explicit approval is required before a new project-wide activation can test the reported permission correction.
+
+### 4. Important risks
+
+- **Important:** Do not create a new command or event. The bounded retry must use only the retained marker, after the same all-project clean-queue/subscription isolation preflight.
+
+### 5. Unverified but required checks
+
+- **Unverified:** The Discord channel can now accept a bot message, the marker reaches exactly one provider receipt, and immediate disable/restoration leaves no unrelated work.
+
+### 6. Suggested fixes or next validation steps
+
+1. Theo must explicitly approve one fresh activation of `security.configure_discord_production_worker_schedule()` in project `tvcgjehreaayfazlhvps`, restricted to the existing marker retry, monitoring, immediate disable, and subscription restoration.
+
+## Independent QA Phase F controlled retry completion - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+Phase F completes as bounded, hosted non-customer evidence. The corrected private target delivered exactly once after the retained 403 retry. Discord remains test-only, customer activation is not approved, and WO-040 returns to **Blocked** pending a separately approved Phase G consented Elite pilot.
+
+### 2. What was verified
+
+- QA re-isolated the non-customer Clash fixture, then confirmed the retained marker was the sole claimable Discord event, no non-fixture event was claimable, and no reminder event could be created.
+- Both named workers activated under Theo's fresh explicit approval. The retained marker reached terminal `delivered` with one provider receipt.
+- The marker retains two delivery-attempt rows: the historical `Discord returned 403` retry without a receipt, and one later `delivered` row with a provider receipt. It has no duplicate canonical scrim, receipt, or outbox event.
+- QA immediately disabled both workers. Final fixture totals are 13 scrims, 6 interaction receipts, 15 Discord events, and 17 delivery attempts. No non-fixture work is open; all QA controls are inactive.
+- `practice_reminder`, `schedule_changed`, and `schedule_cancelled` were restored to their prior enabled state after the final disable.
+
+### 3. Blocking issues
+
+- **Blocking:** Phase F is not customer release evidence. A named, consented Elite pilot, monitored support/rollback procedure, and Theo's separate release decision remain required.
+
+### 4. Important risks
+
+- **Important:** The 403 retry is retained evidence of a real permission failure. Future channel/guild permission changes must be evaluated against it; do not erase or relabel it as a clean first-pass delivery.
+- **Important:** A provider receipt verifies the hosted delivery API path, not end-user browser/UI receipt or broad operational reliability.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Consented customer-pilot admission, customer-specific tenant/role/plan verification, monitoring and support handoff during a real delivery window, recovery/rollback drill, and final release approval.
+
+### 6. Suggested fixes or next validation steps
+
+1. PM must prepare a Phase G plan naming a consented Elite pilot workspace, customer contact/rollback owner, support monitoring window, scope limit, and immediate disable procedure. It must exclude all other customers.
+2. Theo must approve that exact pilot plan before any customer Discord enablement, worker activation, or customer-facing availability claim.
+
+## PM post-Phase F routing - 2026-08-07
+
+Phase F is complete as **hosted, non-customer evidence**. It proves one retained fixture event can make one provider delivery after a documented 403 permission failure/retry, with project-wide isolation, immediate worker disable, and subscription restoration. It does not prove customer supportability, customer setup, sustained worker operation, browser-visible receipt, or general availability.
+
+WO-040 is **Blocked — Project Manager** pending a separately scoped Phase G consented Elite pilot plan. No developer work is currently assigned. The work order remains on release **HOLD**.
+
+### Required Phase G plan
+
+- Name one consented Elite workspace only, its owner contact, pilot start/end window, support monitor, rollback owner, and immediate-disable contact.
+- Verify that workspace's Elite entitlement, live/enabled Discord module, installation, permitted role, subscribed channel, and customer-role boundaries without exposing identifiers or credentials.
+- Define one schedule-only success path, expected data/provider evidence, browser-visible customer state, monitoring cadence, retry/failure handling, and the customer-facing wording that remains truthful throughout the pilot.
+- Define immediate workspace-level disable plus global-worker disable, evidence retention, incident escalation, and pilot exit/cleanup. No broad customer enablement or public availability claim is included.
+
+### Definition of done for Phase G planning
+
+A plan contains every named pilot/owner/window/rollback field above, its acceptance and stop conditions, exact before/after evidence requirements, and a Theo approval record. Only then may QA/Core receive a pilot execution assignment.
+
+## PM pre-pilot customer-readiness route - 2026-08-07
+
+Theo's direction is to make Discord technically and operationally ready for pilot teams before recruiting those teams. The former Phase G pilot stage is therefore split:
+
+1. **Phase G — pre-pilot customer-readiness:** non-customer technical, operational, and release-boundary completion.
+2. **Phase H — consented Elite pilot:** the first real teams use the already-prepared workflow under monitoring.
+3. **Phase I — release decision:** only after pilot evidence and Theo's explicit decision.
+
+### Phase G objective
+
+Turn the successful non-customer Phase F delivery into a supportable customer-pilot candidate without enabling any customer workspace or making any customer-facing availability claim.
+
+### Assigned Core outcome
+
+- Reconcile the deployed Discord revisions, migrations/RLS/grants, worker authentication, provider configuration-name presence, and current manifest/release-boundary status against the reviewed source. Record safe revision and configuration-name evidence only.
+- Close the pre-pilot multi-workspace operational gap: prove that normal scheduled dispatch and reminder processing can be enabled without cross-tenant delivery, duplicate claims, or unbounded unrelated work. Use non-customer fixtures only; if a second configured fixture or provider change is needed, stop and return the exact proposed scope to Theo.
+- Verify owner/admin setup and member/viewer denial journeys, truthful unavailable/retrying/failed/disconnected states, and a workspace-level immediate disable alongside the global worker disable. Preserve historical attempts and receipts.
+- Produce a pilot-support handoff: owner/admin setup checklist, event/attempt inspection procedure, bounded retry/failure handling, incident escalation, workspace disable, global disable, evidence retention, and a no-claim rule.
+- Prepare a named production-candidate manifest/release-boundary update only after the technical and support evidence is complete. Do not deploy, reclassify Discord as customer-available, activate workers, or change provider/secrets/configuration without a new exact Theo approval.
+
+### Phase G acceptance criteria
+
+- At least two isolated non-customer workspace contexts demonstrate tenant-scoped enablement/denial, per-workspace disable, and no cross-tenant event/attempt change under normal dispatch and reminder conditions.
+- Exact deployed candidate revisions, Function authentication, RLS/grants, worker schedules, and configuration-name presence are independently hosted-verified; no secret value is exposed.
+- Owner/admin configuration and member/viewer denial are browser-verified, including unavailable, retrying, failed, and disconnected customer-support states.
+- A written support/rollback runbook has an identified operator, evidence fields, immediate workspace/global disable actions, and a customer-safe incident escalation path.
+- QA independently issues a **pre-pilot customer-ready** verdict. This is not a customer activation, pilot, or release approval.
+
+### Phase G explicit non-goals
+
+- Do not enable Discord for a customer, send a customer Discord message, recruit/claim a pilot, or publish availability.
+- Do not change plan entitlements: Discord remains Elite-only and live/enabled module-gated.
+- Do not change secrets, Discord app/guild/channel permissions, production configuration, database schema, or deploy Functions without a separately named Theo approval.
+
+### Phase G reproducible QA scenario
+
+1. Establish two confirmed non-customer tenant fixtures with distinct roles and clean before-counts. If the existing test Discord configuration cannot support this without a provider change, stop.
+2. Verify all tenant/role/module/plan denials and the authorised owner/admin setup state. Confirm denied actions create no scrim, receipt, event, or delivery attempt.
+3. Execute the approved normal dispatcher/reminder sequence only against the named non-customer fixtures; reconcile all tenant counts and prove each workspace-level disable prevents only its own future delivery while preserving history.
+4. Exercise retry, failure, disconnected, and global-disable operator procedures using retained evidence. Do not manufacture customer or provider activity outside separate approvals.
+5. QA independently reviews the deployed candidate, browser journeys, support handoff, and evidence pack, then issues its pre-pilot verdict.
+
+## PM current routing after Phase F - 2026-08-07
+
+The earlier Phase G pilot-planning entry is superseded by Theo's later pre-pilot direction. The current work is **Phase G pre-pilot customer-readiness**, assigned **Ready for Development** to Core Features Developer. Phase F remains completed hosted non-customer evidence only; its QA row is historical evidence, not an active blocker or a pilot authorisation.
+
+The current release verdict remains **HOLD**. Core must hand back a bounded non-customer candidate and validation evidence before QA can assess pre-pilot customer readiness. If Core determines that a second configured non-customer fixture, Discord provider change, deployment, configuration change, or customer action is necessary, it must stop and return the exact scope to Theo.
+
+## Core Phase G-A read-only readiness audit - 2026-08-07
+
+Theo approved Phase G-A only: source inspection, local validation, read-only hosted reconciliation, authenticated browser inspection, and preparation of the two-context execution plan. No fixture row, provider request, worker state, secret/configuration, deployment, customer workspace, or production data was changed.
+
+### Outcome and current verdict
+
+Phase G-A is complete. The deployed security and worker boundaries remain safely inert, but the current candidate is **not ready for Phase G QA** because customer-visible delivery health and release wording are incomplete. The overall release verdict remains **HOLD**.
+
+### Source and local validation evidence
+
+- Discord signature verification occurs against the raw request body before JSON parsing or tenant lookup. The interaction path then enforces active guild installation, permitted Discord role, Elite/live/enabled module state, and server-owned canonical creation.
+- Owner/admin configuration paths use authenticated Functions plus server-side membership and Discord entitlement checks. Member/viewer access is not trusted to the browser gate.
+- Dispatcher and reminder Functions require `DISCORD_DISPATCH_SECRET`; dispatcher claims only provider-scoped events and rechecks tenant entitlement and tenant subscriptions before delivery.
+- Operator worker and QA-arm routines are `SECURITY DEFINER` with fixed search paths and no `anon`, `authenticated`, or `service_role` execution. Service-only claim/completion RPCs remain unavailable to `anon` and `authenticated`.
+- Focused Discord/competitive contracts: 18 passed, 0 failed.
+- ESLint completed with zero warnings; TypeScript completed; production Vite build completed; bundle budgets passed; `git diff --check` completed with line-ending warnings only.
+
+### Read-only hosted reconciliation
+
+- Exact active revisions remain: `discord-install` v15, `discord-channels` v13, `discord-schedule-reminders` v13, `discord-dispatch` v18, `discord-config` v10, `discord-roles` v5, `discord-interactions` v13, and `discord-qa-nonce` v1. Their recorded hosted SHA-256 identities are unchanged from the previously reviewed WO evidence.
+- Hosted migration history includes `20260802173000_discord_interaction_scheduling`, `20260804134309_discord_production_delivery_controls`, `20260805134134_discord_qa_replay_controls`, `20260805191357_wo040_discord_qa_dispatch_controls`, `20260806130646_wo040_discord_nonce_qa_controls`, and `20260806142907_wo040_discord_worker_reactivation`.
+- Both named Discord cron jobs are inactive. There are zero open Discord events and zero active replay, dispatch, or nonce QA controls.
+- RLS is enabled on `discord_installations`, `discord_channel_subscriptions`, `discord_permitted_roles`, `discord_interaction_receipts`, `integration_events`, and `integration_delivery_attempts`. The security advisor returned no Discord-specific advisory.
+- Worker Vault configuration names `project_url`, `publishable_key`, and `discord_dispatch_secret` are present. No value was read or recorded. Provider Edge-secret name presence could not be independently enumerated through the available read-only interface and remains unverified.
+- Hosted configuration currently has one active installation, one distinct guild, one configured tenant, and four enabled subscriptions. This is insufficient for a two-configured-workspace provider proof.
+
+### Authenticated browser and fixture findings
+
+- The signed-in owner journey for the isolated configured fixture renders `Available`, `Delivery active`, four active prompt types, owner/admin configuration controls, and the warning that `/scrim` remains unavailable until release approval.
+- Those simultaneous states are not an honest pre-pilot customer contract: `Available` and `Delivery active` overstate release readiness while the command and global workers remain release-gated and inactive.
+- The current `discord-config` response exposes installation, subscriptions, and permitted roles only. It does not expose tenant-scoped recent delivery health, so the UI cannot distinguish queued/retrying, failed, disconnected, or last-delivered states.
+- The approved test accounts provide owner, admin, member, and viewer memberships across Free, Pro, Elite/planned, Elite/live/unconfigured, and Elite/live/configured contexts. The Elite/live/unconfigured context can be the second non-customer negative-control workspace; no second Discord installation or provider change is required for the next source/browser matrix.
+- Owner desktop state was browser-verified. Switching workspace roles through the current browser control timed out without changing data, and the requested mobile viewport override did not take effect; admin/member/viewer and real mobile evidence remain unverified.
+
+### Documentation drift
+
+- `EDGE_FUNCTION_MANIFEST.md` still calls `discord-qa-nonce` source-only and undeployed even though hosted v1 is active.
+- `DISCORD_DELIVERY_SUPPORT.md` still describes the non-customer production smoke as outstanding although Phase F completed one bounded delivery after the retained 403 retry.
+- `RELEASE_BOUNDARY.md` correctly continues to exclude interactive Discord delivery.
+
+### Proposed Phase G-B source scope requiring Theo approval
+
+1. Extend the authenticated, owner/admin-only Discord status response with bounded tenant-scoped delivery health derived from existing events/attempts; add no schema and expose no provider reference, secret, or cross-tenant data.
+2. Replace premature `Available` / `Delivery active` wording with explicit setup state plus test-only/release-HOLD wording, and render honest disconnected, queued/retrying, failed, and last-delivered states.
+3. Add focused contracts for tenant scoping, owner/admin authorization, member/viewer denial, state mapping, and release-safe copy.
+4. Reconcile the manifest and support runbook with the hosted Phase F/G-A evidence while keeping the release boundary excluded.
+5. Run focused tests, ESLint, TypeScript, production build, bundle budget, and desktop/mobile local browser checks. Do not deploy or mutate hosted state in Phase G-B.
+
+After Phase G-B source validation, return for a separately approved Phase G-C hosted matrix. That later approval must name the configured fixture, the Elite/live unconfigured negative-control workspace, allowed temporary fixture changes, any worker activation, immediate disable/restoration owner, before/after counts, and the no-provider-change boundary.
+
+## Core Phase G-B source implementation - 2026-08-07
+
+Theo approved the bounded Phase G-B source scope recorded above. The implementation is complete locally; no Function or frontend was deployed and no hosted/provider state was changed.
+
+### Changes implemented
+
+- `discord-config` now returns a bounded owner/admin-only `delivery_health` projection after the existing authenticated membership and Elite/live/enabled checks. All event and attempt reads require the requested `tenant_id`, Discord provider, supported schedule event types, descending recency, and a one-row limit.
+- The response exposes only mapped state, event status, attempt count, retry/delivery timestamps, and the latest attempt outcome. It does not select or return provider references, provider error text, payloads, event IDs, guild/channel IDs beyond the existing configuration contract, or cross-tenant data.
+- A shared pure mapper covers `setup_required`, `connected`, `configured`, `queued`, `retrying`, `failed`, `delivered`, and `disconnected`. Connection/configuration state takes priority over stale historical event evidence.
+- The Integrations badge now says `Test only` instead of `Available`. The Discord panel no longer says `Delivery active`; it renders evidence-specific, release-safe labels and permanently states that customer availability still requires hosted QA, a consented pilot, and Theo's release approval.
+- Disabled Discord modules no longer render owner/admin controls. Member/viewer browser gating remains unchanged, and the Function continues to deny them below the browser through `managerMembership`.
+- The manifest now records hosted `discord-qa-nonce` v1 and the completed Phase F bounded smoke honestly. The support runbook now defines pre-release states, operator ownership, evidence fields, workspace/global stop paths, and the retained release HOLD.
+
+### Validation evidence
+
+- Focused Discord, status, nonce, and competitive contracts: 23 passed, 0 failed.
+- Complete local suite: 267 passed, 0 failed.
+- ESLint: passed with zero warnings.
+- TypeScript: passed.
+- Production Vite build: passed, 3,365 modules transformed.
+- Bundle budgets: passed.
+- `git diff --check`: passed with existing Windows line-ending warnings only.
+- React review: the state presentation is module-static, query reads remain deduplicated through React Query, and the Function parallelises independent status reads before the one dependent latest-attempt read.
+
+### Remaining verification and release boundary
+
+- The new `discord-config` source and frontend are not deployed. Hosted revision/source parity, authenticated owner/admin states, member/viewer denial, state rendering, and real desktop/mobile layout remain unverified for this candidate.
+- No migration is required. The implementation reads existing tenant-scoped tables and does not change RLS, grants, worker scheduling, entitlements, provider configuration, or secrets.
+- Workers remain inactive by the last Phase G-A hosted check. No provider request, fixture mutation, or customer action occurred during Phase G-B.
+- Release remains **HOLD**. This source completion is not `Ready for QA`, customer activation, pilot evidence, or release approval.
+
+### Exact next approval scope
+
+Before Phase G-C data/worker execution, the candidate first needs a bounded deployment verification step:
+
+1. Commit only the intentional WO-040 source/tests/docs plus the existing PM routing/evidence needed by this order; preserve unrelated WO-041/WO-042 files and other dirty work.
+2. Push the current `codex/Staging` branch.
+3. Deploy only `discord-config` with `verify_jwt=true`, including `_shared/collector.ts` and `_shared/discord-health.ts`; do not deploy or activate any worker or provider-facing Function.
+4. Deploy the staging frontend only. Do not change environment variables, secrets, database schema/data, Discord configuration, or customer workspaces.
+5. Verify exact hosted revision/source identity, then run read-only authenticated desktop/mobile owner/admin/member/viewer checks across the existing configured test fixture and Elite/live unconfigured negative-control workspace.
+
+The later Phase G-C worker/provider matrix remains a separate approval after this deployment verification succeeds.

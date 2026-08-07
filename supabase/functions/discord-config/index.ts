@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { authenticatedUser, collectorCorsHeaders, discordEntitled, json, managerMembership, serviceClient } from "../_shared/collector.ts";
+import { discordDeliveryHealthState } from "../_shared/discord-health.ts";
 
 const allowedEvents = ["schedule_created", "schedule_changed", "schedule_cancelled", "practice_reminder"] as const;
 const isAllowedEvent = (value: string): value is typeof allowedEvents[number] => allowedEvents.includes(value as typeof allowedEvents[number]);
@@ -18,11 +19,52 @@ serve(async (request) => {
   const tenantId = typeof body.tenant_id === "string" ? body.tenant_id : "";
   if (!tenantId || !(await discordManager(user.id, tenantId))) return json({ error: "Discord automation is unavailable for this workspace." }, 403);
   const db = serviceClient(); const action = String(body.action || "status");
-  const { data: installation } = await db.from("discord_installations").select("id, guild_id, guild_name, status, installed_at").eq("tenant_id", tenantId).maybeSingle();
+  const { data: installation, error: installationError } = await db.from("discord_installations").select("id, guild_id, guild_name, status, installed_at").eq("tenant_id", tenantId).maybeSingle();
+  if (installationError) return json({ error: "Discord connection status could not be checked." }, 500);
   if (action === "status") {
-    const { data: subscriptions } = await db.from("discord_channel_subscriptions").select("channel_id, channel_name, event_type, enabled").eq("tenant_id", tenantId).eq("enabled", true);
-    const { data: permittedRoles } = await db.from("discord_permitted_roles").select("role_id, role_name").eq("tenant_id", tenantId).order("role_name");
-    return json({ installation: installation && installation.status === "active" ? installation : null, subscriptions: subscriptions || [], permitted_roles: permittedRoles || [] });
+    const [{ data: subscriptions, error: subscriptionsError }, { data: permittedRoles, error: rolesError }, { data: latestEvent, error: eventError }] = await Promise.all([
+      db.from("discord_channel_subscriptions").select("channel_id, channel_name, event_type, enabled").eq("tenant_id", tenantId).eq("enabled", true),
+      db.from("discord_permitted_roles").select("role_id, role_name").eq("tenant_id", tenantId).order("role_name"),
+      db.from("integration_events")
+        .select("id, status, attempt_count, available_at, delivered_at, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("provider", "discord")
+        .in("event_type", [...allowedEvents])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (subscriptionsError || rolesError || eventError) return json({ error: "Discord delivery status could not be checked." }, 500);
+
+    const { data: latestAttempt, error: attemptError } = latestEvent
+      ? await db.from("integration_delivery_attempts")
+        .select("outcome, attempted_at")
+        .eq("tenant_id", tenantId)
+        .eq("event_id", latestEvent.id)
+        .eq("provider", "discord")
+        .order("attempted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      : { data: null, error: null };
+    if (attemptError) return json({ error: "Discord delivery status could not be checked." }, 500);
+
+    const activeSubscriptions = subscriptions || [];
+    const healthState = discordDeliveryHealthState(installation?.status || null, activeSubscriptions.length, latestEvent || null);
+    return json({
+      installation: installation && installation.status === "active" ? installation : null,
+      subscriptions: activeSubscriptions,
+      permitted_roles: permittedRoles || [],
+      release_state: "test_only",
+      delivery_health: {
+        state: healthState,
+        event_status: latestEvent?.status || null,
+        attempt_count: latestEvent?.attempt_count || 0,
+        next_attempt_at: healthState === "retrying" ? latestEvent?.available_at || null : null,
+        last_delivered_at: latestEvent?.delivered_at || null,
+        last_attempt_outcome: latestAttempt?.outcome || null,
+        last_attempted_at: latestAttempt?.attempted_at || null,
+      },
+    });
   }
   if (!installation || installation.status !== "active") return json({ error: "No active Discord installation." }, 404);
   if (action === "set_permitted_roles") {

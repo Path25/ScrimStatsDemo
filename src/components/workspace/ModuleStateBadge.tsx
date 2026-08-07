@@ -6,14 +6,16 @@ export function ModuleStateBadge({
   state,
   enabled = true,
   unavailableLabel = "Unavailable",
+  availableLabel = "Available",
   className,
 }: {
   state: WorkspaceReleaseState;
   enabled?: boolean;
   unavailableLabel?: string;
+  availableLabel?: string;
   className?: string;
 }) {
-  const label = !enabled ? unavailableLabel : state === "planned" ? "Coming soon" : "Available";
+  const label = !enabled ? unavailableLabel : state === "planned" ? "Coming soon" : availableLabel;
 
   return (
     <Badge

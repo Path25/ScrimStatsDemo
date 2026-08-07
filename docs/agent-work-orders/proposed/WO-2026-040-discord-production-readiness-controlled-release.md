@@ -2594,3 +2594,32 @@ Before Phase G-C data/worker execution, the candidate first needs a bounded depl
 5. Verify exact hosted revision/source identity, then run read-only authenticated desktop/mobile owner/admin/member/viewer checks across the existing configured test fixture and Elite/live unconfigured negative-control workspace.
 
 The later Phase G-C worker/provider matrix remains a separate approval after this deployment verification succeeds.
+
+## Core Phase G-B staging deployment verification - 2026-08-07
+
+Theo approved only the bounded candidate deployment and read-only verification scope recorded above. Core committed the reviewed WO-040 source/tests/docs as `405ca36` (`Prepare Discord pre-pilot delivery states`) and pushed it to `origin/codex/Staging`. Unrelated WO-041/WO-042 files and mixed assignment-board/index edits were not staged.
+
+### Hosted deployment evidence
+
+- Supabase project `tvcgjehreaayfazlhvps` reports `discord-config` version **11** as `ACTIVE`, with `verify_jwt=true` and deployed SHA-256 `3a880bb7950d7b4cced745bb35cc3bf85b5e302099559dafccbc05866e9fc5e4`.
+- A read-back of hosted v11 contains the reviewed `discord-config` entrypoint plus `_shared/collector.ts` and `_shared/discord-health.ts`, including tenant-scoped bounded delivery-health reads and the `test_only` response contract.
+- The established Git-triggered staging frontend path served HTTP 200 from `https://staging.scrimstats.gg/integrations` after the push. The response was last modified `Fri, 07 Aug 2026 11:41:24 GMT`, referenced `/assets/index-m6UGdxJD.js`, returned `x-vercel-cache: MISS`, and recorded request reference `arn1:iad1::r9p5t-1786102884618-2bbe2e4c724e`.
+- The connected Vercel account still exposes no projects, so an immutable Vercel deployment ID and provider-side commit-to-deployment mapping could not be independently recorded. The authenticated hosted UI proves the new candidate contract is served, but this is not equivalent to an exact Vercel revision attestation.
+
+### Authenticated desktop evidence
+
+- At a measured 1280 x 720 viewport, the configured non-customer `clash` owner journey renders `Test only`, `Last delivery recorded`, the safe provider-receipt disclaimer, the permanent customer-availability HOLD copy, and the existing owner configuration controls.
+- The `OnceUponATeam` member journey renders `Test only`, the read-only notification-bridge preview, `Unavailable until delivery is verified`, and no Discord configuration controls.
+- The `WO-024 QA Tenant B` admin journey renders `Coming soon` and `Unavailable until delivery is verified`. This verifies the admin's planned/module-unavailable presentation, not an authorised admin setup path on an Elite/live configured workspace.
+- No workspace, provider, database, secret, configuration, worker, or customer state was changed by these browser checks.
+
+### Remaining verification gaps and verdict
+
+- The current browser session is authenticated only as `fridayxiiiempire@gmail.com`; it has owner, admin, and member memberships but no viewer membership. The existing `pathtoyourdream@gmail.com` Clash viewer therefore remains unverified against this deployed frontend candidate.
+- The in-app browser runtime exposes no viewport-resize operation and remained 1280 x 720 after the bounded mobile-viewport attempts. Real 390 px owner/admin/member/viewer evidence remains unverified.
+- An authorised Elite/live admin configuration state is not present in the available signed-in account's workspaces. The admin evidence above is a fail-closed unavailable state only.
+- Phase G-B remains **In Progress** and the release verdict remains **HOLD**. Do not assign Phase G-C, activate workers, mutate fixtures, invoke a provider delivery, enable a customer workspace, or make an availability claim.
+
+### Exact QA handoff blocker
+
+To complete this deployment-verification step, QA needs authenticated access to the existing Clash viewer fixture and a browser capable of a real 390 px viewport. It must repeat the deployed `/integrations` role presentation without mutations and record the exact staging revision if Vercel project visibility is available. After those checks pass, WO-040 may move to the QA and Release Auditor for Phase G-B review; Phase G-C remains separately approval-gated.

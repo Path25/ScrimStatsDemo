@@ -19,15 +19,15 @@
 - `stripe-webhook` (Stripe-signature authenticated)
 - `stripe-mrr-snapshot` (Vault-backed worker-secret authenticated; reporting aggregate only)
 
-## Test-only Discord delivery functions
+## Discord pilot candidate and test controls
 
-- `discord-install`, `discord-channels`, `discord-config`, `discord-roles` (workspace owner/admin JWT required)
+- `discord-install`, `discord-channels`, `discord-config`, `discord-roles` (workspace owner/admin JWT required; Stage 1 source candidate uses the safe `pilot_access` display state)
 - `discord-schedule-reminders`, `discord-dispatch` (dispatch-secret authenticated workers)
 - `discord-qa-nonce` v1 (deployed test-only control; explicit gateway JWT plus dispatch-secret authentication)
 
 `discord-interactions` v13 is deployed with intentional `verify_jwt=false`: Discord Ed25519 signature verification is mandatory before parsing or lookup, and its only intended command is the server-gated `/scrim` practice-block workflow. Its private WO-040 exact-replay control is inert unless a database operator separately arms one tenant-bound run for at most fifteen minutes; browser and service roles cannot arm it.
 
-The deployed Functions in this section are available only for the isolated Discord test workflow. They remain server-gated by Elite plus a `live` and enabled Discord module; no customer workspace is enabled until the separate QA and release gates pass.
+The currently deployed Functions in this section remain part of the isolated Discord test workflow until the Stage 1 candidate is source/revision-matched through the separately approved deployment gate. They remain server-gated by Elite plus a `live` and enabled Discord module. `Pilot access` is limited to named, consenting Elite workspaces admitted after the remaining cutover gates; it is not general availability. `discord-qa-nonce` remains a test-only control.
 
 WO-2026-040 delivery controls from candidate `e268298` remain hosted in the shared Supabase project: migration history records `20260804134309_discord_production_delivery_controls`, and the Discord workers remain inactive. The exact-replay migration is hosted as `20260805134134_discord_qa_replay_controls`. Timing-correction commit `dd354f8` is deployed as `discord-interactions` v13, SHA `0346de39082a99ecc2a8aa874e58608d1316d405120e71cb71b4b9028e456fdb`; retrieved entrypoint and shared helper match the committed candidate. One earlier v12 replay run is terminal and zero runs are active. This is not a new provider invocation or customer activation. Arming a private replay run, submitting a Discord interaction, re-enabling workers, smoke/pilot work, and release each retain their recorded separate approval gates.
 
@@ -35,7 +35,7 @@ WO-2026-040 Phase C exact-event isolation is hosted from commit `8986e82`: migra
 
 WO-2026-040 Phase D source is committed at `1c05d7b`, with hosted migration identity reconciliation at `a0180f0`. Database controls are hosted as migration `20260806130646_wo040_discord_nonce_qa_controls`; `discord-qa-nonce` v1 uses explicit `verify_jwt=true`, SHA `85e9ed3099fd304b88e56754f9e148bfd10fb460011e9facff39bfa29c85dacf`, and exact committed entrypoint/shared sources. `discord-dispatch` remains unchanged at v18. No Phase D run, fixture, provider request, permission/configuration change, or recovery rehearsal has occurred. Every provider-facing step retains separate Theo approval, both workers remain inactive, and the release verdict remains HOLD.
 
-WO-2026-040 Phase F later completed one bounded non-customer delivery after retaining the earlier Discord 403 retry as evidence. Phase G-A then reconfirmed both workers inactive, zero claimable Discord events, zero active QA controls, one configured non-customer tenant/guild, and the same deployed Function revisions. One retained schedule-created event remains terminal `failed` at attempt count five and is not claimable. Phase G-B delivery-health and release-safe UI work is deployed only as a test-only candidate; it does not make Discord customer-available.
+WO-2026-040 Phase F later completed one bounded non-customer delivery after retaining the earlier Discord 403 retry as evidence. Phase G-A then reconfirmed both workers inactive, zero claimable Discord events, zero active QA controls, one configured non-customer tenant/guild, and the same deployed Function revisions. One retained schedule-created event remains terminal `failed` at attempt count five and is not claimable. Phase G-B delivery-health and release-safe UI work is deployed only as a test-only candidate. The later Stage 1 `Pilot access` change is local source only until separately deployed and verified; neither state makes Discord generally available.
 
 ## Retired with HTTP 410 tombstones
 

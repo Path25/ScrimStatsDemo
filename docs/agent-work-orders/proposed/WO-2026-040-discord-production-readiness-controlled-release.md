@@ -1,7 +1,7 @@
 # WO-2026-040 - Make Discord scheduling and delivery production-ready through a controlled release
 
 - **ID reservation:** [WO-2026-040 registry row](../WORK_ORDER_INDEX.md)
-- **Status:** Ready for Development
+- **Status:** In Progress
 - **Assigned owner:** Core Features Developer
 - **Size:** M
 - **Risk:** High
@@ -2654,3 +2654,148 @@ Theo approved the narrowly bounded non-customer fixture proposed above: temporar
 - Final database read-back confirms exactly one matching membership with role `viewer`, one active installation, four enabled subscriptions, one permitted Discord role, and zero active Discord workers.
 
 The authorised Elite/live admin presentation gap is closed and the temporary fixture is fully restored. Phase G-B remains **In Progress** with release **HOLD** only because genuine 390 px hosted evidence and immutable Vercel revision mapping remain unavailable in the current tool surfaces. Phase G-C remains separately approval-gated.
+
+## Independent QA Phase G-B deployed-candidate audit - 2026-08-07
+
+### 1. Release verdict: HOLD
+
+The deployed Phase G-B candidate is a sound, release-safe improvement to the test-only configuration/status contract, but it is not pre-pilot customer-ready. No customer Discord activation, provider action, or worker activation is authorised.
+
+### 2. What was verified
+
+- Active hosted `discord-config` is v11, `verify_jwt=true`, SHA-256 `3a880bb7950d7b4cced745bb35cc3bf85b5e302099559dafccbc05866e9fc5e4`. Retrieved source has the reviewed tenant predicate on every delivery-health event/attempt read and returns no provider reference, provider error, payload, or cross-tenant history.
+- The server still requires an authenticated user, owner/admin membership, Elite tier, and a live/enabled Discord module before status or configuration access. Member/viewer controls remain below that Function boundary.
+- Independent focused contracts passed 19/19; scoped TypeScript and zero-warning ESLint passed.
+- Current hosted state has one active Discord installation/configured tenant, zero active workers/QA controls, zero claimable Discord events, and no non-fixture queueable work. The test-only/release-HOLD wording is present in the reviewed UI/support contract.
+
+### 3. Blocking issues
+
+- **Blocking:** Phase G acceptance requires two isolated non-customer contexts proving normal dispatcher/reminder and per-workspace-disable isolation. Only one configured tenant/provider path exists; that matrix is not available or executed.
+- **Blocking:** Genuine hosted 390px role-state evidence is absent. The current browser runtime did not apply a mobile viewport override, so desktop evidence cannot substitute for responsive verification.
+- **Blocking:** The served staging asset was observed, but immutable Vercel commit-to-deployment evidence is unavailable. A timestamp/cache response does not prove the exact frontend revision required for a customer-readiness decision.
+
+### 4. Important risks
+
+- **Important:** The Phase G-A statement of “zero open Discord events” is inaccurate. Hosted state retains one terminal `failed` schedule-created event at attempt count five. It is not claimable and does not make the workers unsafe, but the evidence record must say “zero claimable events,” not “zero open events.”
+- **Improvement:** The `Test only` module badge inherits the success-green live-module colour. Its text and adjacent HOLD copy are clear, but a neutral/awaiting tone would better avoid visual availability implications.
+
+### 5. Unverified but required checks
+
+- **Unverified:** Configured and unconfigured non-customer two-context normal worker/reminder matrix, workspace-level disable isolation, disconnected/retry/failed browser states, and support/rollback rehearsal.
+- **Unverified:** Hosted 390px owner/admin/member/viewer rendering and immutable staging frontend revision mapping.
+- **Unverified:** Customer pilot, customer-facing support operation, and final release approval.
+
+### 6. Suggested fixes or next validation steps
+
+1. Core/PM must correct the Phase G-A operational wording to preserve the terminal failed event while accurately recording zero *claimable* events.
+2. Theo must provide either authenticated mobile-capable staging evidence for the named non-customer role fixtures or explicitly accept that responsive gap; restore Vercel project visibility if immutable deployment evidence is required.
+3. Before Phase G-C, PM must submit an exact non-customer two-context worker/reminder and workspace-disable plan. It requires separate Theo approval and must not enable a customer or change a provider configuration.
+
+## Theo acceptance of Phase G-B mobile evidence gap - 2026-08-07
+
+Theo accepts the missing genuine 390px hosted role-state checks as a documented residual risk for Phase G-B. This acceptance applies only to that responsive evidence gap; it does not make Discord customer-ready, approve a worker/provider action, waive two-context tenant-isolation evidence, establish immutable frontend deployment identity, authorise a pilot, or change the release **HOLD** verdict.
+
+## PM Phase G-B reconciliation and Phase G-C decision gate - 2026-08-07
+
+Phase G-B is complete as an implemented, locally tested, staging-hosted, and independently QA-audited candidate. It adds tenant-scoped delivery-health status and release-safe customer wording; the accepted 390px evidence gap remains documented. It does not complete Phase G customer readiness.
+
+WO-040 is **Blocked — Project Manager** for one material decision: Phase G-C requires two configured non-customer Discord contexts to prove normal dispatcher/reminder and workspace-disable isolation. The current hosted state has one configured Discord tenant only. The existing Elite/live unconfigured workspace is a useful negative control, but cannot establish a second normal provider-delivery context.
+
+Before any Phase G-C work, Theo must choose and explicitly approve one of:
+
+1. A second named non-customer workspace with a bounded Discord test installation/channel/role configuration; or
+2. A revised, lower claim limited to the single configured non-customer context, which cannot support a pre-pilot customer-ready verdict.
+
+No customer workspace, customer Discord target, worker activation, provider configuration, secret/configuration change, deployment, or customer-facing availability claim is authorised by this routing note.
+
+## Founder pilot-ready production decision - 2026-08-07
+
+Theo clarified the required outcome: Discord does not need full-scale or perfect-release proof before external use. It must be **pilot-ready in production** so approved Elite workspaces on scrimstats.gg can connect their own Discord server and receive schedule prompts; the first teams will then validate real-world use as controlled pilots.
+
+This supersedes Phase G-C's two-configured-non-customer-context requirement as a pre-pilot release blocker. That broader isolation matrix remains valuable follow-up evidence, but is deferred beyond the pilot-ready cutover because existing server-side entitlement, tenant, role, guild, module, and idempotency boundaries have already been independently exercised.
+
+### Revised immediate outcome: pilot-ready production cutover candidate
+
+Core Features Developer must prepare a single release candidate that:
+
+- Serves the reviewed Discord configuration/status journey from scrimstats.gg, with Elite/live/enabled workspace gating and clear **Pilot access** wording rather than a general-availability claim.
+- Allows an authorised Elite owner/admin to connect the approved Discord server, choose the supported schedule prompt/channel controls, and see truthful configured, queued/retrying, failed, disconnected, and last-delivered states.
+- Uses the reviewed authenticated Functions, tenant-scoped event/attempt reads, Ed25519 interaction verification, worker-secret dispatch/reminder path, and workspace/global disable controls without changing plan entitlements.
+- Supplies an exact production cutover checklist: deployed Function/frontend revisions, configuration-name presence only, Discord application endpoint/redirect boundary, worker activation/disable procedure, one non-customer smoke, monitoring, support contact, rollback owner, and immediate workspace/global disable paths.
+- Produces focused contracts plus lint, TypeScript, production build/bundle budget, and a source/hosted handoff for QA.
+
+### Pilot-ready acceptance criteria
+
+- The production candidate is deployed and source/revision-matched; required secret/configuration **names** are present without exposing values.
+- In scrimstats.gg, an Elite owner/admin can complete the supported Discord connection/configuration journey while member/viewer and Free/Pro/non-live cases fail safely below the browser layer.
+- A bounded non-customer production smoke creates one canonical schedule prompt and one provider receipt, then verifies the documented disable/recovery path with no unexpected fixture impact.
+- The UI, support runbook, manifest, and release boundary truthfully say **Pilot access** only; Discord is not described as generally available until pilot evidence and a later release decision.
+- QA independently issues a **pilot-ready production** verdict. This permits manual onboarding of named Elite pilot teams only, not broad customer enablement.
+
+### Deferred beyond pilot-ready cutover
+
+- A two-configured-tenant normal dispatcher/reminder matrix, immutable frontend deployment-provider attestation, broad reliability/scale proof, and general availability. These remain tracked risks and must not be represented as complete.
+
+### Approval boundary
+
+Core may prepare the candidate and local/source evidence now. Production Function/frontend deployment, Discord application or secret/configuration change, worker activation, non-customer smoke, pilot workspace enablement, and wording change from test-only to pilot access each require Theo's separate exact approval after the cutover checklist is reviewed.
+
+## Core pilot-ready cutover Phase 1 package - 2026-08-07
+
+Theo approved Phase 1 only: prepare the detailed pilot-ready production cutover checklist and exact proposed source/copy diff without changing customer-visible source, deploying, changing provider/configuration state, activating workers, running a smoke, or enabling a pilot workspace.
+
+### Outcome
+
+- Added `docs/operations/DISCORD_PILOT_CUTOVER_CHECKLIST.md` as the internal review package for manual named Elite pilot access.
+- The package records the current Function/authentication baseline, configuration and Vault names only, OAuth/interaction endpoint boundaries, exact proposed `Test only` to `Pilot access` source/copy diff, neutral badge requirement, five separately approved cutover stages, one-event non-customer smoke design, safe evidence fields, stop conditions, and evidence-preserving workspace/global rollback order.
+- The schedule-delivery pilot promise remains narrower than `/scrim`: command registration/pilot use is excluded unless Theo separately names it in an exact provider-action approval.
+- Added `scripts/discord-pilot-cutover-contract.test.mjs`. It requires the staged approval model and every reviewed authentication/configuration boundary while proving current customer-visible source remains `Test only` and the existing release boundary remains excluded.
+
+### Validation
+
+- Focused Discord planning/security contracts: 12 passed, 0 failed.
+- Complete repository suite: 270 passed, 0 failed.
+- ESLint: passed with zero warnings.
+- TypeScript: passed.
+- No application, Edge Function, migration, entitlement, provider, secret/configuration, worker, fixture, customer, or hosted state changed.
+
+### Exact next approval gate
+
+Theo must review and explicitly approve the checklist's proposed customer wording and **Stage 1 - source candidate** before Core changes `Test only` / `test_only` to `Pilot access` / `pilot_access` in source. That approval does not authorise production deployment, Discord application/configuration changes, worker activation, smoke execution, pilot enablement, customer communication, or general availability; each remains a later exact gate.
+
+## Core Stage 1 local source candidate - 2026-08-08
+
+Theo approved only the reviewed Stage 1 local source candidate. Core implemented the exact customer-visible `Pilot access` wording, neutral/awaiting module badge treatment, and safe `pilot_access` response metadata in `discord-config` and its browser type. Existing owner/admin, Elite, tenant, live-module, and enabled-module enforcement remains unchanged; the response field is display metadata and is not an authorization control.
+
+### Scoped changes
+
+- The Integrations module badge now reads `Pilot access` and explicitly overrides the live-module success colour with the neutral/awaiting tone.
+- The configuration panel distinguishes approved pilot configuration from queued, retrying, failed, disconnected, and provider-receipt evidence. It expressly limits access to named Elite pilot workspaces and retains the rendered-message disclaimer.
+- `/scrim` remains unavailable for this schedule-delivery pilot unless separately approved.
+- The support path, Function manifest, release boundary, and Message Ledger now distinguish manual named-pilot access from broad/general availability. The ledger does not authorise a send.
+- Focused contracts require the pilot display state, neutral treatment, unchanged server authorization, schedule-only scope, named-pilot limitation, and retained general-release HOLD.
+
+### Validation evidence
+
+- Focused Discord contracts: **17 passed, 0 failed**.
+- Complete repository suite: **270 passed, 0 failed**.
+- ESLint: passed with zero warnings.
+- TypeScript: passed.
+- Production build: passed; Vite transformed 3,365 modules and produced the Integrations chunk at 34.15 kB / 9.44 kB gzip.
+- Bundle budget: passed.
+- `git diff --check`: passed.
+- React review: no new data-fetching, effect, component-structure, accessibility, or bundle concern; the change reuses the existing badge/component paths and adds no dependency.
+
+### Remaining boundary and reproducible QA handoff
+
+At validation time this candidate remained local and uncommitted. The later approved scoped commit does not itself push or deploy. No frontend/Function deployment, migration, database or fixture mutation, Discord provider/configuration change, secret change, worker activation, smoke, pilot admission, customer communication, or public claim occurred.
+
+After a separately approved Stage 2 deployment, QA and Release Auditor should:
+
+1. Record the exact Git commit, immutable frontend deployment identity, and deployed `discord-config` version/source hash with `verify_jwt=true`.
+2. Confirm both Discord workers and every QA control remain inactive before and after the checks.
+3. At desktop and a genuine 390 px viewport, verify `Pilot access` uses the neutral tone for an approved Elite/live/enabled owner/admin and that configured, queued/retrying, failed, disconnected, and last-delivered wording remains evidence-limited.
+4. Verify member/viewer, Free/Pro, non-live, disabled-module, and unrelated-tenant cases fail safely; invoke no configuration control and create no event.
+5. Confirm the hosted `discord-config` response exposes `pilot_access` but no provider reference, provider error, payload, or cross-tenant history.
+
+Stage 2 inert deployment requires separate Theo approval. Provider/configuration reconciliation, worker activation, smoke, named pilot admission, customer communication, and general availability remain later independent gates. Release verdict: **HOLD**.

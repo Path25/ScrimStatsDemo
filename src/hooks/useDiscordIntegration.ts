@@ -14,7 +14,7 @@ export type DiscordStatus = {
   installation: { id: string; guild_id: string; guild_name: string | null; status: string; installed_at: string | null } | null;
   subscriptions: Array<{ channel_id: string; channel_name: string | null; event_type: DiscordEventType; enabled: boolean }>;
   permitted_roles: Array<{ role_id: string; role_name: string | null }>;
-  release_state?: "test_only";
+  release_state?: "pilot_access";
   delivery_health?: {
     state: DiscordDeliveryHealthState;
     event_status: string | null;

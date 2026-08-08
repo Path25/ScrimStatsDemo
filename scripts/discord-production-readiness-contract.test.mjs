@@ -59,18 +59,19 @@ test("Discord worker reactivation verifies the actual pg_cron state", () => {
   assert.doesNotMatch(migration, /raise\s+(?:notice|log|info|debug)/i);
 });
 
-test("Discord production candidate remains outside the customer release boundary", () => {
+test("Discord pilot candidate remains outside the general customer release boundary", () => {
   const manifest = read("docs/launch/EDGE_FUNCTION_MANIFEST.md");
   const boundary = read("docs/launch/RELEASE_BOUNDARY.md");
   const support = read("docs/operations/DISCORD_DELIVERY_SUPPORT.md");
 
-  assert.match(manifest, /## Test-only Discord delivery functions/);
+  assert.match(manifest, /## Discord pilot candidate and test controls/);
   assert.match(manifest, /candidate `e268298` remain hosted.*Discord workers remain inactive/);
   assert.match(manifest, /re-enabling workers.*retain their recorded separate approval gates/);
-  assert.match(boundary, /Interactive Discord delivery until WO-2026-040/);
-  assert.match(boundary, /source-only production candidate is not customer availability/);
+  assert.match(boundary, /Approval-gated Discord schedule-delivery pilot access/);
+  assert.match(boundary, /Broad or general Discord availability/);
+  assert.match(boundary, /source-only pilot candidate is not customer availability/);
   assert.match(support, /security\.configure_discord_production_worker_schedule\(\)/);
   assert.match(support, /security\.disable_discord_production_worker_schedule\(\)/);
   assert.match(support, /provider-receipt evidence.*not rendered-message evidence/);
-  assert.match(support, /Do not describe it as generally available or production-ready/);
+  assert.match(support, /Do not describe Discord as generally available, broadly available to Elite, or production-ready/);
 });

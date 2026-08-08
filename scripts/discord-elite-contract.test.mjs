@@ -81,16 +81,16 @@ test("Discord owner controls use server-enforced Functions and bounded prompt ty
   assert.match(panel, /Connect Discord/);
   assert.match(panel, /Save schedule prompts/);
   assert.match(panel, /deliveryConfigured = subscriptions\.length > 0/);
-  assert.match(panel, /Configured - test only/);
+  assert.match(panel, /Configured - pilot access/);
   assert.match(panel, /Connected - prompts off/);
   assert.doesNotMatch(panel, /installation \? "Connected" : "Setup required"/);
   assert.match(panel, /never relays scouting, review, player, or credential content/);
   assert.match(panel, /discordEventTypes/);
-  assert.match(manifest, /## Test-only Discord delivery functions/);
+  assert.match(manifest, /## Discord pilot candidate and test controls/);
   assert.doesNotMatch(manifest, /Roadmap-preview Discord delivery/);
   const support = read("docs/operations/DISCORD_DELIVERY_SUPPORT.md");
   assert.match(support, /Connected - prompts off/);
-  assert.match(support, /Configured - test only/);
+  assert.match(support, /Configured - pilot access/);
 });
 
 test("Discord worker scheduling remains Vault-backed and operator-only", () => {

@@ -54,7 +54,7 @@ serve(async (request) => {
       installation: installation && installation.status === "active" ? installation : null,
       subscriptions: activeSubscriptions,
       permitted_roles: permittedRoles || [],
-      release_state: "test_only",
+      release_state: "pilot_access",
       delivery_health: {
         state: healthState,
         event_status: latestEvent?.status || null,

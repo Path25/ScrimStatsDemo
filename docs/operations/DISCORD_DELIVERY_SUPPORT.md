@@ -4,19 +4,27 @@
 
 Elite Discord automation is limited to selected schedule-change and practice-reminder prompts linking back to ScrimStats. It must never relay scouting, review, player, credential, or authorization content.
 
-## Honest pre-release states
+## Honest pilot states
 
 - **Unavailable:** Discord credentials, callback configuration, worker scheduling, or bot permissions are not configured. Do not present delivery as available.
 - **Setup required:** No active installation exists for this workspace.
 - **Connected - prompts off:** An Elite owner or admin completed installation, but no supported channel subscription is enabled.
-- **Configured - test only:** One or more supported subscriptions are saved. This is configuration evidence, not an active-worker or customer-availability claim.
+- **Configured - pilot access:** One or more supported subscriptions are saved for a named, approved Elite pilot workspace. This is configuration evidence, not delivery confirmation or a general-availability claim.
 - **Queued - awaiting delivery:** A tenant-scoped event exists but has no provider receipt. This is not delivery confirmation.
 - **Retrying delivery:** A Discord delivery attempt failed and is queued with bounded backoff. This is not delivery confirmation.
 - **Delivery needs attention:** Five dispatch attempts failed. Retain the delivery-attempt evidence and review the connection or channel before any separately approved retry.
 - **Last delivery recorded:** The latest tenant-scoped event has a provider receipt. This proves the API delivery path only, not rendered-message appearance or general reliability.
 - **Disconnected:** Subscription delivery is disabled. Historical delivery evidence is retained.
 
-Every configured state must also show **Test only** until independent hosted QA, a consented pilot, and Theo's separate release approval complete. Do not use `Available` or `Delivery active` during this boundary.
+Every configured pilot state must also show **Pilot access** and remain limited to a named, approved Elite pilot workspace. Do not use `Available` or `Delivery active`, and do not infer pilot admission from an Elite plan or a live module alone.
+
+## Pilot admission and exit
+
+- Admit only a named, consenting Elite workspace after Theo approves its owner/admin, Discord server and channel boundary, pilot window, support contact, monitoring operator, rollback owner, and exit criteria.
+- Confirm the workspace remains Elite with a live and enabled Discord module; owner/admin management and member/viewer denial continue to be enforced by the authenticated Functions.
+- Record installation, configuration, delivery-health, and provider-receipt evidence separately. A saved channel is not delivery evidence, and a receipt does not prove rendered appearance or broad reliability.
+- Exit a single workspace by revoking its Discord installation or disabling its live Discord module. Use the global worker stop for cross-workspace or provider incidents.
+- Keep `/scrim` unavailable for this schedule-delivery pilot unless a later exact approval includes command registration and pilot use.
 
 ## Support triage
 
@@ -53,4 +61,4 @@ For a signed `/scrim` rejection, correlate the Function invocation with the reda
 
 ## Release and customer-claim boundary
 
-Phase F completed one bounded non-customer smoke after retaining its earlier 403 retry evidence. That receipt does not complete multi-workspace support, customer pilot, or release evidence. Until WO-2026-040 completes Phase G independent hosted QA, a named consented pilot, and Theo's separate release approval, Discord remains test-only and excluded from the customer release boundary. Do not describe it as generally available or production-ready.
+Phase F completed one bounded non-customer smoke after retaining its earlier 403 retry evidence. That receipt does not complete multi-workspace support, a customer pilot, or broad release evidence. The Stage 1 source candidate uses **Pilot access** wording, but it is not deployed or admitted to a customer workspace by that source change. Only named, consenting Elite pilot workspaces may later be admitted through the separately approved cutover stages. Do not describe Discord as generally available, broadly available to Elite, or production-ready.

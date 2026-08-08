@@ -10,8 +10,8 @@ test("Discord distinguishes connected configuration from released delivery", () 
 
   assert.match(panel, /deliveryConfigured = subscriptions\.length > 0/);
   assert.match(panel, /Connected - prompts off/);
-  assert.match(panel, /Configured - test only/);
+  assert.match(panel, /Configured - pilot access/);
   assert.match(support, /Connected - prompts off/);
-  assert.match(support, /Configured - test only/);
+  assert.match(support, /Configured - pilot access/);
   assert.doesNotMatch(panel, /Delivery active/);
 });

@@ -16,6 +16,14 @@ Customer-facing claims are allowed only when their evidence and release boundary
 - No bulk email, automated trigger, pricing/plan pressure, discount, Elite/Discord/Collector claim, or customer send is authorised by this ledger.
 - Every send still needs Theo's specific recipient and copy approval under WO-2026-026.
 
+## Discord pilot access
+
+| Statement | Evidence | Allowed use | Prohibited interpretation |
+|---|---|---|---|
+| Your workspace has approved Discord pilot access for schedule prompts. | The named, consenting Elite workspace has completed the separately approved WO-2026-040 pilot-admission gate; installation, configuration, and delivery evidence remain state-specific. | Proposed one-to-one onboarding or support statement for the named pilot owner/admin only. Theo must still approve the exact recipient and copy before sending. | Do not say Discord is generally available, available to every Elite workspace, uninterrupted, rendered correctly from a provider receipt, or covered by a response-time SLA. Do not include `/scrim` unless separately approved. |
+
+This ledger entry does not authorise a send, pilot admission, workspace enablement, or public claim.
+
 ## Elite improvement programme
 
 | Statement | Evidence | Allowed use | Prohibited interpretation |

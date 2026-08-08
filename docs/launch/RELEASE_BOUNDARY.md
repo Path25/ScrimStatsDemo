@@ -10,11 +10,13 @@
 - Collector pairing, configuration, web health, and captured evidence presentation.
 - Public signup, email confirmation, Free workspace creation, privacy, terms, support, status, and honest not-found pages.
 - Workspace-scoped Free, Pro, and Elite checkout, subscription status, and Stripe billing-portal access.
+- Approval-gated Discord schedule-delivery pilot access for individually named, consenting Elite workspaces, only after the WO-2026-040 deployment, provider, smoke, and pilot-admission gates are separately approved and verified.
 
 ## Excluded
 
 - Native collector resilience, signing, packaging, and update delivery.
-- Interactive Discord delivery until WO-2026-040 verifies its complete support path and Theo separately approves release. A source-only production candidate is not customer availability.
+- Broad or general Discord availability, automatic access for every Elite workspace, and any reliability claim beyond the evidence recorded for a named pilot. A source-only pilot candidate is not customer availability.
+- Discord `/scrim` command registration or pilot use unless separately approved; the schedule-delivery pilot does not include it.
 - Unsupported analytics inferred from missing evidence.
 
 ## Preserved compatibility
